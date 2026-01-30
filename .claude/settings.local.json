@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:ranaroussi.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:algotrading101.com)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:analyzingalpha.com)",
+      "Bash(python:*)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(./venv/Scripts/pip:*)",
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(pip install:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(./venv/Scripts/python.exe -m alembic:*)",
+      "Bash(./venv/Scripts/python.exe:*)"
+    ]
+  }
+}
