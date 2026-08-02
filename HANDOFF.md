@@ -15,7 +15,7 @@
 | ✅ | Phase 3: Crew MVP working **live** — queue worker + 3 agents (Technical, Fundamental, PortfolioStrategist) + market_flow as the recommendation sub-report. **CrewAI was dropped**: agents call Ollama directly with structured output (`llm.py::generate_json`, `format=json_schema`); all fetching/skill math is deterministic Python. Live AAPL run: 29.8s wall, 3 LLM calls, valid JSON first try, coherent narratives. 137 tests green |
 | ✅ | Phase 4: API + Feed UI live. Backend routers (analysis/queue/watchlist/stocks + tickers admin) with mongomock-backed tests; Feed page (infinite scroll, filters, Pull/Run All controls, live queue chip), Stock Detail (Overview + AI Summary tabs, Pull button with queued/analyzing state), Sidebar watchlist. Vertical slice verified end-to-end: POST /queue/GOOGL → container analyzed it → appeared in /analysis/feed |
 | ✅ | Phase 5: full 8-agent roster live (Macro/Insider/Institutional/Sentiment/Recommender added; NVDA full run = 54.7s), chunker/summarizer, backend price endpoint (`GET /stocks/{t}/price`, yfinance + 1h cache), PriceChart w/ MAs + broadening formations + volume/ROC panes, TFC grid, and all 7 Stock Detail tabs |
-| ⬜ | Phase 6: Earnings Scanner — calendar tools, scanner + conversation agents, streaming chat endpoint, EarningsScan page |
+| ✅ | Phase 6: Earnings Scanner (non-conversational, per revised specs) — calendar tool + backend mirror, scanner agent + scan worker, /earnings router, EarningsScan page. Live-verified: 3-day scan = 662 screened → top 40 scored in ~2 min, LLM theses coherent (APP 63, PLTR 58); APP analyze→crew handoff worked |
 | ⬜ | Phase 7: Institutional Flow — daily worker, flow scanner agent, Dataroma Playwright pipeline (superinvestor tool is already scrape-ready), flow feed page |
 
 ## Phase 5 sourcing notes (probed 2026-08-02)
@@ -28,6 +28,30 @@
 - Dataroma/superinvestor: implemented (Playwright + LLM extraction), degrades to
   available:False when Playwright missing (it is in Docker, not the local venv).
 
+## Phase 6 sourcing + design notes (probed 2026-08-02)
+
+- **FMP `earnings-calendar` truncates to ~15 rows on this key** and its screener
+  is 402 → calendar comes from Finnhub `calendar/earnings` (complete, has
+  bmo/amc); market cap/name/sector for the $500M pre-screen come from the
+  **Nasdaq screener API** (one call, all US listings, browser UA, cached 24h).
+- **Finnhub candles are 403 premium** and `stock/earnings` "period" is the
+  fiscal quarter end, not the report date → post-earnings moves use yfinance
+  (`get_earnings_dates` timestamps + closes; bmo prices the report day, amc
+  the next session).
+- The scan runs in the **agent-runner** (needs Ollama): POST /earnings/scan
+  inserts a pending `earnings_scans` doc; `earnings_scan_worker.py` (polled in
+  main.py's loop) claims it. Scoring is deterministic Python; the LLM only
+  writes theses for the top 10 (templated fallback on failure).
+- Peak weeks screen 900+ companies → enrichment capped at top **40 by market
+  cap** (`MAX_CANDIDATES`). `finnhub_client` now paces calls (1.05s + one 429
+  retry) so the scan's ~80 insider calls stay under 60/min.
+- `backend/earnings_data.py` intentionally mirrors
+  `agent-runner/tools/earnings_calendar.py` (containers only share Mongo);
+  they share the same `earnings_cache` docs — keep in sync by hand.
+- ⚠️ **GET /earnings/calendar registers AND enqueues every screened ticker**
+  (per spec — it's an automatic ingest path). During earnings season that's
+  600-900 crew jobs. The UI deliberately never calls it; only hit it on purpose.
+
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
 
 ## Hard-won API facts (do not rediscover)
@@ -37,6 +61,10 @@ Workflow agreement: **feature by feature, commit after each working chunk**. Pha
   (`income-statement?symbol=AAPL&period=annual&limit=4`).
 - **Quarterly statements 402 beyond ~4 periods** on the free tier (`limit=8`
   rejected) — `income_quarterly` uses `limit=4`.
+- **FMP fundamentals 402 for symbols outside the free-tier universe** (AAPL 200
+  vs APP 402, same key/day) — `get_financials` degrades that endpoint to `[]`
+  and the crew leans on yfinance; only matters for non-mega-cap tickers, which
+  the earnings scanner feeds in routinely.
 - **Constituent endpoints (`sp500-constituent`, `nasdaq-constituent`) are 402
   paid-tier** — breadth's Wikipedia (S&P 500) / slickcharts (NASDAQ-100) scrape
   fallback is the de facto source. Works; always send a browser User-Agent.

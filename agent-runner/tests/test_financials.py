@@ -58,6 +58,26 @@ def test_stale_cache_refetches(db, fake_fmp):
     assert db[FINANCIALS_CACHE].count_documents({"ticker": "AAPL"}) == 1
 
 
+def test_restricted_symbol_402_degrades_to_empty(db, monkeypatch):
+    """FMP free tier only covers fundamentals for a subset of symbols — a 402
+    on one endpoint must not sink the whole fetch (crew falls back to yfinance)."""
+    import requests
+
+    def _fmp_get(path):
+        if "income-statement" in path and "annual" in path:
+            response = requests.Response()
+            response.status_code = 402
+            raise requests.HTTPError("402 Payment Required", response=response)
+        return [{"path": path}]
+
+    monkeypatch.setattr(financials, "fmp_get", _fmp_get)
+    data = financials.get_financials("APP", db=db)
+
+    assert data["income_annual"] == []
+    assert data["balance_annual"] == [{"path": "balance-sheet-statement?symbol=APP&period=annual&limit=4"}]
+    assert set(data) == set(financials.ENDPOINTS)
+
+
 def test_quota_guard_skips_non_essential(db, fake_fmp):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     db[FMP_USAGE].insert_one({"date": today, "count": financials.SKIP_NON_ESSENTIAL_AT - 1})

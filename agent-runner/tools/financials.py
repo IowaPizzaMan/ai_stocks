@@ -64,7 +64,17 @@ def get_financials(ticker: str, db: Database | None = None) -> dict:
             continue
         if count >= WARN_AT:
             logger.warning("FMP daily usage at %s calls (free tier: 250)", count)
-        data[key] = fmp_get(template.format(t=ticker))
+        try:
+            data[key] = fmp_get(template.format(t=ticker))
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status not in (402, 403):
+                raise
+            # free tier covers fundamentals for only a subset of symbols
+            # (verified 2026-08-02: AAPL 200, APP 402 on the same day/key) —
+            # degrade to empty so the crew run proceeds on yfinance data
+            logger.info("FMP %s for %s/%s — not covered on this plan, skipping", status, ticker, key)
+            data[key] = []
 
     db[FINANCIALS_CACHE].replace_one(
         {"ticker": ticker},
