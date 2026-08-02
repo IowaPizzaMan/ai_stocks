@@ -30,8 +30,8 @@ def get_db() -> Database:
 
 def ensure_indexes(db: Database) -> None:
     """Idempotent index bootstrap — called once at API startup."""
-    db[ANALYSES].create_index([("ticker", ASCENDING), ("created_at", DESCENDING)])
-    db[ANALYSES].create_index([("created_at", DESCENDING)])
+    db[ANALYSES].create_index([("ticker", ASCENDING), ("timestamp", DESCENDING)])
+    db[ANALYSES].create_index([("timestamp", DESCENDING)])
     db[WORK_QUEUE].create_index([("status", ASCENDING), ("created_at", ASCENDING)])
     db[TICKER_INDEX].create_index([("ticker", ASCENDING)], unique=True)
     db[TICKER_INDEX].create_index([("status", ASCENDING)])
