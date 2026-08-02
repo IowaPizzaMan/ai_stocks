@@ -18,6 +18,7 @@ INSTITUTIONAL_CACHE = "institutional_cache"
 EARNINGS_SCANS = "earnings_scans"
 EARNINGS_CACHE = "earnings_cache"
 INSTITUTIONAL_FLOW = "institutional_flow"
+INSTITUTIONAL_FLOW_META = "institutional_flow_meta"
 BREADTH_CACHE = "breadth_cache"
 BREADTH_UNIVERSE = "breadth_universe"
 
@@ -36,6 +37,7 @@ def ensure_indexes(db: Database) -> None:
     db[TICKER_INDEX].create_index([("ticker", ASCENDING)], unique=True)
     db[TICKER_INDEX].create_index([("status", ASCENDING)])
     db[INSTITUTIONAL_FLOW].create_index([("filed_at", DESCENDING)])
+    db[INSTITUTIONAL_FLOW].create_index([("ticker", ASCENDING), ("filed_at", DESCENDING)])
     db[BREADTH_CACHE].create_index([("exchange", ASCENDING), ("date", DESCENDING)])
     # TTL caches (seconds): macro 24h; financials use quarterly re-fetch logic instead of TTL
     db[MACRO_CACHE].create_index("fetched_at", expireAfterSeconds=24 * 3600)
