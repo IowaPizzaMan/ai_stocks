@@ -1,14 +1,148 @@
-"""Assembles and kicks off the CrewAI crew per ticker.
+"""Per-ticker analysis pipeline: prefetch → deterministic skills → LLM agents.
+Spec: specs/component-specs/agent-runner/crew.md
 
-Spec: specs/component-specs/agent-runner/crew.md — implement in Phase 3.
-Includes the parallel data prefetch (ThreadPoolExecutor) used by earnings handoffs.
+Phase 3 MVP roster: TechnicalAnalyst + FundamentalAnalyst + PortfolioStrategist,
+with market_flow's deterministic output standing in as the "recommendation"
+sub-report until the full roster lands in Phase 5. Agents call Ollama directly
+with structured output (see llm.py) — no CrewAI tool-calling.
 """
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+
+import pandas as pd
+
+from agents import fundamental_analyst, portfolio_strategist, technical_analyst
+from skills import accumulation, gap_analysis, market_flow, the_strat
+from tools import breadth as breadth_tool
+from tools import financials as financials_tool
+from tools import price as price_tool
+from tools.db import get_db
+
+logger = logging.getLogger(__name__)
 
 
 class TickerDelistedError(Exception):
     """Raised when a ticker fails the yfinance existence check AND has no financials."""
 
+    def __init__(self, ticker: str):
+        self.ticker = ticker
+        super().__init__(f"{ticker}: no price or financials data available — likely delisted or ticker changed")
+
+
+def _earnings_dates(earnings: dict) -> list:
+    dates = []
+    for record in earnings.get("earnings_dates") or []:
+        for key in ("Earnings Date", "Date", "date"):
+            if key in record and record[key] is not None:
+                try:
+                    dates.append(pd.to_datetime(record[key]).date())
+                except (ValueError, TypeError):
+                    pass
+                break
+    return dates
+
+
+def _price_summary(daily: list[dict]) -> dict:
+    df = pd.DataFrame(daily)
+    if df.empty or "Close" not in df:
+        return {}
+    closes, lows, highs = df["Close"], df["Low"], df["High"]
+    return {
+        "last_close": round(float(closes.iloc[-1]), 2),
+        "change_20d_pct": round(float(closes.iloc[-1] / closes.iloc[-21] - 1) * 100, 1) if len(closes) > 21 else None,
+        "high_20d": round(float(highs.tail(20).max()), 2),
+        "low_20d": round(float(lows.tail(20).min()), 2),
+        "high_60d": round(float(highs.tail(60).max()), 2),
+        "low_60d": round(float(lows.tail(60).min()), 2),
+    }
+
+
+class Crew:
+    def __init__(self, db=None, client=None):
+        self.db = db if db is not None else get_db()
+        self.client = client  # None → llm.py default Ollama client
+        # fetchers as attributes so tests can swap them out
+        self.is_ticker_valid = price_tool.is_ticker_valid
+        self.get_price_history = price_tool.get_price_history
+        self.get_technical_indicators = price_tool.get_technical_indicators
+        self.get_financials = financials_tool.get_financials
+        self.get_earnings_data = financials_tool.get_earnings_data
+        self.get_market_breadth = breadth_tool.get_market_breadth
+
+    def _prefetch(self, ticker: str, parallel: bool) -> dict:
+        jobs = {
+            "price": lambda: self.get_price_history(ticker),
+            "indicators": lambda: self.get_technical_indicators(ticker),
+            "financials": lambda: self.get_financials(ticker, db=self.db),
+            "earnings": lambda: self.get_earnings_data(ticker),
+            "breadth": lambda: self.get_market_breadth(db=self.db),
+        }
+        if parallel:
+            with ThreadPoolExecutor(max_workers=5) as pool:
+                futures = {key: pool.submit(fn) for key, fn in jobs.items()}
+                return {key: f.result(timeout=120) for key, f in futures.items()}
+        return {key: fn() for key, fn in jobs.items()}
+
+    def run(self, ticker: str, parallel_prefetch: bool = False) -> dict:
+        ticker = ticker.upper()
+
+        # 0. cheap existence check before burning LLM time; financials get one
+        # chance to disagree so a single flaky source can't delist a ticker
+        if not self.is_ticker_valid(ticker):
+            fin = self.get_financials(ticker, db=self.db)
+            if not fin or not any(fin.get(k) for k in ("income_annual", "income_quarterly")):
+                raise TickerDelistedError(ticker)
+            logger.info("%s: yfinance check failed but financials resolve — proceeding", ticker)
+
+        # 1. data prefetch
+        data = self._prefetch(ticker, parallel_prefetch)
+        price_history = data["price"]
+
+        # 2. deterministic skills
+        strat_out = the_strat.run(ticker, price_history)
+        gap_out = gap_analysis.run(
+            ticker, price_history,
+            earnings_dates=_earnings_dates(data["earnings"]),
+            nymo=data["breadth"]["nymo"]["current"],
+        )
+        peg_score = gap_out["peg"]["peg_score"] if gap_out.get("peg") else None
+        accumulation_out = accumulation.run(ticker, price_history, gap_score=peg_score)
+        flow_out = market_flow.run(ticker, {"breadth": data["breadth"], "gap": gap_out})
+
+        # 3. LLM agents (sequential; each one structured-output call)
+        technical = technical_analyst.run(ticker, {
+            "strat": strat_out,
+            "accumulation": accumulation_out,
+            "gap": gap_out,
+            "indicators": data["indicators"],
+            "price_summary": _price_summary(price_history["daily"]),
+        }, client=self.client)
+
+        fundamental = fundamental_analyst.run(ticker, {
+            "financials": data["financials"],
+            "earnings": data["earnings"],
+        }, client=self.client)
+
+        sub_reports = {
+            "technical": technical,
+            "fundamental": fundamental,
+            "recommendation": flow_out,
+        }
+
+        recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if r.get("Low") is not None]
+        synthesis = portfolio_strategist.run(ticker, sub_reports, recent_lows=recent_lows,
+                                             client=self.client)
+
+        # 4. final analyses document
+        return {
+            "ticker": ticker,
+            "timestamp": datetime.now(timezone.utc),
+            **synthesis,
+            "sub_reports": sub_reports,
+        }
+
 
 def run_crew(ticker: str, parallel_prefetch: bool = False) -> dict:
-    """Run the full multi-agent pipeline for one ticker; returns the synthesis document."""
-    raise NotImplementedError("crew: Phase 3")
+    """Module-level convenience wrapper used by scripts/tests."""
+    return Crew().run(ticker, parallel_prefetch=parallel_prefetch)
