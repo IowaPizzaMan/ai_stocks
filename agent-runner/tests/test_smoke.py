@@ -21,7 +21,7 @@ def test_imports(mod):
 
 
 def test_skill_interface_is_stubbed():
-    from skills import market_flow
+    from skills import position_management
 
     with pytest.raises(NotImplementedError):
-        market_flow.run("SPY", {})
+        position_management.run("SPY", {})
