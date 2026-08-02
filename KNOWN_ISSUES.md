@@ -82,6 +82,19 @@
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
 
+## Unbuilt / unfinished features
+
+- **Sectors page/router is genuinely unbuilt — it fell through the cracks
+  between phases.** The page scaffold says "Phase 5" and the backend
+  `/sectors` router stub says "Phase 4", but neither phase's delivered scope
+  actually included it (Phase 4 shipped analysis/queue/watchlist/stocks
+  routers; Phase 5 shipped agents + Stock Detail tabs). The specs exist and
+  are straightforward: a sector-card overview and a per-sector signal heatmap
+  built from existing `analyses` data (`Sectors.md`, plus the backend router
+  spec) — all the data it needs is already in Mongo.
+- **Admin page was never scaffolded into a route.** Spec exists
+  (`Admin.md`), no `frontend/src/pages/Admin.tsx` and no route in `App.tsx`.
+
 ## Upstream / API-tier constraints (facts, not fixable in code)
 
 - **FMP** (free tier, post-2025 key — stable API only, legacy `/api/v3` 403s):
