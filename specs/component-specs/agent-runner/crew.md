@@ -95,11 +95,21 @@ class TickerDelistedError(Exception):
         super().__init__(f"{ticker}: no price or financials data available — likely delisted or ticker changed")
 ```
 
-## CrewAI Configuration
-- **Process**: `Process.sequential` — agents run in order, each can read prior outputs
-- **Verbose**: `False` in production; configurable via env var `CREWAI_VERBOSE=1`
-- **LLM**: `Ollama(model=os.getenv("OLLAMA_MODEL", "mistral:7b"), base_url=OLLAMA_URL)`
-- Each agent has `allow_delegation=False` — no agent can hand off to another mid-run
+## LLM Configuration (updated 2026-08-02 — CrewAI dropped)
+Phase 3 implemented the agent loop **without CrewAI**: the proposal's top risk
+(small-model tool-calling flakiness) is sidestepped by keeping every fetch and
+skill deterministic in Python and giving the LLM exactly one job per agent —
+interpret a pre-computed context and return JSON. Mechanics:
+
+- `llm.py::generate_json(prompt, schema)` — direct `ollama.Client.chat` with
+  `format=<json schema>` (Ollama structured outputs), temperature 0.2, 8k ctx,
+  one retry on invalid JSON then a loud `LLMError`
+- Each agent module is `run(ticker, context, client=None) -> dict`: one
+  structured-output call, merged with the deterministic skill outputs
+- Agents still run sequentially and read prior outputs (strategist reads all
+  sub-reports); no delegation exists by construction
+- `crewai` was removed from requirements; re-adding it later only requires
+  swapping the agent internals — the module boundaries are unchanged
 
 ## Output Schema (written to `analyses` collection)
 

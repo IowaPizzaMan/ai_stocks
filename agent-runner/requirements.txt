@@ -1,5 +1,5 @@
-# Agent orchestration + LLM
-crewai>=0.80
+# LLM (direct Ollama structured-output calls — CrewAI dropped in Phase 3;
+# see specs/component-specs/agent-runner/crew.md)
 ollama>=0.4
 
 # Data sources
