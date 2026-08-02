@@ -189,6 +189,61 @@ export interface EnqueueResponse {
   status: "enqueued" | "already_queued";
 }
 
+export interface EarningsScoreBreakdown {
+  move_pts: number;
+  beat_pts: number;
+  revision_pts: number;
+  insider_pts: number;
+  accumulation_pts: number;
+}
+
+export interface EarningsCandidate {
+  ticker: string;
+  company: string;
+  report_date: string;
+  report_time: "bmo" | "amc" | "unknown";
+  sector: string | null;
+  market_cap: number;
+  score: number;
+  score_breakdown: EarningsScoreBreakdown;
+  avg_abs_move_pct: number;
+  beat_rate: number;
+  history_quarters: number;
+  eps_revision: "up" | "flat" | "down";
+  insider_signal: "cluster" | "single" | "none";
+  accumulation_score: number;
+  one_line_thesis: string;
+}
+
+export interface EarningsScanDoc {
+  scan_id: string;
+  status: "pending" | "running" | "complete" | "failed";
+  days_ahead: number;
+  candidates?: EarningsCandidate[];
+  total_screened?: number;
+  scored_count?: number;
+  top_count?: number;
+  error?: string;
+}
+
+export interface EarningsQuarter {
+  period: string;
+  eps_estimate: number | null;
+  eps_actual: number | null;
+  surprise_pct: number | null;
+  beat: boolean;
+  move_pct: number;
+  move_abs: number;
+}
+
+export interface EarningsHistory {
+  ticker: string;
+  quarters: EarningsQuarter[];
+  avg_abs_move_pct: number;
+  beat_rate: number;
+  num_quarters: number;
+}
+
 export interface WatchlistItem {
   ticker: string;
   name?: string | null;
