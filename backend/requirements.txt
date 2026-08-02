@@ -1,0 +1,17 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+pymongo>=4.8,<5.0
+pydantic>=2.8,<3.0
+pydantic-settings>=2.4,<3.0
+
+# price endpoint for charts (cached in Mongo, 1h TTL)
+yfinance>=0.2.50
+pandas>=2.2
+
+# earnings calendar fetch (Finnhub + Nasdaq screener)
+requests>=2.32
+
+# tests
+pytest>=8.0
+httpx>=0.27
+mongomock>=4.1
