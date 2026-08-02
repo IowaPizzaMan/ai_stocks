@@ -64,6 +64,23 @@ def make_crew(valid=True, financials=None):
         "divergence": {"type": "none", "description": ""},
         "method": "computed_ratio_adjusted",
     }
+    crew.get_macro_data = lambda db=None: {"FEDFUNDS": [{"date": "2026-07-01", "value": 4.25}]}
+    crew.get_yield_curve_status = lambda db=None: {"10y_2y_spread": 0.4, "inverted": False,
+                                                   "inversion_severity": "none"}
+    crew.get_insider_activity = lambda t: {
+        "transactions": [], "mspr_monthly": [],
+        "cluster_signal": {"detected": False, "insiders": [], "window_days": None},
+        "net_direction": "balanced", "open_market_buy_value": 0, "open_market_sell_value": 0,
+    }
+    crew.get_institutional_holdings = lambda t, db=None: {
+        "top_holders": [], "fund_holders": [], "ownership_pct": 60.0,
+        "institutions_count": 5000, "insiders_pct": 1.0,
+        "top10_increasing": 5, "top10_decreasing": 5, "as_of": "2026-03-31",
+    }
+    crew.get_superinvestor_activity = lambda t, db=None, client=None: {
+        "moves": [], "available": False, "note": "test"}
+    crew.get_earnings_sentiment = lambda t: {"news": [], "earnings_surprises": [],
+                                             "transcripts": [], "transcripts_note": "n/a"}
     return crew
 
 
@@ -75,15 +92,21 @@ def test_run_produces_full_analyses_document():
     assert doc["signal"] in ("bullish", "bearish", "neutral")
     assert doc["conviction"] in ("high", "medium", "low")
     assert "timestamp" in doc and "summary" in doc
-    assert set(doc["sub_reports"]) == {"technical", "fundamental", "recommendation"}
+    assert set(doc["sub_reports"]) == {"technical", "fundamental", "macro", "insider",
+                                       "institutional", "sentiment", "recommendation"}
     # deterministic pieces flow through
     assert doc["sub_reports"]["technical"]["strat_result"]["tfc"]["status"] in (
         "full_bullish", "full_bearish", "conflict")
     assert doc["sub_reports"]["recommendation"]["recommendation"] in (
         "BUY_MORE", "HOLD", "TRIM", "START_SELLING", "AVOID_ADD", "WATCH")
+    assert doc["sub_reports"]["macro"]["rate_impact"]["fed_funds_rate"] == 4.25
+    assert doc["sub_reports"]["institutional"]["institutional_summary"]["ownership_pct"] == 60.0
+    assert doc["sub_reports"]["insider"]["net_direction"] == "balanced"
+    assert doc["sub_reports"]["sentiment"]["news_count"] == 0
     assert len(doc["position_management"]["stair_step_stops"]) > 0
-    # three LLM calls: technical, fundamental, strategist
-    assert len(crew.client.calls) == 3
+    # eight LLM calls: tech, fund, macro, insider, institutional, sentiment,
+    # recommender, strategist
+    assert len(crew.client.calls) == 8
 
 
 def test_invalid_ticker_with_no_financials_raises_delisted():
@@ -100,7 +123,8 @@ def test_invalid_ticker_with_financials_proceeds():
 
 def test_parallel_prefetch_produces_same_shape():
     doc = make_crew().run("AAPL", parallel_prefetch=True)
-    assert set(doc["sub_reports"]) == {"technical", "fundamental", "recommendation"}
+    assert set(doc["sub_reports"]) == {"technical", "fundamental", "macro", "insider",
+                                       "institutional", "sentiment", "recommendation"}
 
 
 def test_earnings_dates_extraction():

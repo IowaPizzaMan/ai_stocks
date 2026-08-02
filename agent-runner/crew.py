@@ -1,10 +1,10 @@
 """Per-ticker analysis pipeline: prefetch → deterministic skills → LLM agents.
 Spec: specs/component-specs/agent-runner/crew.md
 
-Phase 3 MVP roster: TechnicalAnalyst + FundamentalAnalyst + PortfolioStrategist,
-with market_flow's deterministic output standing in as the "recommendation"
-sub-report until the full roster lands in Phase 5. Agents call Ollama directly
-with structured output (see llm.py) — no CrewAI tool-calling.
+Full Phase 5 roster: Technical, Fundamental, Macro, Insider, Institutional,
+Sentiment, Recommender, then PortfolioStrategist synthesizing everything.
+Agents call Ollama directly with structured output (see llm.py) — no CrewAI
+tool-calling.
 """
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -12,12 +12,26 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from agents import fundamental_analyst, portfolio_strategist, technical_analyst
+from agents import (
+    fundamental_analyst,
+    insider_analyst,
+    institutional_analyst,
+    macro_analyst,
+    portfolio_strategist,
+    recommender_agent,
+    sentiment_analyst,
+    technical_analyst,
+)
 from skills import accumulation, gap_analysis, market_flow, the_strat
 from tools import breadth as breadth_tool
 from tools import financials as financials_tool
+from tools import insider as insider_tool
+from tools import institutional as institutional_tool
+from tools import macro as macro_tool
 from tools import price as price_tool
-from tools.db import get_db
+from tools import sentiment as sentiment_tool
+from tools import superinvestor as superinvestor_tool
+from tools.db import TICKER_INDEX, get_db
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +83,12 @@ class Crew:
         self.get_financials = financials_tool.get_financials
         self.get_earnings_data = financials_tool.get_earnings_data
         self.get_market_breadth = breadth_tool.get_market_breadth
+        self.get_macro_data = macro_tool.get_macro_data
+        self.get_yield_curve_status = macro_tool.get_yield_curve_status
+        self.get_insider_activity = insider_tool.get_insider_activity
+        self.get_institutional_holdings = institutional_tool.get_institutional_holdings
+        self.get_superinvestor_activity = superinvestor_tool.get_superinvestor_activity
+        self.get_earnings_sentiment = sentiment_tool.get_earnings_sentiment
 
     def _prefetch(self, ticker: str, parallel: bool) -> dict:
         jobs = {
@@ -77,9 +97,14 @@ class Crew:
             "financials": lambda: self.get_financials(ticker, db=self.db),
             "earnings": lambda: self.get_earnings_data(ticker),
             "breadth": lambda: self.get_market_breadth(db=self.db),
+            "macro": lambda: self.get_macro_data(db=self.db),
+            "yield_curve": lambda: self.get_yield_curve_status(db=self.db),
+            "insider": lambda: self.get_insider_activity(ticker),
+            "institutional": lambda: self.get_institutional_holdings(ticker, db=self.db),
+            "sentiment": lambda: self.get_earnings_sentiment(ticker),
         }
         if parallel:
-            with ThreadPoolExecutor(max_workers=5) as pool:
+            with ThreadPoolExecutor(max_workers=6) as pool:
                 futures = {key: pool.submit(fn) for key, fn in jobs.items()}
                 return {key: f.result(timeout=120) for key, f in futures.items()}
         return {key: fn() for key, fn in jobs.items()}
@@ -110,6 +135,15 @@ class Crew:
         accumulation_out = accumulation.run(ticker, price_history, gap_score=peg_score)
         flow_out = market_flow.run(ticker, {"breadth": data["breadth"], "gap": gap_out})
 
+        # superinvestor is best-effort (Playwright + scrape) — never sinks a run
+        try:
+            superinvestor = self.get_superinvestor_activity(ticker, db=self.db, client=self.client)
+        except Exception as exc:
+            logger.info("superinvestor unavailable for %s: %s", ticker, exc)
+            superinvestor = {"moves": [], "available": False, "note": str(exc)}
+
+        record = self.db[TICKER_INDEX].find_one({"ticker": ticker}) or {}
+
         # 3. LLM agents (sequential; each one structured-output call)
         technical = technical_analyst.run(ticker, {
             "strat": strat_out,
@@ -124,10 +158,36 @@ class Crew:
             "earnings": data["earnings"],
         }, client=self.client)
 
+        macro = macro_analyst.run(ticker, {
+            "macro": data["macro"],
+            "yield_curve": data["yield_curve"],
+            "sector": record.get("sector"),
+        }, client=self.client)
+
+        insider = insider_analyst.run(ticker, {"insider": data["insider"]}, client=self.client)
+
+        institutional = institutional_analyst.run(ticker, {
+            "institutional": data["institutional"],
+            "superinvestor": superinvestor,
+        }, client=self.client)
+
+        sentiment = sentiment_analyst.run(ticker, {"sentiment": data["sentiment"]},
+                                          client=self.client)
+
+        recommendation = recommender_agent.run(ticker, {
+            "market_flow": flow_out,
+            "breadth": data["breadth"],
+            "gap": gap_out,
+        }, client=self.client)
+
         sub_reports = {
             "technical": technical,
             "fundamental": fundamental,
-            "recommendation": flow_out,
+            "macro": macro,
+            "insider": insider,
+            "institutional": institutional,
+            "sentiment": sentiment,
+            "recommendation": recommendation,
         }
 
         recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if r.get("Low") is not None]

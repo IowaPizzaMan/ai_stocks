@@ -48,14 +48,15 @@ def run(ticker: str, sub_reports: dict, recent_lows: list[float] | None = None,
     recent_lows: last few daily session lows (oldest→newest) for the stop ladder."""
     stops = stair_step_stops(recent_lows or [])
 
-    # Trim bulky history arrays out of what the synthesizer reads — it needs
-    # the assessments, not the chartable series.
+    # Trim bulky raw arrays out of what the synthesizer reads — it needs the
+    # assessments, not the chartable series or transaction dumps.
+    bulky = {"strat_result", "gaps", "recent_transactions", "top_holders",
+             "fund_holders", "superinvestor_moves", "mspr_monthly"}
     compact = {}
     for name, report in sub_reports.items():
         if isinstance(report, dict):
             compact[name] = {k: v for k, v in report.items()
-                             if not str(k).startswith("history") and k not in
-                             ("strat_result", "gaps")}
+                             if not str(k).startswith("history") and k not in bulky}
         else:
             compact[name] = report
 
