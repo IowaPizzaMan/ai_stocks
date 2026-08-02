@@ -53,6 +53,7 @@
   600-900 crew jobs. The UI deliberately never calls it; only hit it on purpose.
 
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
+Bugs and limitations get logged in **KNOWN_ISSUES.md as they're found** (fixed items move to its Fixed section, not deleted).
 
 ## Hard-won API facts (do not rediscover)
 
