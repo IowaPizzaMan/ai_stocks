@@ -1,18 +1,32 @@
 // Spec: specs/component-specs/frontend/pages/StockDetail.md
-// Phase 4 scope: header w/ Pull + watchlist, Overview + AI Summary tabs.
-// Charts, TFC grid, and the remaining tabs land in Phase 5.
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Analysis } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
+import PriceChart from "../components/stock/PriceChart";
+import TFCChartGrid from "../components/stock/TFCChartGrid";
+import {
+  FundamentalsTab,
+  InsiderTab,
+  InstitutionalTab,
+  SentimentTab,
+  TechnicalsTab,
+} from "../components/stock/tabs";
 import { useTickerAnalysis, useTickerRecord } from "../hooks/useAnalysis";
+import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
+import type { Timeframe } from "../lib/strat/displayWindow";
 import { relativeTime } from "../lib/time";
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "technicals", label: "Technicals" },
+  { id: "fundamentals", label: "Fundamentals" },
+  { id: "insider", label: "Insider" },
+  { id: "institutional", label: "Institutional" },
+  { id: "sentiment", label: "Sentiment" },
   { id: "ai-summary", label: "AI Summary" },
 ];
 
@@ -23,9 +37,11 @@ export default function StockDetail() {
   const navigate = useNavigate();
   const activeTab = location.hash.replace("#", "") || "overview";
 
+  const [deepDiveTf, setDeepDiveTf] = useState<Timeframe>("1Y");
   const { data: analyses, isLoading } = useTickerAnalysis(symbol);
   const { data: record } = useTickerRecord(symbol);
   const { data: queue } = useQueueStatus();
+  const { data: priceData } = useStockPriceHistory(symbol, ["1D", "1W", "1M", "1Y", "5Y", "MAX"]);
   const enqueue = useEnqueueTicker();
   const addToWatchlist = useAddToWatchlist();
 
@@ -110,14 +126,32 @@ export default function StockDetail() {
         </div>
       )}
 
+      {/* TFC grid + deep-dive chart render for any ticker with price data */}
+      <div className="mb-6">
+        <TFCChartGrid
+          priceData={priceData}
+          tfcStatus={latest?.sub_reports?.technical?.strat_result?.tfc?.status}
+        />
+      </div>
+      <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+          Deep dive — {deepDiveTf}
+        </p>
+        <PriceChart
+          priceData={priceData[deepDiveTf] ?? []}
+          defaultTimeframe="1Y"
+          onTimeframeChange={setDeepDiveTf}
+        />
+      </div>
+
       {latest && (
         <>
-          <nav className="flex gap-1 border-b border-zinc-800">
+          <nav className="flex flex-wrap gap-1 border-b border-zinc-800">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => navigate(`#${tab.id}`, { replace: true })}
-                className={`px-4 py-2 text-sm transition-colors ${
+                className={`px-3 py-2 text-sm transition-colors ${
                   activeTab === tab.id
                     ? "border-b-2 border-sky-500 text-white"
                     : "text-zinc-400 hover:text-zinc-200"
@@ -132,11 +166,13 @@ export default function StockDetail() {
           </nav>
 
           <div className="mt-6">
-            {activeTab === "ai-summary" ? (
-              <AISummaryTab analysis={latest} />
-            ) : (
-              <OverviewTab analysis={latest} />
-            )}
+            {activeTab === "overview" && <OverviewTab analysis={latest} />}
+            {activeTab === "technicals" && <TechnicalsTab technical={latest.sub_reports?.technical} />}
+            {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} />}
+            {activeTab === "insider" && <InsiderTab insider={latest.sub_reports?.insider} />}
+            {activeTab === "institutional" && <InstitutionalTab institutional={latest.sub_reports?.institutional} />}
+            {activeTab === "sentiment" && <SentimentTab sentiment={latest.sub_reports?.sentiment} />}
+            {activeTab === "ai-summary" && <AISummaryTab analysis={latest} />}
           </div>
         </>
       )}
