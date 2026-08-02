@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 import earnings_data
-from db import EARNINGS_SCANS, TICKER_INDEX, WORK_QUEUE
+from db import EARNINGS_SCANS, WORK_QUEUE
 from deps import db_dependency
 from registry import register_ticker
 
@@ -32,35 +32,16 @@ class AnalyzeRequest(BaseModel):
     tickers: list[str]
 
 
-def _register_and_enqueue_calendar(calendar: list[dict], db) -> None:
-    """Calendar pull is one of the two automatic entry paths into the system:
-    every screened ticker gets registered and queued for the crew. Cheap and
-    idempotent — register_ticker upserts and pending/running jobs aren't
-    duplicated on repeat calls."""
-    for entry in calendar:
-        ticker = entry["ticker"].upper()
-        record = db[TICKER_INDEX].find_one({"ticker": ticker})
-        if record and record.get("status") == "removed_from_market":
-            continue  # a stale calendar row shouldn't resurrect a delisted ticker
-
-        register_ticker(db, ticker, source="earnings_calendar",
-                        name=entry.get("company"), sector=entry.get("sector"))
-
-        already = db[WORK_QUEUE].find_one(
-            {"ticker": ticker, "status": {"$in": ["pending", "running"]}})
-        if not already:
-            db[WORK_QUEUE].insert_one({
-                "ticker": ticker, "status": "pending", "source": "earnings_calendar",
-                "created_at": _utcnow(), "updated_at": _utcnow(),
-            })
-
-
 @router.get("/calendar")
 def get_calendar(days: int = 7, db=Depends(db_dependency)):
-    """Pre-screened upcoming earnings (raw, unscored). Cached 4h."""
-    data = earnings_data.get_earnings_calendar(days_ahead=days, db=db)
-    _register_and_enqueue_calendar(data, db)
-    return data
+    """Pre-screened upcoming earnings (raw, unscored). Cached 4h.
+
+    Read-only, deviating from the spec's auto-ingest design: during earnings
+    season the calendar holds 600-900 names, and registering + enqueueing them
+    all meant ~1-min crew runs for hours and a bloated ticker_index for Run
+    All sweeps. Tickers enter the system one at a time instead — the user
+    queues them from the calendar table via POST /earnings/analyze."""
+    return earnings_data.get_earnings_calendar(days_ahead=days, db=db)
 
 
 @router.post("/scan")

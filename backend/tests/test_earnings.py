@@ -16,7 +16,10 @@ CALENDAR = [
 
 # --- GET /earnings/calendar -----------------------------------------------------
 
-def test_calendar_returns_registers_and_enqueues(client, db, monkeypatch):
+def test_calendar_is_read_only(client, db, monkeypatch):
+    """Deliberate deviation from the spec's auto-ingest: pulling the calendar
+    must never register tickers or feed the work queue (peak weeks hold
+    600-900 names — the user queues individual rows instead)."""
     monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar",
                         lambda days_ahead, db: CALENDAR)
 
@@ -24,27 +27,8 @@ def test_calendar_returns_registers_and_enqueues(client, db, monkeypatch):
     assert r.status_code == 200
     assert [e["ticker"] for e in r.json()] == ["BIG", "MID"]
 
-    big = db[TICKER_INDEX].find_one({"ticker": "BIG"})
-    assert big["status"] == "active"
-    assert big["name"] == "Big Co" and big["sector"] == "Technology"
-    assert "earnings_calendar" in big["sources"]
-    assert db[WORK_QUEUE].count_documents({"status": "pending"}) == 2
-
-    # repeat call: no duplicate jobs
-    client.get("/earnings/calendar?days=5")
-    assert db[WORK_QUEUE].count_documents({"status": "pending"}) == 2
-
-
-def test_calendar_skips_delisted_tickers(client, db, monkeypatch):
-    monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar",
-                        lambda days_ahead, db: CALENDAR)
-    db[TICKER_INDEX].insert_one({"ticker": "BIG", "status": "removed_from_market"})
-
-    client.get("/earnings/calendar")
-
-    assert db[WORK_QUEUE].find_one({"ticker": "BIG"}) is None
-    assert db[TICKER_INDEX].find_one({"ticker": "BIG"})["status"] == "removed_from_market"
-    assert db[WORK_QUEUE].find_one({"ticker": "MID"}) is not None
+    assert db[WORK_QUEUE].count_documents({}) == 0
+    assert db[TICKER_INDEX].count_documents({}) == 0
 
 
 def test_calendar_serves_from_shared_cache(client, db, monkeypatch):

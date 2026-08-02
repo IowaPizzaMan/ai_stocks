@@ -20,10 +20,6 @@
 
 ## Design limitations (accepted for now)
 
-- **`GET /earnings/calendar` registers AND enqueues every screened ticker**
-  (spec'd auto-ingest path). During earnings season that's 600–900 crew jobs
-  (~1 min each on the GPU) from a single call. The UI deliberately never calls
-  it; only hit it on purpose. Candidate fix: `?enqueue=false` default.
 - **Scan enrichment caps at the top 40 by market cap** (`MAX_CANDIDATES`).
   Peak weeks screen 900+ companies, so mid-caps below the cut — often the
   biggest post-earnings movers — never get scored. Narrow the window (1–2
@@ -82,6 +78,11 @@
 
 ## Fixed
 
+- ~~`GET /earnings/calendar` registered AND enqueued every screened ticker~~
+  (spec'd auto-ingest — 600–900 crew jobs from one call during earnings
+  season) — removed 2026-08-02 at the user's request: the endpoint is now
+  read-only and the EarningsScan page shows the calendar with a per-row
+  Queue button (`POST /earnings/analyze`, one ticker at a time).
 - ~~FMP 402 on a restricted symbol sank the whole crew run~~ — fixed in Phase
   6.5 (`get_financials` catches 402/403 per endpoint, returns `[]`, run
   proceeds on yfinance data).

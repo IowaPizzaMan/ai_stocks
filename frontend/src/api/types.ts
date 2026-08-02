@@ -189,6 +189,17 @@ export interface EnqueueResponse {
   status: "enqueued" | "already_queued";
 }
 
+export interface EarningsCalendarEntry {
+  ticker: string;
+  company: string;
+  report_date: string;
+  report_time: "bmo" | "amc" | "unknown";
+  eps_estimate: number | null;
+  revenue_estimate: number | null;
+  market_cap: number;
+  sector: string | null;
+}
+
 export interface EarningsScoreBreakdown {
   move_pts: number;
   beat_pts: number;

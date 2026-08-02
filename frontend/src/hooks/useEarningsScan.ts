@@ -3,7 +3,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../api/client";
-import type { EarningsHistory, EarningsScanDoc } from "../api/types";
+import type { EarningsCalendarEntry, EarningsHistory, EarningsScanDoc } from "../api/types";
+
+/** Upcoming pre-screened calendar (read-only on the backend — queuing a
+ * ticker is an explicit per-row action via useAnalyzeTickers). */
+export function useEarningsCalendar(days: number) {
+  return useQuery({
+    queryKey: ["earnings-calendar", days],
+    queryFn: async () => {
+      const { data } = await api.get<EarningsCalendarEntry[]>(`/earnings/calendar?days=${days}`);
+      return data;
+    },
+    staleTime: 60 * 60 * 1000, // backend caches 4h; don't hammer on tab focus
+  });
+}
 
 /** Scan lifecycle: POST /earnings/scan returns a scan_id; the agent-runner
  * picks the job up from Mongo, so we poll every 3s until complete/failed. */

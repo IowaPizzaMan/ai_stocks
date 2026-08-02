@@ -11,12 +11,13 @@ export interface ScanConfig {
 interface ScanControlsProps {
   onScan: (config: ScanConfig) => void;
   onMinCapChange: (minCapBn: number) => void;
+  onDaysChange: (days: number) => void;
   isScanning: boolean;
 }
 
 const DAY_CHOICES = [3, 5, 7, 14];
 
-export default function ScanControls({ onScan, onMinCapChange, isScanning }: ScanControlsProps) {
+export default function ScanControls({ onScan, onMinCapChange, onDaysChange, isScanning }: ScanControlsProps) {
   const [daysAhead, setDaysAhead] = useState(7);
   const [minCapBn, setMinCapBn] = useState(0.5);
 
@@ -26,7 +27,10 @@ export default function ScanControls({ onScan, onMinCapChange, isScanning }: Sca
         {DAY_CHOICES.map((d) => (
           <button
             key={d}
-            onClick={() => setDaysAhead(d)}
+            onClick={() => {
+              setDaysAhead(d);
+              onDaysChange(d);
+            }}
             className={`rounded px-3 py-1 text-sm ${
               daysAhead === d
                 ? "bg-indigo-600 text-white"

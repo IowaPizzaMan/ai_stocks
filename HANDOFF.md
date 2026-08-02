@@ -48,9 +48,10 @@
 - `backend/earnings_data.py` intentionally mirrors
   `agent-runner/tools/earnings_calendar.py` (containers only share Mongo);
   they share the same `earnings_cache` docs — keep in sync by hand.
-- ⚠️ **GET /earnings/calendar registers AND enqueues every screened ticker**
-  (per spec — it's an automatic ingest path). During earnings season that's
-  600-900 crew jobs. The UI deliberately never calls it; only hit it on purpose.
+- **GET /earnings/calendar is read-only** (deviation from the spec's
+  auto-ingest design, per user request — peak weeks hold 600-900 names).
+  The EarningsScan page shows the upcoming calendar with a per-row Queue
+  button; tickers enter the system one at a time via POST /earnings/analyze.
 
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
 Bugs and limitations get logged in **KNOWN_ISSUES.md as they're found** (fixed items move to its Fixed section, not deleted).

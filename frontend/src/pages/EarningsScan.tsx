@@ -1,12 +1,18 @@
 // Spec: specs/component-specs/frontend/pages/EarningsScan.md
-// Single-pane scan view: run a scan, get a ranked table, click a row to
-// enqueue the full crew. Not conversational.
+// Single-pane scan view: the upcoming calendar is always browsable with a
+// per-row Queue button (the backend calendar endpoint is read-only); running
+// a scan scores the top candidates into a ranked table. Not conversational.
 import { useEffect, useState } from "react";
 import type { EarningsCandidate } from "../api/types";
 import EarningsCalendarTable from "../components/earnings/EarningsCalendarTable";
 import EarningsCandidateCard from "../components/earnings/EarningsCandidateCard";
 import ScanControls, { type ScanConfig } from "../components/earnings/ScanControls";
-import { useAnalyzeTickers, useEarningsScan } from "../hooks/useEarningsScan";
+import UpcomingEarningsTable from "../components/earnings/UpcomingEarningsTable";
+import {
+  useAnalyzeTickers,
+  useEarningsCalendar,
+  useEarningsScan,
+} from "../hooks/useEarningsScan";
 
 export default function EarningsScan() {
   const { startScan, scan, isScanning, status, startError } = useEarningsScan();
@@ -15,6 +21,8 @@ export default function EarningsScan() {
   const [minCapBn, setMinCapBn] = useState(0.5);
   const [daysAhead, setDaysAhead] = useState(7);
   const [detail, setDetail] = useState<EarningsCandidate | null>(null);
+
+  const calendar = useEarningsCalendar(daysAhead);
 
   useEffect(() => {
     document.title = "StockAI — Earnings Scanner";
@@ -35,22 +43,20 @@ export default function EarningsScan() {
   const candidates = (scan?.candidates ?? []).filter(
     (c) => c.market_cap >= minCapBn * 1e9,
   );
+  const calendarEntries = (calendar.data ?? []).filter(
+    (e) => e.market_cap >= minCapBn * 1e9,
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <h1 className="text-xl font-semibold">Earnings Scanner</h1>
 
-      <ScanControls onScan={onScan} onMinCapChange={setMinCapBn} isScanning={isScanning} />
-
-      {status === "idle" && (
-        <div className="py-16 text-center text-zinc-500">
-          <p className="mb-1 text-lg text-zinc-400">No scan yet</p>
-          <p className="text-sm">
-            Scan the calendar to score every company reporting in the coming days —
-            big historical movers, rising estimates, insider buying, accumulation.
-          </p>
-        </div>
-      )}
+      <ScanControls
+        onScan={onScan}
+        onMinCapChange={setMinCapBn}
+        onDaysChange={setDaysAhead}
+        isScanning={isScanning}
+      />
 
       {isScanning && (
         <p className="text-sm text-zinc-400">
@@ -96,6 +102,23 @@ export default function EarningsScan() {
           No candidates above the selected market-cap floor — lower it or widen the window.
         </p>
       )}
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-medium uppercase text-zinc-500">
+          Upcoming earnings (next {daysAhead} days, ≥ $500M)
+        </h2>
+        {calendar.isError && (
+          <p className="py-4 text-center text-sm text-red-400">
+            Couldn't load the calendar — is the backend running?
+          </p>
+        )}
+        <UpcomingEarningsTable
+          entries={calendarEntries}
+          isLoading={calendar.isLoading}
+          queuedTickers={queuedTickers}
+          onQueueTicker={analyzeTicker}
+        />
+      </section>
 
       {detail && (
         <EarningsCandidateCard
