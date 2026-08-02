@@ -10,6 +10,7 @@ from routers import (
     earnings,
     institutional_flow,
     macro,
+    price,
     queue,
     sectors,
     stocks,
@@ -33,6 +34,7 @@ app.add_middleware(
 )
 
 app.include_router(analysis.router)
+app.include_router(price.router)
 app.include_router(stocks.router)
 app.include_router(macro.router)
 app.include_router(watchlist.router)
