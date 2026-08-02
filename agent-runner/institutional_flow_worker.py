@@ -16,6 +16,7 @@ Window notes:
   calendar which deliberately does NOT auto-enqueue).
 """
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 
 from agents import institutional_flow_scanner
@@ -70,19 +71,39 @@ def _scheduled_due(now: datetime, last_scan_at: datetime | None) -> bool:
     return last_scan_at.date() < now.date()
 
 
-def _is_duplicate(db, event: dict) -> bool:
-    key = {
-        "fund": event["fund"],
-        "ticker": event["ticker"],
-        "action": event["action"],
-        "source": event["source"],
-    }
+def _fund_key(fund: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", fund.lower())
+
+
+def _same_fund(key_a: str, key_b: str) -> bool:
+    """LLM extraction words fund names differently run to run ("Torray Fund"
+    vs "Torray Funds", with/without the manager's name) — treat normalized
+    containment either way as the same fund."""
+    return bool(key_a) and bool(key_b) and (key_a in key_b or key_b in key_a)
+
+
+def _is_duplicate(db, event: dict, batch: list[dict]) -> bool:
     if event["source"] == "13F":
-        # same holder row re-emitted while it stays inside the lookback window
-        return db[INSTITUTIONAL_FLOW].find_one({**key, "filed_at": event["filed_at"]}) is not None
-    # dataroma filed_at is scan time, so match on a recency window instead
+        # deterministic source: same holder row re-emitted while it stays
+        # inside the lookback window
+        key = {"source": "13F", "fund": event["fund"], "ticker": event["ticker"],
+               "action": event["action"], "filed_at": event["filed_at"]}
+        return (db[INSTITUTIONAL_FLOW].find_one(key) is not None
+                or any(e["source"] == "13F" and e["fund"] == event["fund"]
+                       and e["ticker"] == event["ticker"] and e["action"] == event["action"]
+                       and e["filed_at"] == event["filed_at"] for e in batch))
+
+    # dataroma: filed_at is scan time and the extraction is non-deterministic,
+    # so match any recent event for the ticker with a fuzzy fund-name match,
+    # regardless of action (buy/new_position wobble between runs too)
     cutoff = event["filed_at"] - timedelta(days=DATAROMA_DEDUP_DAYS)
-    return db[INSTITUTIONAL_FLOW].find_one({**key, "filed_at": {"$gte": cutoff}}) is not None
+    for doc in db[INSTITUTIONAL_FLOW].find(
+            {"source": "dataroma", "ticker": event["ticker"], "filed_at": {"$gte": cutoff}},
+            {"fund": 1, "fund_key": 1}):
+        if _same_fund(event["fund_key"], doc.get("fund_key") or _fund_key(doc.get("fund", ""))):
+            return True
+    return any(e["source"] == "dataroma" and e["ticker"] == event["ticker"]
+               and _same_fund(event["fund_key"], e["fund_key"]) for e in batch)
 
 
 def _register_and_enqueue(db, events: list[dict]) -> None:
@@ -116,9 +137,13 @@ def run_scan(db=None, client=None, now: datetime | None = None) -> int:
     filing_changes = institutional_tool.get_recent_13f_changes(
         now - timedelta(days=FILING_LOOKBACK_DAYS), db=db)
 
-    events = institutional_flow_scanner.run(
+    raw_events = institutional_flow_scanner.run(
         dataroma_moves=dataroma_moves, filing_changes=filing_changes, client=client, now=now)
-    events = [e for e in events if not _is_duplicate(db, e)]
+    events: list[dict] = []
+    for e in raw_events:
+        e["fund_key"] = _fund_key(e["fund"])
+        if not _is_duplicate(db, e, events):
+            events.append(e)
 
     if events:
         for e in events:

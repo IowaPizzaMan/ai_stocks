@@ -16,7 +16,21 @@
 | ✅ | Phase 4: API + Feed UI live. Backend routers (analysis/queue/watchlist/stocks + tickers admin) with mongomock-backed tests; Feed page (infinite scroll, filters, Pull/Run All controls, live queue chip), Stock Detail (Overview + AI Summary tabs, Pull button with queued/analyzing state), Sidebar watchlist. Vertical slice verified end-to-end: POST /queue/GOOGL → container analyzed it → appeared in /analysis/feed |
 | ✅ | Phase 5: full 8-agent roster live (Macro/Insider/Institutional/Sentiment/Recommender added; NVDA full run = 54.7s), chunker/summarizer, backend price endpoint (`GET /stocks/{t}/price`, yfinance + 1h cache), PriceChart w/ MAs + broadening formations + volume/ROC panes, TFC grid, and all 7 Stock Detail tabs |
 | ✅ | Phase 6: Earnings Scanner (non-conversational, per revised specs) — calendar tool + backend mirror, scanner agent + scan worker, /earnings router, EarningsScan page. Live-verified: 3-day scan = 662 screened → top 40 scored in ~2 min, LLM theses coherent (APP 63, PLTR 58); APP analyze→crew handoff worked |
-| ⬜ | Phase 7: Institutional Flow — daily worker, flow scanner agent, Dataroma Playwright pipeline (superinvestor tool is already scrape-ready), flow feed page |
+| ✅ | Phase 7: Institutional Flow — flow scanner agent (deterministic classify/score, LLM headlines for top 15 w/ templated fallback), daily worker (scan after 22:00 UTC or via Scan Now flag; dedup + register/enqueue event tickers), /institutional API, flow feed page (filters, notability slider, Scan Now) |
+
+## Phase 7 design notes (2026-08-02)
+
+- Scan cadence: once per UTC day after `settings.institutional_scan_hour_utc`
+  (22), checked every main-loop tick; `POST /institutional/scan` sets a
+  `manual_scan_requested` flag in `institutional_flow_meta` that the worker
+  claims (consumed even if the scan then fails, so a broken scrape can't
+  retry-loop).
+- 13F side scans a fixed 100-day lookback (yfinance `Date Reported` = quarter
+  end, so a since-last-scan window would never match); dedup makes re-scans
+  idempotent. Dataroma events use scan time as `filed_at` + a 7-day dedup
+  window. See KNOWN_ISSUES for the flow-feed caveats.
+- Flow events DO auto-register + enqueue their tickers (spec'd; volumes are
+  small) — unlike the earnings calendar, which deliberately doesn't.
 
 ## Phase 5 sourcing notes (probed 2026-08-02)
 

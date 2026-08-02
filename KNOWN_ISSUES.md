@@ -51,6 +51,36 @@
   computed locally per the breadth spec, never validated.
 - **Superinvestor/Dataroma requires Playwright**, which is Docker-only; local
   venv runs degrade to `available: False`.
+- **Dataroma flow events carry scan time as `filed_at`.** The moves.php text
+  extraction (`tools/superinvestor.py`) doesn't capture per-move dates, so the
+  feed shows when we saw the move, not when the fund made it. Dedup uses a
+  7-day per-ticker window with a fuzzy (normalized containment) fund-name
+  match, ignoring action — the LLM re-extraction words fund names and actions
+  differently run to run (live: a re-scan slipped 9 of 61 events past exact
+  matching before this) — so a fund genuinely making two moves on the same
+  ticker within a week is collapsed into one event, and sufficiently
+  different name variants can still slip through as dupes.
+- **Dataroma extraction coverage is partial per scan.** `tools/superinvestor.py`
+  truncates page text to 8,000 chars and the LLM extracts an incomplete,
+  varying subset of the moves each run (live: three scans of the same page
+  yielded 61, 9, then 5 distinct events). Repeated scans converge on full
+  coverage thanks to dedup, but a single daily scan misses moves. Fix belongs
+  in the extraction (chunk the page / raise the char cap), not the worker.
+- **Dataroma "buy"/"sell" actions are ambiguous** — moves.php uses Buy/Sell
+  for both opens/adds and trims/exits; the scanner maps buy→add and sell→trim
+  unless the extraction explicitly says new_position/exit, so some position
+  opens will show as "Add".
+- **13F flow events describe the *current* position, not the trade.**
+  yfinance holder rows carry position size (`Shares`/`Value`) plus a QoQ
+  `pctChange`; the traded delta and % of the fund's portfolio aren't available
+  (`pct_of_portfolio` is always null). Also `Date Reported` is the quarter
+  end, so the 13F side scans a fixed 100-day lookback (deduped) rather than
+  the since-last-scan window — new filings appear in one daily batch whenever
+  yfinance's holder tables refresh, dated to the quarter end.
+- **Flow notability is heuristic keyword scoring** — passive/high-conviction
+  fund lists are short hardcoded substrings in
+  `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
+  like an active manager.
 
 ## Upstream / API-tier constraints (facts, not fixable in code)
 

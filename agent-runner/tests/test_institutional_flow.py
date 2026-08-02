@@ -206,6 +206,42 @@ def test_run_scan_dedups_repeat_events(db, scan_fakes):
     assert db[INSTITUTIONAL_FLOW].count_documents({}) == 2
 
 
+def test_dataroma_dedup_survives_llm_rewording(db, scan_fakes, monkeypatch):
+    """Re-extraction of the same page words fund/action differently — the
+    fuzzy fund-name + action-insensitive match must still collapse it."""
+    assert worker.run_scan(db=db, now=NOW) == 2
+    monkeypatch.setattr(
+        worker.superinvestor_tool, "get_recent_superinvestor_moves",
+        lambda since, client=None: [dataroma_move(
+            fund="Bill Ackman - Pershing Square Capital", action="buy")])
+    monkeypatch.setattr(worker.institutional_tool, "get_recent_13f_changes",
+                        lambda since, db=None: [])
+
+    assert worker.run_scan(db=db, now=NOW + timedelta(days=1)) == 0
+    assert db[INSTITUTIONAL_FLOW].count_documents({"source": "dataroma"}) == 1
+
+
+def test_dataroma_dedup_within_one_batch(db, scan_fakes, monkeypatch):
+    monkeypatch.setattr(
+        worker.superinvestor_tool, "get_recent_superinvestor_moves",
+        lambda since, client=None: [dataroma_move(),
+                                    dataroma_move(fund="Pershing Square Capital", action="add")])
+    monkeypatch.setattr(worker.institutional_tool, "get_recent_13f_changes",
+                        lambda since, db=None: [])
+    assert worker.run_scan(db=db, now=NOW) == 1
+
+
+def test_dataroma_different_fund_or_ticker_not_deduped(db, scan_fakes, monkeypatch):
+    assert worker.run_scan(db=db, now=NOW) == 2
+    monkeypatch.setattr(
+        worker.superinvestor_tool, "get_recent_superinvestor_moves",
+        lambda since, client=None: [dataroma_move(fund="Baupost Group"),
+                                    dataroma_move(ticker="MSFT")])
+    monkeypatch.setattr(worker.institutional_tool, "get_recent_13f_changes",
+                        lambda since, db=None: [])
+    assert worker.run_scan(db=db, now=NOW + timedelta(days=1)) == 2
+
+
 def test_run_scan_skips_delisted_and_already_queued(db, scan_fakes):
     db[TICKER_INDEX].insert_one({"ticker": "GOOGL", "status": "removed_from_market"})
     db[WORK_QUEUE].insert_one({"ticker": "OXY", "status": "pending",
