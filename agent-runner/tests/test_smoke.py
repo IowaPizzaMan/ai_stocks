@@ -20,8 +20,8 @@ def test_imports(mod):
     importlib.import_module(mod)
 
 
-def test_skill_interface_is_stubbed():
-    from skills import position_management
+def test_all_skills_expose_run():
+    from skills import accumulation, gap_analysis, market_flow, position_management, the_strat
 
-    with pytest.raises(NotImplementedError):
-        position_management.run("SPY", {})
+    for skill in (accumulation, gap_analysis, market_flow, position_management, the_strat):
+        assert callable(skill.run)
