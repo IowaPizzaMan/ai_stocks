@@ -255,6 +255,30 @@ export interface EarningsHistory {
   num_quarters: number;
 }
 
+export type FlowAction = "new_position" | "add" | "trim" | "exit";
+
+export interface InstitutionalFlowEvent {
+  ticker: string;
+  fund: string;
+  action: FlowAction;
+  shares: number | null;
+  value_usd: number | null;
+  pct_of_portfolio: number | null;
+  pct_change: number | null; // QoQ position change (13F rows), 1.0 = +100%
+  headline: string;
+  notability_score: number;
+  source: "13F" | "dataroma";
+  filed_at: string;
+  scanned_at: string;
+}
+
+export interface InstitutionalFlowResponse {
+  items: InstitutionalFlowEvent[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 export interface WatchlistItem {
   ticker: string;
   name?: string | null;
