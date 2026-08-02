@@ -1,0 +1,93 @@
+# agent-runner/tools/price.py
+
+## Purpose
+All price-related data fetching and technical indicator computation. Three exported functions, all used by TechnicalAnalyst.
+
+## Functions
+
+### `get_price_history(ticker: str, period: str = "1y") -> dict`
+Fetches OHLCV history via yfinance.
+
+```python
+import yfinance as yf
+
+def get_price_history(ticker: str, period: str = "1y") -> dict:
+    tk = yf.Ticker(ticker)
+    # Fetch multiple timeframes — skills need daily + weekly + monthly for TFC
+    daily = tk.history(period=period, interval="1d")
+    weekly = tk.history(period="2y", interval="1wk")
+    monthly = tk.history(period="5y", interval="1mo")
+    return {
+        "daily": daily.reset_index().to_dict(orient="records"),
+        "weekly": weekly.reset_index().to_dict(orient="records"),
+        "monthly": monthly.reset_index().to_dict(orient="records"),
+        "ticker": ticker
+    }
+```
+
+### `get_technical_indicators(ticker: str) -> dict`
+Computes indicators on top of price history using pandas-ta.
+
+**Indicators computed:**
+- RSI (14)
+- MACD (12, 26, 9) — line, signal, histogram
+- Bollinger Bands (20, 2)
+- ATR (14) — for volatility-based stop sizing
+- Volume SMA (20) — for relative volume spikes
+- EMA (8, 21, 50, 200)
+
+```python
+import pandas_ta as ta
+
+def get_technical_indicators(ticker: str) -> dict:
+    tk = yf.Ticker(ticker)
+    df = tk.history(period="1y", interval="1d")
+    df.ta.rsi(length=14, append=True)
+    df.ta.macd(append=True)
+    df.ta.bbands(append=True)
+    df.ta.atr(length=14, append=True)
+    # ... etc
+    return df.tail(30).to_dict(orient="records")  # last 30 days of signals
+```
+
+### `get_accumulation_score(ticker: str, lookback_days: int = 60) -> dict`
+Thin wrapper that fetches price+volume data and calls `skills/accumulation.py`.
+
+```python
+from skills.accumulation import AccumulationSkill
+
+def get_accumulation_score(ticker: str, lookback_days: int = 60) -> dict:
+    tk = yf.Ticker(ticker)
+    df = tk.history(period=f"{lookback_days}d", interval="1d")
+    skill = AccumulationSkill()
+    return skill.run(ticker, df)
+```
+
+### `is_ticker_valid(ticker: str) -> bool`
+Cheap existence check run before a full crew analysis starts (see `crew.md` prefetch phase). Distinguishes "this ticker no longer trades" from a transient API hiccup, so the system can mark it `removed_from_market` in `ticker_index` instead of just logging a generic failure.
+
+```python
+def is_ticker_valid(ticker: str) -> bool:
+    tk = yf.Ticker(ticker)
+    try:
+        fast = tk.fast_info
+        has_price = fast.get("lastPrice") is not None
+    except Exception:
+        has_price = False
+
+    if has_price:
+        return True
+
+    # fast_info can be flaky for thinly-traded names — fall back to a short history pull
+    # before concluding the ticker is actually gone
+    hist = tk.history(period="5d", interval="1d")
+    return not hist.empty
+```
+
+Treated as a strong (not absolute) signal — yfinance occasionally has gaps for reasons other than delisting (API hiccups, brand-new IPOs). `crew.py` only raises `TickerDelistedError` when this check fails **and** the financials fetch also comes back empty, to avoid false positives from a single flaky source.
+
+## Dependencies
+- `yfinance`
+- `pandas`
+- `pandas-ta`
+- `skills/accumulation.py`

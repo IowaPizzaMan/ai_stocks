@@ -1,0 +1,274 @@
+---
+title: StockAI — System Architecture
+---
+
+flowchart TB
+
+    %% ─── USER ───────────────────────────────────────────────────────────────
+    User(["👤 User (Neal)"])
+
+    %% ─── FRONTEND ───────────────────────────────────────────────────────────
+    subgraph FE["Frontend — React + Vite (Docker: react)"]
+        direction TB
+        FE_Nav["Navbar\n(search, queue status)"]
+        FE_Sidebar["Sidebar\n(watchlist)"]
+
+        subgraph FE_Pages["Pages"]
+            P_Feed["Feed.tsx\n/"]
+            P_Stock["StockDetail.tsx\n/stock/:ticker"]
+            P_Sectors["Sectors.tsx\n/sectors"]
+            P_Watch["Watchlist.tsx\n/watchlist"]
+            P_Earn["EarningsScan.tsx\n/earnings"]
+            P_InstFlow["InstitutionalFlow.tsx\n/institutional-flow"]
+        end
+
+        subgraph FE_Stock_Tabs["Stock Detail Tabs"]
+            T_AI["AI Summary"]
+            T_Tech["Technicals"]
+            T_Fund["Fundamentals"]
+            T_Ins["Insider"]
+            T_Inst["Institutional"]
+            T_Sent["Sentiment"]
+        end
+
+        subgraph FE_Earn_UI["Earnings Scanner UI"]
+            E_Controls["ScanControls"]
+            E_Table["EarningsCalendarTable"]
+            E_Card["EarningsCandidateCard"]
+            E_Chat["Chat (streaming)"]
+        end
+
+        subgraph FE_InstFlow_UI["Institutional Flow UI"]
+            IF_Filter["InstitutionalFlowFilterBar\n(+ Scan Now)"]
+            IF_Card["InstitutionalFlowCard"]
+            IF_Badge["ActionBadge"]
+        end
+
+        FE_Hooks["React Query Hooks\nuseAnalysis · useQueue\nuseWatchlist · useEarningsScan\nuseInstitutionalFlow"]
+        FE_API["api.ts\n(Axios → FastAPI)"]
+    end
+
+    %% ─── FASTAPI ─────────────────────────────────────────────────────────────
+    subgraph API["Backend — FastAPI (Docker: fastapi :8000)"]
+        direction TB
+        R_Analysis["/analysis/feed\n/analysis/{ticker}\n/analysis/sector/{sector}"]
+        R_Stocks["/stocks/search\n/stocks/{ticker}/financials\n/stocks/{ticker}/signals"]
+        R_Queue["/queue · /queue/all\n/queue/{ticker}"]
+        R_Watch["/watchlist"]
+        R_Macro["/macro"]
+        R_Sectors["/sectors"]
+        R_Earnings["/earnings/calendar\n/earnings/scan\n/earnings/scan/chat ← streaming\n/earnings/analyze"]
+        R_InstFlow["/institutional/flow\n/institutional/flow/{ticker}\n/institutional/scan"]
+        R_Tickers["/stocks/{ticker}\n/tickers ← registry debug view"]
+    end
+
+    %% ─── MONGODB ─────────────────────────────────────────────────────────────
+    subgraph DB["MongoDB (Docker: mongodb :27017)"]
+        direction TB
+        C_Analyses[("analyses\n(AI results)")]
+        C_Queue[("work_queue\n(jobs)")]
+        C_Watch[("watchlist")]
+        C_Fin[("financials_cache\n(90-day TTL)")]
+        C_Trans[("transcripts_cache\n(permanent)")]
+        C_Macro[("macro_cache\n(24hr TTL)")]
+        C_Inst[("institutional_cache")]
+        C_Earn[("earnings_scans\nearnings_cache")]
+        C_InstFlow[("institutional_flow\ninstitutional_flow_meta")]
+        C_Breadth[("breadth_cache\nbreadth_universe\n(computed NYMO/NAMO)")]
+        C_TickerIdx[("ticker_index\n(system-wide registry\n+ search index)")]
+    end
+
+    %% ─── AGENT RUNNER ────────────────────────────────────────────────────────
+    subgraph AR["Agent Runner (Docker: agent-runner)"]
+        direction TB
+        AR_Main["main.py\n(poll loop, 30s)"]
+        AR_Worker["queue_worker.py\n(claim → run → mark done)"]
+
+        subgraph AR_Crew["crew.py — CrewAI Pipeline"]
+            direction LR
+            Prefetch["Data Prefetch\n(parallel if earnings_scanner)"]
+
+            subgraph AR_Agents["Agents (sequential)"]
+                A_Tech["TechnicalAnalyst"]
+                A_Fund["FundamentalAnalyst"]
+                A_Macro["MacroAnalyst"]
+                A_Ins["InsiderAnalyst"]
+                A_Inst["InstitutionalAnalyst"]
+                A_Sent["SentimentAnalyst"]
+                A_Rec["RecommenderAgent"]
+                A_Port["PortfolioStrategist\n(synthesis)"]
+            end
+
+            subgraph AR_Skills["Skills"]
+                SK_Strat["the_strat.py"]
+                SK_Accum["accumulation.py"]
+                SK_Gap["gap_analysis.py"]
+                SK_Flow["market_flow.py"]
+                SK_Pos["position_management.py"]
+            end
+        end
+
+        subgraph AR_Earnings_Crew["Earnings Scanner Pipeline"]
+            ES_Agent["EarningsScannerAgent\n(parallel scoring)"]
+            EC_Agent["EarningsConversationAgent\n(streaming chat)"]
+        end
+
+        subgraph AR_InstFlow["Institutional Flow Worker\n(own daily timer, not per-ticker)"]
+            IF_Worker["institutional_flow_worker.py"]
+            IF_Agent["InstitutionalFlowScannerAgent\n(market-wide)"]
+        end
+
+        subgraph AR_Tools["Tools"]
+            TL_Price["price.py\n(yfinance)"]
+            TL_Fin["financials.py\n(FMP + cache)"]
+            TL_Macro["macro.py\n(FRED + cache)"]
+            TL_Ins["insider.py\n(FMP + Finnhub)"]
+            TL_Inst["institutional.py\n(FMP)"]
+            TL_Super["superinvestor.py\n(Playwright → Dataroma)"]
+            TL_Sent["sentiment.py\n(Finnhub transcripts)"]
+            TL_Breadth["breadth.py\n(McClellan computed locally\nfrom batched yfinance closes)"]
+            TL_EarnCal["earnings_calendar.py\n(FMP + Finnhub)"]
+            TL_DB["db.py\n(MongoDB helpers)"]
+        end
+
+        subgraph AR_Chunker["Chunker"]
+            CH_Chunk["chunker.py"]
+            CH_Sum["summarizer.py"]
+        end
+    end
+
+    %% ─── OLLAMA ─────────────────────────────────────────────────────────────
+    subgraph LLM["Ollama (Docker: ollama :11434)"]
+        O_Model["mistral:7b\n(or llama3.1:8b)"]
+    end
+
+    %% ─── DATA SOURCES ────────────────────────────────────────────────────────
+    subgraph DS["External Data Sources"]
+        direction TB
+        DS_YF["yfinance\n(price, breadth, estimates)"]
+        DS_FMP["FMP API\n(financials, 13F, insider)\n250 calls/day"]
+        DS_FH["Finnhub\n(transcripts, MSPR, sentiment)\n60 calls/min"]
+        DS_FRED["FRED\n(macro: CPI, rates, GDP)"]
+        DS_EDGAR["SEC EDGAR\n(Form 4, 13F fallback)"]
+        DS_DATA["Dataroma\n(superinvestors)\n(Playwright scrape)"]
+    end
+
+    %% ─── CONNECTIONS ─────────────────────────────────────────────────────────
+
+    %% User ↔ Frontend
+    User <--> FE_Nav
+    User <--> FE_Pages
+    FE_Pages --> FE_Hooks
+    FE_Hooks --> FE_API
+
+    %% Frontend → API
+    FE_API --> R_Analysis
+    FE_API --> R_Stocks
+    FE_API --> R_Queue
+    FE_API --> R_Watch
+    FE_API --> R_Macro
+    FE_API --> R_Sectors
+    FE_API --> R_Earnings
+    FE_API --> R_InstFlow
+    FE_API --> R_Tickers
+    E_Chat -- "streaming POST" --> R_Earnings
+
+    %% API ↔ MongoDB
+    R_Analysis <--> C_Analyses
+    R_Stocks <--> C_Fin
+    R_Queue <--> C_Queue
+    R_Watch <--> C_Watch
+    R_Macro <--> C_Macro
+    R_Sectors <--> C_Analyses
+    R_Earnings <--> C_Earn
+    R_Earnings --> C_Queue
+    R_Earnings -- "register + enqueue every\ncalendar ticker" --> C_TickerIdx
+    R_InstFlow <--> C_InstFlow
+    R_Tickers <--> C_TickerIdx
+    R_Queue <--> C_TickerIdx
+    R_Watch --> C_TickerIdx
+    R_Stocks --> C_TickerIdx
+
+    %% Agent Runner internal flow
+    AR_Main --> AR_Worker
+    AR_Main --> IF_Worker
+    AR_Worker --> AR_Crew
+    AR_Worker --> AR_Earnings_Crew
+    AR_Worker <--> C_Queue
+    IF_Worker --> IF_Agent
+    IF_Worker <--> C_InstFlow
+    IF_Worker -- "register + enqueue\ndiscovered tickers" --> C_TickerIdx
+    IF_Worker --> C_Queue
+    IF_Worker -- "manual trigger" --> R_InstFlow
+    AR_Worker -- "mark removed_from_market\non TickerDelistedError" --> C_TickerIdx
+
+    Prefetch --> AR_Agents
+    AR_Agents --> AR_Skills
+    AR_Agents --> AR_Chunker
+    AR_Chunker --> LLM
+    AR_Agents --> LLM
+    A_Port --> C_Analyses
+
+    ES_Agent --> C_Earn
+    EC_Agent <--> LLM
+    EC_Agent --> C_Queue
+
+    %% Tools ↔ Data Sources
+    TL_Price --> DS_YF
+    TL_Breadth --> DS_YF
+    TL_Breadth <--> C_Breadth
+    TL_Fin --> DS_FMP
+    TL_Ins --> DS_FMP
+    TL_Ins --> DS_FH
+    TL_Inst --> DS_FMP
+    TL_Inst --> DS_EDGAR
+    TL_Sent --> DS_FH
+    TL_Macro --> DS_FRED
+    TL_Super --> DS_DATA
+    TL_EarnCal --> DS_FMP
+    TL_EarnCal --> DS_FH
+    TL_DB <--> DB
+
+    %% Tools used by Prefetch
+    Prefetch --> TL_Price
+    Prefetch --> TL_Fin
+    Prefetch --> TL_Ins
+    Prefetch --> TL_Inst
+    Prefetch --> TL_Sent
+    Prefetch --> TL_Breadth
+    Prefetch --> TL_Macro
+    Prefetch --> TL_Super
+    ES_Agent --> TL_EarnCal
+    ES_Agent --> TL_Ins
+
+    %% Institutional Flow Worker — market-wide, reuses the same tools as InstitutionalAnalyst
+    IF_Agent --> TL_Inst
+    IF_Agent --> TL_Super
+
+    %% API calls Ollama for earnings chat streaming
+    R_Earnings --> LLM
+
+    %% ─── STYLING ─────────────────────────────────────────────────────────────
+    classDef frontend fill:#1e1b4b,stroke:#6366f1,color:#e0e7ff
+    classDef api     fill:#0c2340,stroke:#3b82f6,color:#bfdbfe
+    classDef db      fill:#0f2027,stroke:#10b981,color:#a7f3d0
+    classDef agent   fill:#1a0a2e,stroke:#8b5cf6,color:#ddd6fe
+    classDef llm     fill:#1a1a00,stroke:#f59e0b,color:#fef3c7
+    classDef data    fill:#0f1a0f,stroke:#22c55e,color:#bbf7d0
+    classDef user    fill:#1e293b,stroke:#94a3b8,color:#e2e8f0
+
+    class FE,FE_Nav,FE_Sidebar,FE_Pages,FE_Stock_Tabs,FE_Earn_UI,FE_InstFlow_UI,FE_Hooks,FE_API frontend
+    class P_Feed,P_Stock,P_Sectors,P_Watch,P_Earn,P_InstFlow frontend
+    class T_AI,T_Tech,T_Fund,T_Ins,T_Inst,T_Sent frontend
+    class E_Controls,E_Table,E_Card,E_Chat frontend
+    class IF_Filter,IF_Card,IF_Badge frontend
+    class API,R_Analysis,R_Stocks,R_Queue,R_Watch,R_Macro,R_Sectors,R_Earnings,R_InstFlow,R_Tickers api
+    class DB,C_Analyses,C_Queue,C_Watch,C_Fin,C_Trans,C_Macro,C_Inst,C_Earn,C_InstFlow,C_TickerIdx,C_Breadth db
+    class AR,AR_Main,AR_Worker,AR_Crew,AR_Agents,AR_Skills,AR_Tools,AR_Chunker,AR_Earnings_Crew,AR_InstFlow agent
+    class A_Tech,A_Fund,A_Macro,A_Ins,A_Inst,A_Sent,A_Rec,A_Port,ES_Agent,EC_Agent,Prefetch,IF_Worker,IF_Agent agent
+    class SK_Strat,SK_Accum,SK_Gap,SK_Flow,SK_Pos agent
+    class TL_Price,TL_Fin,TL_Macro,TL_Ins,TL_Inst,TL_Super,TL_Sent,TL_Breadth,TL_EarnCal,TL_DB agent
+    class CH_Chunk,CH_Sum agent
+    class LLM,O_Model llm
+    class DS,DS_YF,DS_FMP,DS_FH,DS_FRED,DS_EDGAR,DS_DATA data
+    class User user
