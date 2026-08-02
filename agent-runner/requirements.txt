@@ -10,9 +10,10 @@ requests>=2.32
 lxml>=5.0
 playwright>=1.48
 
-# Analysis
+# Analysis (indicators computed directly with pandas — pandas-ta 0.3.x was
+# pulled from PyPI and 0.4.x is an incompatible rewrite; see tools/price.md)
 pandas>=2.2
-pandas-ta>=0.3.14b0
+numpy>=1.26
 
 # Storage / config
 pymongo>=4.8,<5.0

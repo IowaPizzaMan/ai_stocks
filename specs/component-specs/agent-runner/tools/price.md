@@ -26,7 +26,13 @@ def get_price_history(ticker: str, period: str = "1y") -> dict:
 ```
 
 ### `get_technical_indicators(ticker: str) -> dict`
-Computes indicators on top of price history using pandas-ta.
+Computes indicators on top of price history **directly with pandas** (updated
+2026-08-02: pandas-ta 0.3.14b0 no longer exists on PyPI, and the 0.4.x betas are
+a py3.12-only rewrite with a different API — the six indicators below are
+standard formulas, implemented in `compute_indicators(df)` as a pure function so
+they unit-test without network access. Column names: `RSI_14`, `MACD`,
+`MACD_SIGNAL`, `MACD_HIST`, `BB_MID/UPPER/LOWER`, `ATR_14`, `VOLUME_SMA_20`,
+`EMA_8/21/50/200`).
 
 **Indicators computed:**
 - RSI (14)
