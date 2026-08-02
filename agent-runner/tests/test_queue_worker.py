@@ -27,8 +27,9 @@ class FakeCrew:
         self.error = error
         self.ran = []
 
-    def run(self, ticker):
+    def run(self, ticker, parallel_prefetch=False):
         self.ran.append(ticker)
+        self.parallel_flags = getattr(self, "parallel_flags", []) + [parallel_prefetch]
         if self.error:
             raise self.error
         return dict(self.result)
@@ -44,6 +45,17 @@ def enqueue(db, ticker, created_at=None, status="pending"):
 
 def test_empty_queue_returns_false(db):
     assert queue_worker.claim_and_run_next(db=db, crew=FakeCrew()) is False
+
+
+def test_parallel_prefetch_flag_passes_through_to_crew(db):
+    db[WORK_QUEUE].insert_one({
+        "ticker": "NVDA", "status": "pending", "source": "earnings_scanner",
+        "parallel_prefetch": True,
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
+    })
+    crew = FakeCrew()
+    queue_worker.claim_and_run_next(db=db, crew=crew)
+    assert crew.parallel_flags == [True]
 
 
 def test_successful_job_writes_analysis_and_marks_done(db):

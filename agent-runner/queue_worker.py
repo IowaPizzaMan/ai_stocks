@@ -65,7 +65,9 @@ def claim_and_run_next(db=None, crew=None) -> bool:
     crew = crew if crew is not None else Crew(db=db)
 
     try:
-        result = crew.run(ticker)
+        # earnings-scanner jobs opt in to parallel prefetch (user picked them
+        # from a ranked list and is waiting on the result)
+        result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")))
         db[ANALYSES].insert_one(result)
         db[WORK_QUEUE].update_one(
             {"_id": job["_id"]},
