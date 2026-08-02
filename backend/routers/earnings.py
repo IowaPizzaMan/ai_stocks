@@ -1,29 +1,114 @@
-"""Spec: specs/component-specs/backend/routers/earnings.md"""
-from fastapi import APIRouter, HTTPException
+"""Spec: specs/component-specs/backend/routers/earnings.md
+
+Not conversational — the scan produces a ranked table and selecting tickers
+posts straight to the work queue. The scoring scan itself runs in the
+agent-runner (it needs Ollama), so POST /scan just inserts a pending doc in
+`earnings_scans` that earnings_scan_worker.py claims; the frontend polls
+GET /scan/{scan_id} until it flips to complete/failed.
+"""
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+
+import earnings_data
+from db import EARNINGS_SCANS, TICKER_INDEX, WORK_QUEUE
+from deps import db_dependency
+from registry import register_ticker
 
 router = APIRouter(prefix="/earnings", tags=["earnings"])
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class ScanRequest(BaseModel):
+    days_ahead: int = Field(default=7, ge=1, le=14)
+
+
+class AnalyzeRequest(BaseModel):
+    tickers: list[str]
+
+
+def _register_and_enqueue_calendar(calendar: list[dict], db) -> None:
+    """Calendar pull is one of the two automatic entry paths into the system:
+    every screened ticker gets registered and queued for the crew. Cheap and
+    idempotent — register_ticker upserts and pending/running jobs aren't
+    duplicated on repeat calls."""
+    for entry in calendar:
+        ticker = entry["ticker"].upper()
+        record = db[TICKER_INDEX].find_one({"ticker": ticker})
+        if record and record.get("status") == "removed_from_market":
+            continue  # a stale calendar row shouldn't resurrect a delisted ticker
+
+        register_ticker(db, ticker, source="earnings_calendar",
+                        name=entry.get("company"), sector=entry.get("sector"))
+
+        already = db[WORK_QUEUE].find_one(
+            {"ticker": ticker, "status": {"$in": ["pending", "running"]}})
+        if not already:
+            db[WORK_QUEUE].insert_one({
+                "ticker": ticker, "status": "pending", "source": "earnings_calendar",
+                "created_at": _utcnow(), "updated_at": _utcnow(),
+            })
+
+
 @router.get("/calendar")
-def get_calendar(days: int = 7):
-    raise HTTPException(501, "Not implemented — Phase 6")
+def get_calendar(days: int = 7, db=Depends(db_dependency)):
+    """Pre-screened upcoming earnings (raw, unscored). Cached 4h."""
+    data = earnings_data.get_earnings_calendar(days_ahead=days, db=db)
+    _register_and_enqueue_calendar(data, db)
+    return data
 
 
 @router.post("/scan")
-def start_scan():
-    raise HTTPException(501, "Not implemented — Phase 6")
+def start_scan(body: ScanRequest | None = None, db=Depends(db_dependency)):
+    """Kick off a scoring scan (async, ~1-3 min). Poll GET /scan/{scan_id}."""
+    body = body or ScanRequest()
+    scan_id = str(uuid.uuid4())
+    db[EARNINGS_SCANS].insert_one({
+        "scan_id": scan_id,
+        "status": "pending",
+        "days_ahead": body.days_ahead,
+        "requested_at": _utcnow(),
+    })
+    return {"scan_id": scan_id, "status": "pending"}
 
 
 @router.get("/scan/{scan_id}")
-def get_scan(scan_id: str):
-    raise HTTPException(501, "Not implemented — Phase 6")
+def get_scan(scan_id: str, db=Depends(db_dependency)):
+    doc = db[EARNINGS_SCANS].find_one({"scan_id": scan_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return doc
 
 
 @router.post("/analyze")
-def analyze_selected():
-    raise HTTPException(501, "Not implemented — Phase 6")
+def analyze_selected(body: AnalyzeRequest, db=Depends(db_dependency)):
+    """User picked tickers off the ranked list — enqueue full crew runs now."""
+    enqueued = []
+    for ticker in body.tickers:
+        ticker = ticker.upper()
+        register_ticker(db, ticker, source="earnings_scanner")
+        existing = db[WORK_QUEUE].find_one(
+            {"ticker": ticker, "status": {"$in": ["pending", "running"]}})
+        if existing:
+            continue
+        db[WORK_QUEUE].insert_one({
+            "ticker": ticker,
+            "status": "pending",
+            "source": "earnings_scanner",
+            "parallel_prefetch": True,  # crew.py fans out its data fetch for these
+            "created_at": _utcnow(),
+            "updated_at": _utcnow(),
+        })
+        enqueued.append(ticker)
+    return {"enqueued": enqueued}
 
 
 @router.get("/history/{ticker}")
-def get_history(ticker: str):
-    raise HTTPException(501, "Not implemented — Phase 6")
+def get_history(ticker: str, db=Depends(db_dependency)):
+    """Post-earnings move log — how the stock actually reacted to past prints."""
+    return earnings_data.get_earnings_history(ticker.upper(), db=db)

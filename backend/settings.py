@@ -9,5 +9,7 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:14b"
 
+    finnhub_api_key: str = ""  # earnings calendar fetch (routers/earnings.py)
+
 
 settings = Settings()
