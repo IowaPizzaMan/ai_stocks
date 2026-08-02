@@ -10,9 +10,9 @@
 | ✅ | Phase 0: stack up on this machine (`docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d`), health/docs/frontend verified, `.env` populated with real keys |
 | ✅ | Phase 1.1–1.6: full data layer — `tools/db.py`, `price.py`, `financials.py`, `macro.py`, `breadth.py`, plus real `seed_watchlist.py` / `backfill_financials.py`. 46 tests green (`agent-runner\.venv\Scripts\python -m pytest agent-runner\tests`) |
 | ✅ | Live-verified: watchlist seeded (AAPL/MSFT/NVDA), financials 7/7 endpoints cached, 12 FRED series, NYMO/NAMO computed (−12.3/−11.0 neutral) |
-| ⬜ | `ollama pull qwen2.5:14b` (was in progress when this was written — check `docker compose exec ollama ollama list`) |
-| ⬜ | Rebuild agent-runner image so the container picks up the new tools + trimmed requirements: `docker compose up -d --build agent-runner` |
-| ⬜ | Phase 2: skills (accumulation, the_strat, gap_analysis, market_flow, position_management) — pure functions, specs in `specs/component-specs/agent-runner/skills/` |
+| ✅ | `qwen2.5:14b` pulled and inference-verified on the GPU; agent-runner image rebuilt with the Phase 1 code |
+| ✅ | Phase 2: all five skills implemented + tested (accumulation, gap_analysis, the_strat, market_flow, position_management) — 113 tests green. Rule specs live at `specs/*_rules.md`, `specs/the-strat-spec.md`, `specs/position_management_agent_spec.md` |
+| ⬜ | Phase 3: Crew MVP — `work_queue` + `queue_worker` + 3-agent crew (Technical, Fundamental, PortfolioStrategist) writing to `analyses`. The riskiest bet: CrewAI ↔ Ollama tool-calling on a 14B model. Local venv does NOT have crewai/ollama-py — test inside the container or install them locally |
 
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
 
