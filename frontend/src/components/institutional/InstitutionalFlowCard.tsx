@@ -1,6 +1,9 @@
 // Spec: specs/component-specs/frontend/components/institutional/InstitutionalFlowCard.md
+// Deviation: adds a per-card Queue button (same pattern as the earnings
+// calendar) — flow scans no longer auto-enqueue crew runs.
 import { useNavigate } from "react-router-dom";
 import type { InstitutionalFlowEvent } from "../../api/types";
+import { useEnqueueTicker } from "../../hooks/useQueue";
 import { relativeTime } from "../../lib/time";
 import ActionBadge from "./ActionBadge";
 
@@ -30,6 +33,7 @@ function NotabilityMeter({ score }: { score: number }) {
 
 export default function InstitutionalFlowCard({ event }: { event: InstitutionalFlowEvent }) {
   const navigate = useNavigate();
+  const enqueue = useEnqueueTicker();
 
   return (
     <article className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-800/50">
@@ -45,7 +49,16 @@ export default function InstitutionalFlowCard({ event }: { event: InstitutionalF
             {event.ticker}
           </button>
         </div>
-        <span className="shrink-0 text-xs text-zinc-500">{relativeTime(event.filed_at)}</span>
+        <span className="flex shrink-0 items-center gap-3">
+          <span className="text-xs text-zinc-500">{relativeTime(event.filed_at)}</span>
+          <button
+            onClick={() => enqueue.mutate(event.ticker)}
+            disabled={enqueue.isPending || enqueue.isSuccess}
+            className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 transition-colors hover:border-sky-500 hover:text-sky-300 disabled:opacity-50"
+          >
+            {enqueue.isSuccess ? "Queued ✓" : "Queue ▶"}
+          </button>
+        </span>
       </div>
 
       <p className="mb-3 text-sm leading-relaxed text-zinc-300">{event.headline}</p>

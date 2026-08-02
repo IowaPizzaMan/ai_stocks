@@ -183,20 +183,23 @@ def scan_fakes(monkeypatch):
     monkeypatch.setattr(scanner, "generate_json", lambda *a, **kw: {"headlines": []})
 
 
-def test_run_scan_writes_events_and_enqueues(db, scan_fakes):
+def test_run_scan_writes_events_feed_only(db, scan_fakes):
     written = worker.run_scan(db=db, now=NOW)
 
     assert written == 2
     docs = list(db[INSTITUTIONAL_FLOW].find({}))
     assert {d["ticker"] for d in docs} == {"GOOGL", "OXY"}
+
     def aware(dt):  # mongomock round-trips datetimes as naive UTC
         return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
     assert all(aware(d["scanned_at"]) == NOW for d in docs)
-
-    assert db[TICKER_INDEX].find_one({"ticker": "GOOGL"})["sources"] == ["institutional_flow"]
-    assert db[WORK_QUEUE].count_documents({"status": "pending"}) == 2
     assert aware(worker._get_meta(db, "last_scan_at")) == NOW
+
+    # deviation from spec (same as the earnings calendar): events are
+    # feed-only — no auto-registration, no auto-enqueued crew runs
+    assert db[TICKER_INDEX].count_documents({}) == 0
+    assert db[WORK_QUEUE].count_documents({}) == 0
 
 
 def test_run_scan_dedups_repeat_events(db, scan_fakes):
@@ -242,15 +245,12 @@ def test_dataroma_different_fund_or_ticker_not_deduped(db, scan_fakes, monkeypat
     assert worker.run_scan(db=db, now=NOW + timedelta(days=1)) == 2
 
 
-def test_run_scan_skips_delisted_and_already_queued(db, scan_fakes):
+def test_run_scan_leaves_existing_registry_and_queue_alone(db, scan_fakes):
     db[TICKER_INDEX].insert_one({"ticker": "GOOGL", "status": "removed_from_market"})
     db[WORK_QUEUE].insert_one({"ticker": "OXY", "status": "pending",
                                "created_at": NOW, "updated_at": NOW})
 
     worker.run_scan(db=db, now=NOW)
 
-    # delisted ticker: not resurrected, not enqueued
     assert db[TICKER_INDEX].find_one({"ticker": "GOOGL"})["status"] == "removed_from_market"
-    assert db[WORK_QUEUE].count_documents({"ticker": "GOOGL"}) == 0
-    # already-queued ticker: no duplicate job
-    assert db[WORK_QUEUE].count_documents({"ticker": "OXY"}) == 1
+    assert db[WORK_QUEUE].count_documents({}) == 1  # only the pre-existing job

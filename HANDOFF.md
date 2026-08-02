@@ -29,8 +29,11 @@
   end, so a since-last-scan window would never match); dedup makes re-scans
   idempotent. Dataroma events use scan time as `filed_at` + a 7-day dedup
   window. See KNOWN_ISSUES for the flow-feed caveats.
-- Flow events DO auto-register + enqueue their tickers (spec'd; volumes are
-  small) — unlike the earnings calendar, which deliberately doesn't.
+- Flow events are **feed-only** (same deviation as the earnings calendar, per
+  user request 2026-08-02): a scan does NOT register or enqueue its tickers —
+  the first live scan queued 26 crew runs on startup, which was exactly the
+  calendar flood again. Each flow card has a Queue button instead
+  (POST /queue/{ticker}).
 
 ## Phase 5 sourcing notes (probed 2026-08-02)
 

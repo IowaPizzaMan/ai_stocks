@@ -108,6 +108,12 @@
 
 ## Fixed
 
+- ~~Institutional flow scans registered AND enqueued every event ticker~~
+  (spec'd auto-ingest — the first live scan queued 26 crew runs at agent-runner
+  startup) — removed 2026-08-02 at the user's request, same deviation as the
+  earnings calendar below: scans are feed-only and each flow card has a Queue
+  button (`POST /queue/{ticker}`). Cleanup deleted the 20 still-pending jobs
+  and the 18 auto-registered, never-analyzed tickers from `ticker_index`.
 - ~~`GET /earnings/calendar` registered AND enqueued every screened ticker~~
   (spec'd auto-ingest — 600–900 crew jobs from one call during earnings
   season) — removed 2026-08-02 at the user's request: the endpoint is now

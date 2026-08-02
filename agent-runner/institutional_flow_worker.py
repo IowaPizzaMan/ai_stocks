@@ -11,9 +11,10 @@ Window notes:
   yfinance's "Date Reported" is the quarter end, so a 24h window would never
   match anything. Dedup below makes re-scanning the same rows idempotent —
   each quarterly refresh surfaces a row once.
-- Every distinct ticker in a scan's events is registered and enqueued for a
-  full crew run (spec'd behavior; volumes are small, unlike the earnings
-  calendar which deliberately does NOT auto-enqueue).
+- Deviation from the spec (same one as the earnings calendar, per user
+  request): a scan does NOT auto-register or enqueue its tickers. Events are
+  feed-only; tickers enter the system one at a time via the flow card's Queue
+  button (POST /queue/{ticker}).
 """
 import logging
 import re
@@ -23,14 +24,7 @@ from agents import institutional_flow_scanner
 from settings import settings
 from tools import institutional as institutional_tool
 from tools import superinvestor as superinvestor_tool
-from tools.db import (
-    INSTITUTIONAL_FLOW,
-    INSTITUTIONAL_FLOW_META,
-    TICKER_INDEX,
-    WORK_QUEUE,
-    get_db,
-    register_ticker,
-)
+from tools.db import INSTITUTIONAL_FLOW, INSTITUTIONAL_FLOW_META, get_db
 
 logger = logging.getLogger(__name__)
 
@@ -106,27 +100,9 @@ def _is_duplicate(db, event: dict, batch: list[dict]) -> bool:
                and _same_fund(event["fund_key"], e["fund_key"]) for e in batch)
 
 
-def _register_and_enqueue(db, events: list[dict]) -> None:
-    now = _utcnow()
-    for ticker in sorted({e["ticker"] for e in events}):
-        record = db[TICKER_INDEX].find_one({"ticker": ticker})
-        if record and record.get("status") == "removed_from_market":
-            continue  # a fund's stale 13F reference shouldn't resurrect a delisted ticker
-
-        register_ticker(ticker, source="institutional_flow", db=db)
-
-        already_queued = db[WORK_QUEUE].find_one(
-            {"ticker": ticker, "status": {"$in": ["pending", "running"]}})
-        if not already_queued:
-            db[WORK_QUEUE].insert_one({
-                "ticker": ticker, "status": "pending", "source": "institutional_flow",
-                "created_at": now, "updated_at": now,
-            })
-
-
 def run_scan(db=None, client=None, now: datetime | None = None) -> int:
-    """Full sweep: fetch both sources → build events → dedup → insert →
-    register/enqueue tickers. Returns the number of new events written."""
+    """Full sweep: fetch both sources → build events → dedup → insert.
+    Returns the number of new events written."""
     db = db if db is not None else get_db()
     now = now or _utcnow()
     since = _get_meta(db, "last_scan_at") or now - timedelta(hours=24)
@@ -149,7 +125,6 @@ def run_scan(db=None, client=None, now: datetime | None = None) -> int:
         for e in events:
             e["scanned_at"] = now
         db[INSTITUTIONAL_FLOW].insert_many(events)
-        _register_and_enqueue(db, events)
 
     _set_meta(db, "last_scan_at", now)
     logger.info("institutional flow scan wrote %s new events", len(events))

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
@@ -30,9 +31,11 @@ const event = (over: Partial<InstitutionalFlowEvent> = {}): InstitutionalFlowEve
 
 const renderCard = (e: InstitutionalFlowEvent) =>
   render(
-    <MemoryRouter>
-      <InstitutionalFlowCard event={e} />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <InstitutionalFlowCard event={e} />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 test("renders headline, badge, stats and notability", () => {
@@ -72,4 +75,9 @@ test("clicking the ticker navigates to stock detail", () => {
   renderCard(event());
   fireEvent.click(screen.getByText("GOOGL"));
   expect(mockNavigate).toHaveBeenCalledWith("/stock/GOOGL");
+});
+
+test("has a Queue button (flow scans no longer auto-enqueue)", () => {
+  renderCard(event());
+  expect(screen.getByText("Queue ▶")).toBeDefined();
 });
