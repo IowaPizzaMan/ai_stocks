@@ -58,3 +58,19 @@ def generate_json(prompt: str, schema: dict, system: str = "",
                            attempt + 1, retries + 1, content[:200])
 
     raise LLMError(f"model produced invalid JSON after {retries + 1} attempts: {last_error}")
+
+
+def generate_text(prompt: str, system: str = "", client=None,
+                  options: dict | None = None) -> str:
+    """Plain-text chat call (no schema) — used by the chunk summarizer."""
+    client = client if client is not None else get_client()
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    response = client.chat(
+        model=settings.ollama_model,
+        messages=messages,
+        options={**DEFAULT_OPTIONS, **(options or {})},
+    )
+    return response["message"]["content"]
