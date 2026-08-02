@@ -13,7 +13,9 @@ from tools.db import FINANCIALS_CACHE, get_db, track_fmp_call
 
 logger = logging.getLogger(__name__)
 
-FMP_BASE = "https://financialmodelingprep.com/api/"
+# The legacy /api/v3 endpoints 403 for accounts created after FMP's 2025
+# migration — this key only works against the "stable" API.
+FMP_BASE = "https://financialmodelingprep.com/stable/"
 CACHE_DAYS = 90
 
 # FMP free tier: 250 calls/day. Warn near the ceiling; drop nice-to-have
@@ -23,13 +25,14 @@ SKIP_NON_ESSENTIAL_AT = 240
 
 # key -> (path template, essential)
 ENDPOINTS = {
-    "income_annual": ("v3/income-statement/{t}?period=annual&limit=4", True),
-    "income_quarterly": ("v3/income-statement/{t}?period=quarter&limit=8", True),
-    "balance_annual": ("v3/balance-sheet-statement/{t}?period=annual&limit=4", True),
-    "cashflow_annual": ("v3/cash-flow-statement/{t}?period=annual&limit=4", True),
-    "ratios": ("v3/ratios/{t}?period=annual&limit=4", False),
-    "key_metrics": ("v3/key-metrics/{t}?period=annual&limit=4", False),
-    "growth": ("v3/income-statement-growth/{t}", False),
+    "income_annual": ("income-statement?symbol={t}&period=annual&limit=4", True),
+    # free tier 402s quarterly history deeper than ~4 periods (limit=8 rejected)
+    "income_quarterly": ("income-statement?symbol={t}&period=quarter&limit=4", True),
+    "balance_annual": ("balance-sheet-statement?symbol={t}&period=annual&limit=4", True),
+    "cashflow_annual": ("cash-flow-statement?symbol={t}&period=annual&limit=4", True),
+    "ratios": ("ratios?symbol={t}&period=annual&limit=4", False),
+    "key_metrics": ("key-metrics?symbol={t}&period=annual&limit=4", False),
+    "growth": ("income-statement-growth?symbol={t}&limit=4", False),
 }
 
 

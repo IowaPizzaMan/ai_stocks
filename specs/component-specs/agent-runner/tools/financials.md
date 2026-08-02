@@ -53,9 +53,19 @@ def get_earnings_data(ticker: str) -> dict:
 
 ## FMP Helper
 
+> **API version (verified 2026-08-02):** the legacy `/api/v3/...` endpoints return
+> 403 for this account — FMP retired them for accounts created after their 2025
+> migration. Use the **stable** API: `https://financialmodelingprep.com/stable/`
+> with query-style paths (`income-statement?symbol=AAPL&period=annual&limit=4`).
+> Constituent endpoints (`sp500-constituent`, `nasdaq-constituent`) are 402
+> paid-tier — breadth's Wikipedia/slickcharts scrape fallback is the de facto
+> constituent source on the free tier. Quarterly statements 402 beyond ~4
+> periods of history (`limit=8` rejected, `limit=4` works) — income_quarterly
+> uses `limit=4`.
+
 ```python
 import httpx
-FMP_BASE = "https://financialmodelingprep.com/api/"
+FMP_BASE = "https://financialmodelingprep.com/stable/"
 FMP_KEY = os.getenv("FMP_API_KEY")
 
 def fmp_get(path: str) -> list | dict:

@@ -33,7 +33,9 @@ EXCHANGES = {"nyse": "sp500", "nasdaq": "nasdaq100"}
 def _fmp_constituents(name: str) -> list[str]:
     from tools.financials import fmp_get
 
-    endpoint = {"sp500": "v3/sp500_constituent", "nasdaq100": "v3/nasdaq_constituent"}[name]
+    # 402s on the free tier (constituents are paid) — the scrape fallback below
+    # is the de facto source; this stays for keys that do have access
+    endpoint = {"sp500": "sp500-constituent", "nasdaq100": "nasdaq-constituent"}[name]
     rows = fmp_get(endpoint)
     return [r["symbol"] for r in rows]
 
