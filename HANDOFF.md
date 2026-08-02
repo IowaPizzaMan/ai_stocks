@@ -11,8 +11,9 @@
 | ✅ | Phase 1.1–1.6: full data layer — `tools/db.py`, `price.py`, `financials.py`, `macro.py`, `breadth.py`, plus real `seed_watchlist.py` / `backfill_financials.py`. 46 tests green (`agent-runner\.venv\Scripts\python -m pytest agent-runner\tests`) |
 | ✅ | Live-verified: watchlist seeded (AAPL/MSFT/NVDA), financials 7/7 endpoints cached, 12 FRED series, NYMO/NAMO computed (−12.3/−11.0 neutral) |
 | ✅ | `qwen2.5:14b` pulled and inference-verified on the GPU; agent-runner image rebuilt with the Phase 1 code |
-| ✅ | Phase 2: all five skills implemented + tested (accumulation, gap_analysis, the_strat, market_flow, position_management) — 113 tests green. Rule specs live at `specs/*_rules.md`, `specs/the-strat-spec.md`, `specs/position_management_agent_spec.md` |
-| ⬜ | Phase 3: Crew MVP — `work_queue` + `queue_worker` + 3-agent crew (Technical, Fundamental, PortfolioStrategist) writing to `analyses`. The riskiest bet: CrewAI ↔ Ollama tool-calling on a 14B model. Local venv does NOT have crewai/ollama-py — test inside the container or install them locally |
+| ✅ | Phase 2: all five skills implemented + tested (accumulation, gap_analysis, the_strat, market_flow, position_management). Rule specs live at `specs/*_rules.md`, `specs/the-strat-spec.md`, `specs/position_management_agent_spec.md` |
+| ✅ | Phase 3: Crew MVP working **live** — queue worker + 3 agents (Technical, Fundamental, PortfolioStrategist) + market_flow as the recommendation sub-report. **CrewAI was dropped**: agents call Ollama directly with structured output (`llm.py::generate_json`, `format=json_schema`); all fetching/skill math is deterministic Python. Live AAPL run: 29.8s wall, 3 LLM calls, valid JSON first try, coherent narratives. 137 tests green |
+| ⬜ | Phase 4: API + Feed UI — backend routers (analysis/queue/watchlist/stocks) + Feed page + Stock Detail (Overview + AI Summary tabs) + Pull buttons. Full vertical slice: click Pull → analysis appears |
 
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
 
