@@ -13,7 +13,8 @@
 | ✅ | `qwen2.5:14b` pulled and inference-verified on the GPU; agent-runner image rebuilt with the Phase 1 code |
 | ✅ | Phase 2: all five skills implemented + tested (accumulation, gap_analysis, the_strat, market_flow, position_management). Rule specs live at `specs/*_rules.md`, `specs/the-strat-spec.md`, `specs/position_management_agent_spec.md` |
 | ✅ | Phase 3: Crew MVP working **live** — queue worker + 3 agents (Technical, Fundamental, PortfolioStrategist) + market_flow as the recommendation sub-report. **CrewAI was dropped**: agents call Ollama directly with structured output (`llm.py::generate_json`, `format=json_schema`); all fetching/skill math is deterministic Python. Live AAPL run: 29.8s wall, 3 LLM calls, valid JSON first try, coherent narratives. 137 tests green |
-| ⬜ | Phase 4: API + Feed UI — backend routers (analysis/queue/watchlist/stocks) + Feed page + Stock Detail (Overview + AI Summary tabs) + Pull buttons. Full vertical slice: click Pull → analysis appears |
+| ✅ | Phase 4: API + Feed UI live. Backend routers (analysis/queue/watchlist/stocks + tickers admin) with mongomock-backed tests; Feed page (infinite scroll, filters, Pull/Run All controls, live queue chip), Stock Detail (Overview + AI Summary tabs, Pull button with queued/analyzing state), Sidebar watchlist. Vertical slice verified end-to-end: POST /queue/GOOGL → container analyzed it → appeared in /analysis/feed |
+| ⬜ | Phase 5: full agent roster (Macro, Insider, Institutional, Sentiment, Recommender agents + their tools), chunker/summarizer, remaining Stock Detail tabs + charts (TFC grid, PriceChart) |
 
 Workflow agreement: **feature by feature, commit after each working chunk**. Phases in project-proposal.md §6.
 
