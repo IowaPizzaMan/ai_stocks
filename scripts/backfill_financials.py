@@ -12,10 +12,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "agent-runner"))
 
+from logging_config import get_logger  # noqa: E402
 from tools.breadth import get_market_breadth  # noqa: E402
 from tools.db import FMP_USAGE, WATCHLIST, ensure_indexes, get_db  # noqa: E402
 from tools.financials import get_financials  # noqa: E402
 from tools.macro import get_macro_data  # noqa: E402
+
+logger = get_logger(__name__, component="scripts")
 
 
 def backfill(tickers: list[str]) -> None:
@@ -33,8 +36,9 @@ def backfill(tickers: list[str]) -> None:
             data = get_financials(ticker, db=db)
             filled = sum(1 for v in data.values() if v)
             print(f"{ticker}: financials cached ({filled}/{len(data)} endpoints returned data)")
-        except Exception as exc:
-            print(f"{ticker}: financials FAILED — {exc}")
+        except Exception:
+            logger.exception("%s: financials fetch failed", ticker)
+            print(f"{ticker}: financials FAILED — see logs/scripts/scripts.log")
 
     print("fetching macro indicators (FRED, 24h cache)...")
     macro = get_macro_data(db=db)
@@ -51,4 +55,8 @@ def backfill(tickers: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    backfill([t.upper() for t in sys.argv[1:]])
+    try:
+        backfill([t.upper() for t in sys.argv[1:]])
+    except Exception:
+        logger.exception("backfill_financials failed")
+        raise

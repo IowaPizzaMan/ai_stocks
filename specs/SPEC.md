@@ -266,6 +266,68 @@ Added to the top nav alongside Feed and Sectors, and linked from the Stock Detai
 
 ---
 
+## Exception Handling & Logging
+
+Every component catches its own unhandled exceptions and records them — today to a local file, later to whatever production logging backend the app ends up on — without call sites changing when that switch happens.
+
+### Local Today, Cloud-Ready Later
+- **Today**: every exception, plus normal app-level logging, is written to a local file under a root `logs/` directory.
+- **Later**: when this moves off Neal's machine, only the sink inside the shared logging helper changes (e.g., swap the file handler for a CloudWatch/Datadog/Sentry handler) — call sites (`logger.info(...)`, `logger.exception(...)`) never change.
+- Achieved via one small `get_logger(component)` helper per Python service instead of the ad hoc `logging.getLogger(__name__)` + scattered `logging.basicConfig()` calls that exist today.
+
+### Log Directory Layout
+```
+logs/
+  agent-runner/
+    agent-runner.log   # rotating; app events + logger.exception() tracebacks
+  backend/
+    backend.log        # rotating; app events + unhandled request exceptions
+  frontend/
+    frontend.log       # client-side errors, relayed through the backend (browsers can't write local files)
+  scripts/
+    scripts.log        # one-off scripts (backfill_financials.py, seed_watchlist.py)
+```
+- One folder per component, one rotating log file per component — never one shared file.
+- Rotation: `TimedRotatingFileHandler` (daily, 14-day retention) — these are debugging dumps, not long-term storage or an audit trail.
+- `logs/` lives at the repo root. Each service's `logging_config.py` resolves its log root as one directory above its own file (`<service>/../logs`), which in Docker (`WORKDIR /app`) lands at `/logs` — so both the `backend` and `agent-runner` containers bind-mount the whole tree with a single `./logs:/logs`, and each service only ever writes inside its own `logs/<component>/` subfolder. Entries persist on the host across restarts/rebuilds. The tree is git-ignored (`*.log` already is; each folder keeps a `.gitkeep` so it exists before first run).
+
+### Reusable Logging Function
+Each Python service (`agent-runner`, `backend`) gets its own `logging_config.py` (duplicated, not shared — the two are already independent services with their own `requirements.txt`/`Dockerfile`, matching how `settings.py` is already duplicated per component) exposing one function:
+
+```python
+# agent-runner/logging_config.py  (backend/logging_config.py is the same shape,
+# with COMPONENT = "backend")
+COMPONENT = "agent-runner"
+
+def get_logger(name: str, component: str = COMPONENT) -> logging.Logger:
+    """
+    Single choke point for where logs go. Today: TimedRotatingFileHandler
+    writing to logs/<component>/<component>.log, plus a stderr stream handler,
+    attached once per component and shared by every logger under it. Swapping
+    to a cloud backend later means changing the handler(s) registered here
+    (e.g. based on a LOG_SINK=local|cloud env var) -- nothing else in the
+    codebase changes.
+    """
+```
+Call sites pass their own `__name__` (e.g. `logger = get_logger(__name__)`), which is namespaced under the component (`agent-runner.tools.institutional`) so log lines still show which module logged them. `component` only needs overriding by callers outside the owning service — `scripts/*.py` import agent-runner's `logging_config` (they already do `sys.path.insert` into `agent-runner/` to reach its `tools/`) but pass `component="scripts"` so their crashes land in `logs/scripts/` instead of `logs/agent-runner/`. Existing `logger = logging.getLogger(__name__)` + scattered `logging.basicConfig()` call sites across `agent-runner` and `backend` are replaced this way.
+
+### Catching Exceptions Per Component
+
+| Component | Where uncaught exceptions are caught | Behavior |
+|---|---|---|
+| `agent-runner` | `queue_worker.py` job loop, `institutional_flow_worker.py`, `earnings_scan_worker.py` | Each job/scan iteration is wrapped in try/except; `logger.exception(...)` records the full traceback, the job is marked `failed` (existing status field), and the worker keeps polling — one bad ticker never kills the process |
+| `backend` (FastAPI) | Global `@app.exception_handler(Exception)` in `main.py` | Logs the traceback via `get_logger("backend")` and returns a generic 500, instead of an unhandled exception surfacing raw |
+| `frontend` | Top-level React `ErrorBoundary` + `window.onerror` / `window.onunhandledrejection` | POSTs `{ message, stack, component, url, timestamp }` to `POST /logs/frontend`; the backend writes it to `logs/frontend/` via `get_logger("frontend")` — browsers can't write local files directly, so frontend errors are relayed through the API |
+| `scripts` | `backfill_financials.py`, `seed_watchlist.py` | `main()` body wrapped in try/except, `logger.exception(...)`, exits non-zero |
+
+### New API Endpoint
+
+| Endpoint | Description |
+|---|---|
+| `POST /logs/frontend` | Accepts a client-side error report and writes it via `get_logger("frontend")` to `logs/frontend/` |
+
+---
+
 ## AI Layer — CrewAI + Local LLM via Ollama
 
 - **Framework**: CrewAI — multi-agent orchestration with defined roles, goals, and tool access
@@ -395,6 +457,7 @@ The agentic pipeline (CrewAI + Ollama) runs on a schedule and writes all analysi
 | `GET /institutional/flow` | Market-wide institutional/superinvestor flow feed. Paginated. |
 | `GET /institutional/flow/{ticker}` | Flow history for a single ticker |
 | `POST /institutional/scan` | Manually trigger a fresh institutional flow scan |
+| `POST /logs/frontend` | Accepts a client-side error report, writes it to `logs/frontend/` (see "Exception Handling & Logging") |
 
 ---
 
@@ -482,9 +545,16 @@ stockai/
 ├── .env                             # API keys, Mongo URI, Ollama URL
 ├── .env.example                     # Committed template (no secrets)
 │
+├── logs/                            # Root log directory — one subfolder per component, bind-mounted into containers
+│   ├── agent-runner/                # agent-runner.log (.gitkeep until first run)
+│   ├── backend/                     # backend.log
+│   ├── frontend/                    # frontend.log (written by backend via POST /logs/frontend)
+│   └── scripts/                     # scripts.log
+│
 ├── agent-runner/                    # CrewAI pipeline — queue worker
 │   ├── Dockerfile
 │   ├── main.py                      # Entry point: polls work_queue every 30s, runs InstitutionalFlowWorker on its own daily timer
+│   ├── logging_config.py            # get_logger(component) — file-based today, swappable sink later
 │   ├── queue_worker.py              # Claims jobs, dispatches crew, marks done/failed
 │   ├── crew.py                      # Assembles and kicks off the CrewAI crew per ticker
 │   ├── institutional_flow_worker.py # Runs InstitutionalFlowScannerAgent on a daily schedule (not per-ticker)
@@ -529,7 +599,8 @@ stockai/
 │
 ├── api/                             # FastAPI backend
 │   ├── Dockerfile
-│   ├── main.py                      # App entry point, mounts routers
+│   ├── main.py                      # App entry point, mounts routers, global exception_handler(Exception)
+│   ├── logging_config.py            # get_logger(component) — same shape as agent-runner's, duplicated not shared
 │   │
 │   ├── routers/
 │   │   ├── analysis.py              # GET /analysis/feed, /analysis/{ticker}, /analysis/sector/{sector}
@@ -539,7 +610,8 @@ stockai/
 │   │   ├── sectors.py               # GET /sectors
 │   │   ├── queue.py                 # POST /queue/all (Run All — sweeps ticker_index), POST /queue/{ticker}, GET /queue
 │   │   ├── earnings.py              # GET /earnings/calendar (also registers+enqueues), POST /earnings/scan, POST /earnings/analyze
-│   │   └── institutional_flow.py    # GET /institutional/flow, /institutional/flow/{ticker}, POST /institutional/scan
+│   │   ├── institutional_flow.py    # GET /institutional/flow, /institutional/flow/{ticker}, POST /institutional/scan
+│   │   └── logs.py                  # POST /logs/frontend — writes client error reports via get_logger("frontend")
 │   │
 │   ├── models/                      # Pydantic schemas
 │   │   ├── analysis.py
@@ -602,7 +674,8 @@ stockai/
 │       │       ├── SignalBadge.tsx
 │       │       ├── ConvictionMeter.tsx
 │       │       ├── TickerStatusBadge.tsx  # "Removed from Market" badge, renders nothing when active
-│       │       └── SkeletonCard.tsx
+│       │       ├── SkeletonCard.tsx
+│       │       └── ErrorBoundary.tsx      # Top-level catch; reports via errorLogger.ts on render errors
 │       │
 │       ├── hooks/
 │       │   ├── useAnalysis.ts
@@ -612,7 +685,8 @@ stockai/
 │       │
 │       └── lib/
 │           ├── api.ts               # Axios/fetch wrapper pointing at FastAPI
-│           └── constants.ts
+│           ├── constants.ts
+│           └── errorLogger.ts       # window.onerror / onunhandledrejection hooks -> POST /logs/frontend
 │
 └── scripts/                         # One-off utility scripts (not in Docker)
     ├── seed_watchlist.py            # Pre-populate watchlist in MongoDB
@@ -627,10 +701,13 @@ stockai/
 services:
   mongodb:       # Document store — analysis results, cached financials, work_queue
   fastapi:       # REST API — serves the React app, exposes queue endpoints
+                 # volumes: ./logs:/logs
   react:         # Frontend — Vite dev server (or static build served via nginx)
   agent-runner:  # CrewAI pipeline — polls work_queue every 30s, writes to MongoDB
+                 # volumes: ./logs:/logs
   ollama:        # Local LLM inference
 ```
+Each container mounts the whole `logs/` tree but only ever writes inside its own `logs/<component>/` subfolder (see "Exception Handling & Logging"). `frontend` doesn't need its own mount — client errors are relayed through `POST /logs/frontend` and land in `./logs/frontend` via the `backend` container.
 
 ---
 
@@ -687,4 +764,4 @@ Both paths write through `register_ticker()` (see `backend/db.md`) into `ticker_
 
 ---
 
-*Last updated: 2026-08-01*
+*Last updated: 2026-08-02*

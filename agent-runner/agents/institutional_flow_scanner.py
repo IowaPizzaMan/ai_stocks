@@ -13,13 +13,13 @@ Inputs come from the worker (institutional_flow_worker.py), not fetched here:
   (yfinance top-holder rows with Holder/Shares/Value/pctChange/Date Reported
   plus the ticker)
 """
-import logging
 import re
 from datetime import datetime, timezone
 
 from llm import generate_json
+from logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 TOP_HEADLINES = 15  # events that get an LLM-written headline per scan
 

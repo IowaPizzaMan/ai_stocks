@@ -9,8 +9,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "agent-runner"))
 
+from logging_config import get_logger  # noqa: E402
 from tools.db import WATCHLIST, get_db, register_ticker  # noqa: E402
 from tools.price import is_ticker_valid  # noqa: E402
+
+logger = get_logger(__name__, component="scripts")
 
 
 def seed(tickers: list[str]) -> None:
@@ -39,4 +42,8 @@ if __name__ == "__main__":
     args = [t.upper() for t in sys.argv[1:]]
     if not args:
         sys.exit("usage: python scripts/seed_watchlist.py TICKER [TICKER ...]")
-    seed(args)
+    try:
+        seed(args)
+    except Exception:
+        logger.exception("seed_watchlist failed")
+        raise

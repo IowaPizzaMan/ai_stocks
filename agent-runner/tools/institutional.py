@@ -6,16 +6,16 @@ Sourcing (verified 2026-08-02): every FMP 13F/institutional endpoint returns
 source: top-10 institutional holders with QoQ pctChange, mutual fund holders,
 and the major_holders ownership summary.
 """
-import logging
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import yfinance as yf
 from pymongo.database import Database
 
+from logging_config import get_logger
 from tools.db import INSTITUTIONAL_CACHE, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 CACHE_DAYS = 90  # 13F data updates quarterly
 

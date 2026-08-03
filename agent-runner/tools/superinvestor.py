@@ -6,7 +6,6 @@ scrape/extraction fails, returns an empty result with `available: False` so
 the InstitutionalAnalyst degrades instead of the crew failing. No hardcoded
 CSS selectors — page text goes to Ollama for structured extraction.
 """
-import logging
 import random
 import time
 from datetime import date, datetime
@@ -14,9 +13,10 @@ from datetime import date, datetime
 from pymongo.database import Database
 
 from llm import generate_json
+from logging_config import get_logger
 from tools.db import DATAROMA_META, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MOVES_SCHEMA = {
     "type": "object",

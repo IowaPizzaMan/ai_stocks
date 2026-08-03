@@ -11,7 +11,6 @@ Sourcing rationale (probed live 2026-08-02): Finnhub `calendar/earnings` for
 the sweep (FMP truncates on this key), Nasdaq screener API for the $500M
 cap/name/sector pre-screen, yfinance for real post-earnings reaction moves.
 """
-import logging
 from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
@@ -20,9 +19,10 @@ import yfinance as yf
 from pymongo.database import Database
 
 from db import EARNINGS_CACHE
+from logging_config import get_logger
 from settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MIN_MARKET_CAP = 500_000_000
 CALENDAR_CACHE_HOURS = 4
