@@ -6,13 +6,13 @@ all data fetching and skill math is deterministic Python; the model only
 interprets and narrates. Retries once on invalid JSON before failing loudly.
 """
 import json
-import logging
 
 import ollama
 
+from logging_config import get_logger
 from settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 DEFAULT_OPTIONS = {"temperature": 0.2, "num_ctx": 8192}
 

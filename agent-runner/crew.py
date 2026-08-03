@@ -6,7 +6,6 @@ Sentiment, Recommender, then PortfolioStrategist synthesizing everything.
 Agents call Ollama directly with structured output (see llm.py) — no CrewAI
 tool-calling.
 """
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -22,6 +21,7 @@ from agents import (
     sentiment_analyst,
     technical_analyst,
 )
+from logging_config import get_logger
 from skills import accumulation, gap_analysis, market_flow, the_strat
 from tools import breadth as breadth_tool
 from tools import financials as financials_tool
@@ -33,7 +33,7 @@ from tools import sentiment as sentiment_tool
 from tools import superinvestor as superinvestor_tool
 from tools.db import TICKER_INDEX, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TickerDelistedError(Exception):

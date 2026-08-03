@@ -9,18 +9,18 @@ Peak weeks pre-screen 900+ companies (live count 2026-08-02), so enrichment is
 capped at MAX_CANDIDATES by market cap — every screened company still lands in
 the scan doc's total_screened.
 """
-import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import yfinance as yf
 
 from llm import generate_json
+from logging_config import get_logger
 from tools import earnings_calendar as calendar_tool
 from tools import insider as insider_tool
 from tools import price as price_tool
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MAX_CANDIDATES = 40   # enrichment cap: ~2 Finnhub + ~4 yfinance calls each
 TOP_COUNT = 10        # candidates that get an LLM-written thesis

@@ -6,15 +6,15 @@ this worker — polled from main.py's loop alongside the work queue — picks it
 up, runs agents/earnings_scanner.run_scan, and writes the results back onto
 the same doc for the frontend to poll via GET /earnings/scan/{scan_id}.
 """
-import logging
 from datetime import datetime, timezone
 
 from pymongo import ReturnDocument
 
 from agents import earnings_scanner
+from logging_config import get_logger
 from tools.db import EARNINGS_SCANS, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _utcnow() -> datetime:

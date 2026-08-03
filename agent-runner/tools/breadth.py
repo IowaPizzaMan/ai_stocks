@@ -6,7 +6,6 @@ oscillator is computed locally over proxy universes (S&P 500 for NYSE,
 NASDAQ-100 for NASDAQ) — one batched yf.download per universe per day.
 """
 import io
-import logging
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
@@ -14,9 +13,10 @@ import requests
 import yfinance as yf
 from pymongo.database import Database
 
+from logging_config import get_logger
 from tools.db import BREADTH_CACHE, BREADTH_UNIVERSE, get_db, track_fmp_call
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 UNIVERSE_MAX_AGE_DAYS = 7
 ZONE_THRESHOLD = 60  # ±60 per market_flow_rules.md; calibrate vs StockCharts (proxy universes run narrower)

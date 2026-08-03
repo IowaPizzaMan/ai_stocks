@@ -6,15 +6,15 @@ ticker_index (and the watchlist entry, if any) so Run All sweeps skip it and
 the UI can badge it — distinct from ordinary transient failures, which stay
 active and get retried on the next run.
 """
-import logging
 from datetime import datetime, timedelta, timezone
 
 from pymongo import ReturnDocument
 
 from crew import Crew, TickerDelistedError
+from logging_config import get_logger
 from tools.db import ANALYSES, WORK_QUEUE, ensure_indexes, get_db, mark_ticker_removed
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 STALE_RUNNING_MINUTES = 30
 

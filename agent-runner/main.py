@@ -6,17 +6,16 @@ Three loops in one process:
   is watching the progress spinner)
 - institutional flow scan once daily (market-wide, independent of the queue)
 """
-import logging
 import time
 from datetime import datetime, timezone
 
 from earnings_scan_worker import claim_and_run_next_scan
 from institutional_flow_worker import run_daily_scan_if_due
+from logging_config import get_logger
 from queue_worker import claim_and_run_next
 from settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
-logger = logging.getLogger("agent-runner")
+logger = get_logger(__name__)
 
 
 def main() -> None:

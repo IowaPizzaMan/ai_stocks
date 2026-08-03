@@ -1,17 +1,17 @@
 """FMP financials + yfinance earnings data, cached in Mongo.
 Spec: specs/component-specs/agent-runner/tools/financials.md
 """
-import logging
 from datetime import datetime, timedelta, timezone
 
 import requests
 import yfinance as yf
 from pymongo.database import Database
 
+from logging_config import get_logger
 from settings import settings
 from tools.db import FINANCIALS_CACHE, get_db, track_fmp_call
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # The legacy /api/v3 endpoints 403 for accounts created after FMP's 2025
 # migration — this key only works against the "stable" API.

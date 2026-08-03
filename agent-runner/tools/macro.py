@@ -1,16 +1,16 @@
 """FRED macro indicators with a 24-hour Mongo cache.
 Spec: specs/component-specs/agent-runner/tools/macro.md
 """
-import logging
 from datetime import datetime, timedelta, timezone
 
 import requests
 from pymongo.database import Database
 
+from logging_config import get_logger
 from settings import settings
 from tools.db import MACRO_CACHE, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 FRED_BASE = "https://api.stlouisfed.org/fred/"
 CACHE_HOURS = 24

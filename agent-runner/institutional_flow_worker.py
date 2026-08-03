@@ -16,17 +16,17 @@ Window notes:
   feed-only; tickers enter the system one at a time via the flow card's Queue
   button (POST /queue/{ticker}).
 """
-import logging
 import re
 from datetime import datetime, timedelta, timezone
 
 from agents import institutional_flow_scanner
+from logging_config import get_logger
 from settings import settings
 from tools import institutional as institutional_tool
 from tools import superinvestor as superinvestor_tool
 from tools.db import INSTITUTIONAL_FLOW, INSTITUTIONAL_FLOW_META, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 FILING_LOOKBACK_DAYS = 100   # covers one 13F cycle (filings post ~45d after quarter end)
 DATAROMA_DEDUP_DAYS = 7      # same fund/ticker/action within a week = same move re-scraped

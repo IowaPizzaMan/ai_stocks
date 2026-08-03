@@ -16,7 +16,6 @@ Sourcing (probed live 2026-08-02 — deviations from the spec's pseudocode):
 Cache docs live in `earnings_cache` and are shared with the API container —
 keep shapes in sync with backend/earnings_data.py.
 """
-import logging
 from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
@@ -24,10 +23,11 @@ import requests
 import yfinance as yf
 from pymongo.database import Database
 
+from logging_config import get_logger
 from tools.db import EARNINGS_CACHE, get_db
 from tools.finnhub_client import finnhub_get
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 MIN_MARKET_CAP = 500_000_000  # $500M floor per spec
 CALENDAR_CACHE_HOURS = 4
