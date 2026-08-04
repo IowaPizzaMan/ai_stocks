@@ -88,6 +88,7 @@ export interface InsiderReport {
   mspr_trend: { direction: string; commentary: string };
   unusual_size: string;
   signal_strength: string;
+  as_of?: string | null; // most recent Form 4 transaction date in the lookback window
 }
 
 export interface InstitutionalReport {
@@ -108,6 +109,7 @@ export interface InstitutionalReport {
   superinvestor_moves: { fund: string; action: string; ticker: string; detail?: string }[];
   superinvestor_read: string;
   concentration_assessment: string;
+  as_of?: string | null; // same date as institutional_summary.as_of, at top level for consistency
 }
 
 export interface SentimentReport {
@@ -121,6 +123,7 @@ export interface SentimentReport {
   transcripts_available: boolean;
   bullish_keywords: { terms: string[]; count: number };
   cautious_keywords: { terms: string[]; count: number };
+  as_of?: string | null; // most recent headline date in the news window
 }
 
 export interface SectorSummary {
@@ -150,6 +153,7 @@ export interface TechnicalReport {
   accumulation_result?: { accumulation_score: number; signal: string; rationale?: string };
   gap_result?: { signal?: string };
   strat_result?: { signal?: string; tfc?: { status: string } };
+  as_of?: string | null; // latest daily price bar this read is based on
 }
 
 export interface FundamentalReport {
@@ -161,6 +165,7 @@ export interface FundamentalReport {
   balance_sheet_health?: { assessment: string };
   fcf_profile?: { assessment: string };
   valuation_assessment?: { view: string };
+  as_of?: string | null; // most recent reported statement date
 }
 
 export interface RecommendationReport {

@@ -1,4 +1,5 @@
 """MongoDB helpers for agents and tools. Spec: specs/component-specs/agent-runner/tools/db.md"""
+import math
 from datetime import datetime, timezone
 from functools import lru_cache
 
@@ -53,6 +54,19 @@ def ensure_indexes(db: Database | None = None) -> None:
     # sector (macro) or the whole run (superinvestor) — see crew.py callers.
     db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
     db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
+
+
+def sanitize_floats(value):
+    """Recursively replaces non-finite floats (NaN/Infinity) with None.
+    BSON round-trips them fine, but they crash the backend's JSON encoder
+    on the way back out, so keep them out of Mongo entirely."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: sanitize_floats(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_floats(v) for v in value]
+    return value
 
 
 def query_db(collection: str, filter: dict, limit: int = 100, db: Database | None = None) -> list:

@@ -18,7 +18,7 @@ import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
 import type { Timeframe } from "../lib/strat/displayWindow";
-import { relativeTime } from "../lib/time";
+import { formatDate, relativeTime } from "../lib/time";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -162,6 +162,7 @@ export default function StockDetail() {
             ))}
             <span className="ml-auto self-center text-xs text-zinc-600">
               analyzed {relativeTime(latest.timestamp)}
+              {formatDate(latest.timestamp) && ` — data as of ${formatDate(latest.timestamp)}`}
             </span>
           </nav>
 

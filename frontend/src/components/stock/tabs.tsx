@@ -8,6 +8,8 @@ import type {
   TechnicalReport,
 } from "../../api/types";
 import { useStockFinancials } from "../../hooks/usePriceHistory";
+import { formatDate } from "../../lib/time";
+import DataAsOf from "../shared/DataAsOf";
 import FundamentalsCharts from "./FundamentalsCharts";
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -75,6 +77,7 @@ export function TechnicalsTab({ technical }: { technical?: TechnicalReport }) {
       )}
 
       <Section title="Narratives">
+        <DataAsOf date={technical.as_of} className="mb-3 text-xs text-zinc-600" />
         <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
           <p><span className="text-zinc-500">Momentum — </span>{technical.momentum_summary}</p>
           <p><span className="text-zinc-500">TFC — </span>{technical.tfc_narrative}</p>
@@ -128,6 +131,7 @@ export function FundamentalsTab({ fundamental, ticker }: { fundamental?: Fundame
     <div className="space-y-4">
       {fundamental && (
         <Section title="Assessment">
+          <DataAsOf date={fundamental.as_of} label="latest statement" className="mb-3 text-xs text-zinc-600" />
           <p className="mb-3 text-sm leading-relaxed text-zinc-300">{fundamental.narrative}</p>
           <div className="flex flex-wrap gap-2">
             <Pill>revenue: {fundamental.revenue_trend?.direction}</Pill>
@@ -155,6 +159,7 @@ export function InsiderTab({ insider }: { insider?: InsiderReport }) {
   return (
     <div className="space-y-4">
       <Section title={`Read — ${insider.overall_insider_signal} (${insider.signal_strength})`}>
+        <DataAsOf date={insider.as_of} label="most recent transaction" className="mb-3 text-xs text-zinc-600" />
         <p className="mb-3 text-sm leading-relaxed text-zinc-300">{insider.narrative}</p>
         <div className="flex flex-wrap gap-2">
           <Pill>net: {insider.net_direction.replaceAll("_", " ")}</Pill>
@@ -220,6 +225,7 @@ export function InstitutionalTab({ institutional }: { institutional?: Institutio
   return (
     <div className="space-y-4">
       <Section title={`Read — ${institutional.overall_institutional_signal}`}>
+        <DataAsOf date={institutional.as_of} label="13F data as of" className="mb-3 text-xs text-zinc-600" />
         <p className="mb-3 text-sm leading-relaxed text-zinc-300">{institutional.narrative}</p>
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><p className="text-xs text-zinc-500">Ownership</p><p className="font-mono text-zinc-200">{s.ownership_pct ?? "–"}%</p></div>
@@ -281,6 +287,7 @@ export function SentimentTab({ sentiment }: { sentiment?: SentimentReport }) {
         )}
         <p className="mt-3 text-xs text-zinc-600">
           based on {sentiment.news_count} headlines over 30 days
+          {formatDate(sentiment.as_of ?? "") && `, most recent ${formatDate(sentiment.as_of ?? "")}`}
           {sentiment.transcripts_available ? "" : " (earnings-call transcripts unavailable on the current data plan)"}
         </p>
       </Section>

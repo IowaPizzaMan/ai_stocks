@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import type { AnalysisFeedItem } from "../../api/types";
 import { useAddToWatchlist } from "../../hooks/useWatchlist";
-import { relativeTime } from "../../lib/time";
+import { formatDate, relativeTime } from "../../lib/time";
 import ConvictionMeter from "../shared/ConvictionMeter";
 import SignalBadge from "../shared/SignalBadge";
 
@@ -32,7 +32,14 @@ export default function AnalysisCard({ analysis }: { analysis: AnalysisFeedItem 
             <span className="text-xs text-zinc-500">{analysis.sector}</span>
           )}
         </div>
-        <span className="text-xs text-zinc-500">{relativeTime(analysis.timestamp)}</span>
+        <div className="text-right">
+          <span className="block text-xs text-zinc-500">{relativeTime(analysis.timestamp)}</span>
+          {formatDate(analysis.timestamp) && (
+            <span className="block text-[11px] text-zinc-600">
+              data as of {formatDate(analysis.timestamp)}
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-zinc-300">
