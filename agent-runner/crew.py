@@ -162,7 +162,7 @@ class Crew:
             "macro": data["macro"],
             "yield_curve": data["yield_curve"],
             "sector": record.get("sector"),
-        }, client=self.client)
+        }, client=self.client, db=self.db)
 
         insider = insider_analyst.run(ticker, {"insider": data["insider"]}, client=self.client)
 

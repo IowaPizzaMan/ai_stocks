@@ -8,15 +8,17 @@ CSS selectors — page text goes to Ollama for structured extraction.
 """
 import random
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 from pymongo.database import Database
 
 from llm import generate_json
 from logging_config import get_logger
-from tools.db import DATAROMA_META, get_db
+from tools.db import DATAROMA_META, SUPERINVESTOR_MOVES_CACHE, get_db
 
 logger = get_logger(__name__)
+
+CACHE_DAYS = 7
 
 MOVES_SCHEMA = {
     "type": "object",
@@ -69,16 +71,29 @@ def _extract_moves(page_text: str, ticker: str | None, client=None) -> list[dict
     return moves
 
 
+def _filter_ticker(moves: list[dict], ticker: str) -> list[dict]:
+    return [m for m in moves if m.get("ticker", "").upper() == ticker.upper()]
+
+
 def get_superinvestor_activity(ticker: str, db: Database | None = None, client=None) -> dict:
+    """Per-ticker view onto a shared, CACHE_DAYS-old-at-most scrape+extraction
+    of the whole Dataroma moves page — the page content and its LLM extraction
+    don't depend on which ticker asked, so the scrape only actually runs once
+    per week; every ticker in between just filters the cached move list."""
     db = db if db is not None else get_db()
     ticker = ticker.upper()
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=CACHE_DAYS)
+    cached = db[SUPERINVESTOR_MOVES_CACHE].find_one({"fetched_at": {"$gt": cutoff}})
+    if cached:
+        return {"moves": _filter_ticker(cached["moves"], ticker), "available": True, "note": None}
 
     last_pull = db[DATAROMA_META].find_one({"key": "last_pull"})
     last_date = last_pull["date"] if last_pull else "2020-01-01"
 
     try:
         moves_text = _fetch_page_text(f"https://dataroma.com/m/moves.php?date={last_date}")
-        moves = _extract_moves(moves_text, ticker, client=client)
+        all_moves = _extract_moves(moves_text, ticker=None, client=client)
     except Exception as exc:
         logger.info("superinvestor data unavailable for %s: %s", ticker, exc)
         return {"moves": [], "available": False,
@@ -87,7 +102,10 @@ def get_superinvestor_activity(ticker: str, db: Database | None = None, client=N
     db[DATAROMA_META].replace_one(
         {"key": "last_pull"}, {"key": "last_pull", "date": date.today().isoformat()}, upsert=True
     )
-    return {"moves": moves, "available": True, "note": None}
+    db[SUPERINVESTOR_MOVES_CACHE].replace_one(
+        {}, {"moves": all_moves, "fetched_at": datetime.now(timezone.utc)}, upsert=True
+    )
+    return {"moves": _filter_ticker(all_moves, ticker), "available": True, "note": None}
 
 
 def get_recent_superinvestor_moves(since: datetime, client=None) -> list[dict]:

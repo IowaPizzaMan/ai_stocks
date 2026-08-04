@@ -131,6 +131,24 @@ def test_parallel_prefetch_produces_same_shape():
                                        "institutional", "sentiment", "recommendation"}
 
 
+def test_macro_analyst_cached_across_tickers_in_same_sector():
+    db = mongomock.MongoClient()["crew_test"]
+    db["ticker_index"].insert_many([
+        {"ticker": "AAPL", "sector": "Technology"},
+        {"ticker": "MSFT", "sector": "Technology"},
+    ])
+    crew = make_crew()
+    crew.db = db
+
+    crew.run("AAPL")
+    first_call_count = len(crew.client.calls)
+    crew.run("MSFT")
+    second_run_calls = len(crew.client.calls) - first_call_count
+
+    # same 8 agent/strategist calls minus the cached macro_analyst call
+    assert second_run_calls == first_call_count - 1
+
+
 def test_earnings_dates_extraction():
     earnings = {"earnings_dates": [
         {"Earnings Date": "2026-07-30"},

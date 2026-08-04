@@ -15,7 +15,9 @@ TICKER_INDEX = "ticker_index"
 FINANCIALS_CACHE = "financials_cache"
 TRANSCRIPTS_CACHE = "transcripts_cache"
 MACRO_CACHE = "macro_cache"
+MACRO_ANALYSIS_CACHE = "macro_analysis_cache"
 INSTITUTIONAL_CACHE = "institutional_cache"
+SUPERINVESTOR_MOVES_CACHE = "superinvestor_moves_cache"
 EARNINGS_SCANS = "earnings_scans"
 EARNINGS_CACHE = "earnings_cache"
 INSTITUTIONAL_FLOW = "institutional_flow"
@@ -47,6 +49,10 @@ def ensure_indexes(db: Database | None = None) -> None:
     )
     db[TICKER_INDEX].create_index([("ticker", ASCENDING)], unique=True)
     db[TICKER_INDEX].create_index([("status", ASCENDING)])
+    # Non-ticker-specific pipeline steps, cached across all tickers sharing a
+    # sector (macro) or the whole run (superinvestor) — see crew.py callers.
+    db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
+    db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
 
 
 def query_db(collection: str, filter: dict, limit: int = 100, db: Database | None = None) -> list:
