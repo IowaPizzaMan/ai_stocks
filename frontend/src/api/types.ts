@@ -123,6 +123,15 @@ export interface SentimentReport {
   cautious_keywords: { terms: string[]; count: number };
 }
 
+export interface SectorSummary {
+  sector: string;
+  bullish_count: number;
+  bearish_count: number;
+  neutral_count: number;
+  ticker_count: number;
+  top_ticker: string | null;
+}
+
 export interface FeedResponse {
   items: AnalysisFeedItem[];
   total: number;
