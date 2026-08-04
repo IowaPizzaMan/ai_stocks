@@ -279,6 +279,108 @@ export interface InstitutionalFlowResponse {
   page_size: number;
 }
 
+// Raw FMP payload shapes returned by GET /stocks/{ticker}/financials — the
+// backend passes these through unchanged (agent-runner/tools/financials.py
+// caches FMP's stable/ratios + stable/key-metrics responses verbatim), so
+// these field names are FMP's real field names, not an app-defined schema.
+// Only fields actually read by FundamentalsTab are typed explicitly; each
+// interface keeps an index signature for the rest of FMP's payload.
+// Arrays are newest-first (FMP convention) — reverse for chronological x-axes.
+export interface FMPIncomeStatement {
+  date: string;
+  period: string;
+  calendarYear?: string;
+  revenue: number;
+  grossProfit: number;
+  operatingIncome: number;
+  netIncome: number;
+  eps: number;
+  epsDiluted: number;
+  sellingGeneralAndAdministrativeExpenses?: number;
+  generalAndAdministrativeExpenses?: number;
+  sellingAndMarketingExpenses?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPBalanceSheetStatement {
+  date: string;
+  totalCurrentAssets: number;
+  totalCurrentLiabilities: number;
+  totalDebt: number;
+  cashAndCashEquivalents: number;
+  netDebt: number;
+  totalStockholdersEquity: number;
+  accruedExpenses?: number;
+  taxPayables?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPCashFlowStatement {
+  date: string;
+  netIncome?: number;
+  operatingCashFlow: number;
+  capitalExpenditure: number;
+  freeCashFlow: number;
+  commonStockRepurchased?: number;
+  commonDividendsPaid?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPRatios {
+  date: string;
+  priceToEarningsRatio: number | null;
+  priceToSalesRatio: number | null;
+  priceToBookRatio: number | null;
+  enterpriseValueMultiple: number | null; // canonical EV/EBITDA — key_metrics.evToEBITDA is a duplicate, don't chart both
+  priceToFreeCashFlowRatio: number | null;
+  priceToEarningsGrowthRatio: number | null; // PEG — unstable near-zero growth, clamp before charting
+  dividendYield: number | null;
+  grossProfitMargin: number | null;
+  operatingProfitMargin: number | null;
+  ebitdaMargin: number | null;
+  netProfitMargin: number | null;
+  debtToEquityRatio: number | null;
+  currentRatio: number | null;
+  quickRatio: number | null;
+  operatingCashFlowRatio: number | null;
+  interestCoverageRatio: number | null; // renders as 0 near-zero net interest expense — treat as "N/A" below a threshold
+  [key: string]: unknown;
+}
+
+export interface FMPKeyMetrics {
+  date: string;
+  returnOnEquity: number | null; // can exceed 100% for heavy-buyback companies — needs a caption, not a bug
+  returnOnInvestedCapital: number | null;
+  returnOnAssets: number | null;
+  returnOnCapitalEmployed?: number | null;
+  freeCashFlowYield: number | null;
+  capexToRevenue?: number | null;
+  daysOfSalesOutstanding: number | null;
+  daysOfInventoryOutstanding: number | null;
+  daysOfPayablesOutstanding: number | null;
+  cashConversionCycle: number | null;
+  evToEBITDA?: number | null; // duplicate of ratios.enterpriseValueMultiple — don't chart this one
+  [key: string]: unknown;
+}
+
+export interface FMPGrowth {
+  date: string;
+  growthRevenue: number | null;
+  growthNetIncome: number | null;
+  growthEPS: number | null;
+  [key: string]: unknown;
+}
+
+export interface StockFinancials {
+  income_annual: FMPIncomeStatement[];
+  income_quarterly: FMPIncomeStatement[];
+  balance_annual: FMPBalanceSheetStatement[];
+  cashflow_annual: FMPCashFlowStatement[];
+  ratios: FMPRatios[];
+  key_metrics: FMPKeyMetrics[];
+  growth: FMPGrowth[];
+}
+
 export interface WatchlistItem {
   ticker: string;
   name?: string | null;

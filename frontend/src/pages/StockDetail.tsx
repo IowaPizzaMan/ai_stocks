@@ -168,7 +168,7 @@ export default function StockDetail() {
           <div className="mt-6">
             {activeTab === "overview" && <OverviewTab analysis={latest} />}
             {activeTab === "technicals" && <TechnicalsTab technical={latest.sub_reports?.technical} />}
-            {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} />}
+            {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} ticker={ticker} />}
             {activeTab === "insider" && <InsiderTab insider={latest.sub_reports?.insider} />}
             {activeTab === "institutional" && <InstitutionalTab institutional={latest.sub_reports?.institutional} />}
             {activeTab === "sentiment" && <SentimentTab sentiment={latest.sub_reports?.sentiment} />}

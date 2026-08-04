@@ -1,7 +1,7 @@
 // Price bars for charts, at the bar resolution matching each timeframe.
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import type { OHLCVBar, PriceResponse } from "../api/types";
+import type { OHLCVBar, PriceResponse, StockFinancials } from "../api/types";
 import { TIMEFRAME_RESOLUTION, type Timeframe } from "../lib/strat/displayWindow";
 
 async function fetchBars(ticker: string, resolution: string): Promise<OHLCVBar[]> {
@@ -55,8 +55,8 @@ export function useStockFinancials(ticker: string) {
   return useQuery({
     queryKey: ["financials", ticker.toUpperCase()],
     queryFn: async () => {
-      const { data } = await api.get(`/stocks/${ticker}/financials`);
-      return data as Record<string, unknown>;
+      const { data } = await api.get<StockFinancials>(`/stocks/${ticker}/financials`);
+      return data;
     },
     enabled: !!ticker,
     retry: false,
