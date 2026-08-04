@@ -194,11 +194,15 @@ class Crew:
         synthesis = portfolio_strategist.run(ticker, sub_reports, recent_lows=recent_lows,
                                              client=self.client)
 
-        # 4. final analyses document
+        # 4. final analyses document — the two recent_* flags ride top-level
+        # (like sector/signal) so the feed projection serves them to the cards
         return {
             "ticker": ticker,
             "timestamp": datetime.now(timezone.utc),
             **synthesis,
+            "recent_institutional_activity":
+                institutional_tool.recent_activity_direction(data["institutional"] or {}),
+            "recent_insider_summary": (data["insider"] or {}).get("recent_summary"),
             "sub_reports": sub_reports,
         }
 

@@ -17,6 +17,9 @@ export interface AnalysisFeedItem {
   flags: string[];
   sector?: string | null;
   position_management?: PositionManagement;
+  // Feed flags — absent on analyses written before these existed
+  recent_institutional_activity?: "buying" | "selling" | "mixed" | null;
+  recent_insider_summary?: string | null; // e.g. "10 buys, 2 sells"
 }
 
 export interface Analysis extends AnalysisFeedItem {

@@ -104,6 +104,10 @@ def test_run_produces_full_analyses_document():
     assert doc["sub_reports"]["insider"]["net_direction"] == "balanced"
     assert doc["sub_reports"]["sentiment"]["news_count"] == 0
     assert len(doc["position_management"]["stair_step_stops"]) > 0
+    # feed flag fields ride top-level (5 increasing vs 5 decreasing → mixed;
+    # the insider stub has no recent_summary → None)
+    assert doc["recent_institutional_activity"] == "mixed"
+    assert doc["recent_insider_summary"] is None
     # eight LLM calls: tech, fund, macro, insider, institutional, sentiment,
     # recommender, strategist
     assert len(crew.client.calls) == 8

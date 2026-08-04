@@ -6,9 +6,18 @@ import { relativeTime } from "../../lib/time";
 import ConvictionMeter from "../shared/ConvictionMeter";
 import SignalBadge from "../shared/SignalBadge";
 
+const INSTITUTIONAL_FLAG: Record<string, { label: string; className: string }> = {
+  buying: { label: "↑ Institutions buying", className: "border-emerald-500/30 text-emerald-400" },
+  selling: { label: "↓ Institutions selling", className: "border-red-500/30 text-red-400" },
+  mixed: { label: "Institutions mixed", className: "border-zinc-700 text-zinc-400" },
+};
+
 export default function AnalysisCard({ analysis }: { analysis: AnalysisFeedItem }) {
   const navigate = useNavigate();
   const addToWatchlist = useAddToWatchlist();
+  const instFlag = analysis.recent_institutional_activity
+    ? INSTITUTIONAL_FLAG[analysis.recent_institutional_activity]
+    : undefined;
 
   return (
     <article
@@ -32,6 +41,21 @@ export default function AnalysisCard({ analysis }: { analysis: AnalysisFeedItem 
 
       {analysis.flags.length > 0 && (
         <p className="mb-3 text-xs text-amber-400">⚑ {analysis.flags[0]}</p>
+      )}
+
+      {(instFlag || analysis.recent_insider_summary) && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {instFlag && (
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs ${instFlag.className}`}>
+              {instFlag.label}
+            </span>
+          )}
+          {analysis.recent_insider_summary && (
+            <span className="rounded-full border border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-400">
+              insiders: {analysis.recent_insider_summary}
+            </span>
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-between">
