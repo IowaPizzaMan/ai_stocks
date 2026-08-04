@@ -97,14 +97,6 @@
 
 ## Unbuilt / unfinished features
 
-- **Sectors page/router is genuinely unbuilt — it fell through the cracks
-  between phases.** The page scaffold says "Phase 5" and the backend
-  `/sectors` router stub says "Phase 4", but neither phase's delivered scope
-  actually included it (Phase 4 shipped analysis/queue/watchlist/stocks
-  routers; Phase 5 shipped agents + Stock Detail tabs). The specs exist and
-  are straightforward: a sector-card overview and a per-sector signal heatmap
-  built from existing `analyses` data (`Sectors.md`, plus the backend router
-  spec) — all the data it needs is already in Mongo.
 - **Admin page was never scaffolded into a route.** Spec exists
   (`Admin.md`), no `frontend/src/pages/Admin.tsx` and no route in `App.tsx`.
 
@@ -134,6 +126,10 @@
 
 ## Fixed
 
+- ~~Sectors page/router unbuilt (fell through the cracks between phases)~~ —
+  built 2026-08-03: `GET /sectors` rollup + `/sectors/{sector}` alias in the
+  backend, and the full Sectors page (signal-mix summary chart, sector cards,
+  conviction-weighted heatmap + sorted list, "View in Feed" cross-links).
 - ~~Institutional flow scans registered AND enqueued every event ticker~~
   (spec'd auto-ingest — the first live scan queued 26 crew runs at agent-runner
   startup) — removed 2026-08-02 at the user's request, same deviation as the
