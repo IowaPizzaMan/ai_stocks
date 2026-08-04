@@ -66,7 +66,11 @@ A stock research and tracking app that goes far beyond price. StockAI synthesize
 - Data fetched in parallel across agents for speed
 - Post-earnings tracking: after a company reports, log the actual price move and compare to the predicted setup
 
-### 10. [More to come]
+### 10. Company Enrichment (logos, website intel)
+- **Company logos** next to tickers across the UI (search results, feed cards, watchlist rows, stock detail header) — likely already covered by FMP's `v3/profile/{symbol}` `image` field, needs a quick verification spike rather than a new integration. See `DATA_SOURCES.md` → "Company Logos."
+- **Company website scraping** — pull each company's website/IR page via Playwright (reusing the Dataroma scraping pattern) for qualitative signal financial statements don't carry. Deferred, unresearched — see `DATA_SOURCES.md` → "Company Website Scraping."
+
+### 11. [More to come]
 - *(Placeholder for additional ideas)*
 
 ---

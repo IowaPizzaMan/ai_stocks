@@ -8,24 +8,28 @@ Endpoints for reading analysis results. The frontend's primary data source — p
 ### `GET /analysis/feed`
 Paginated list of analyses, newest first. Powers the home feed.
 
-**Query params:** `page=1`, `page_size=20`, `signal=bullish|bearish|neutral`, `sector=`, `conviction=high|medium|low`, `from_date=`, `to_date=`
+**Query params:** `page=1`, `page_size=20`, `ticker=`, `signal=bullish|bearish|neutral`, `sector=`, `conviction=high|medium|low`, `from_date=`, `to_date=`, `institutional_activity=buying|selling` (see `FilterBar.md` "Strategy Filters (Phase 2)" — undecided/not yet scored, param shape spec'd ahead of the backing data)
 
 ```python
 @router.get("/analysis/feed", response_model=AnalysisFeedResponse)
 def get_feed(
     page: int = 1,
     page_size: int = 20,
+    ticker: str | None = None,
     signal: str | None = None,
     sector: str | None = None,
     conviction: str | None = None,
     from_date: datetime | None = None,
     to_date: datetime | None = None,
+    institutional_activity: str | None = None,
     db = Depends(db_dependency)
 ):
     filter = {}
+    if ticker: filter["ticker"] = { "$regex": f"^{re.escape(ticker)}", "$options": "i" }
     if signal: filter["signal"] = signal
     if sector: filter["sector"] = sector
     if conviction: filter["conviction"] = conviction
+    if institutional_activity: filter["recent_institutional_activity"] = institutional_activity
     if from_date or to_date:
         filter["timestamp"] = {}
         if from_date: filter["timestamp"]["$gte"] = from_date

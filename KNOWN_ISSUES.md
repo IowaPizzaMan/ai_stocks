@@ -19,6 +19,13 @@
   and the frontend polls it indefinitely (no client-side timeout either).
   Workaround: manually flip the doc's status in Mongo. Fix belongs in
   `earnings_scan_worker.py` + a poll cap in `useEarningsScan`.
+- **1M price chart looks wrong — weekly-change and monthly-change values appear
+  swapped.** Reported by Neal while using the app (2026-08-03); not yet
+  root-caused in code. `PriceChart.tsx`'s `1M` timeframe renders daily candles
+  over a 30/21-day display window (`displayWindow.ts`), so the bug is more
+  likely in wherever weekly/monthly % change stats are computed/labeled for
+  display than in the candle data itself — needs a repro in the running app
+  to pin down which component reads the wrong field.
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
