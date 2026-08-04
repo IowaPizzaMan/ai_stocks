@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type { Analysis, FeedResponse } from "../api/types";
 
 export interface FeedFilters {
+  ticker?: string; // substring match, server-side (FilterBar search input)
   signal?: string;
   sector?: string;
   conviction?: string;

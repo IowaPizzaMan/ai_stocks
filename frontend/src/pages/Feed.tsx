@@ -10,6 +10,7 @@ import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 export default function Feed() {
   const [searchParams] = useSearchParams();
   const filters = {
+    ticker: searchParams.get("ticker") ?? undefined,
     signal: searchParams.get("signal") ?? undefined,
     sector: searchParams.get("sector") ?? undefined,
     conviction: searchParams.get("conviction") ?? undefined,
