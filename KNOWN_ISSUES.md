@@ -6,6 +6,12 @@
 
 ## Open bugs
 
+- **LLM JSON parsing failures fall back to templated theses.** When Ollama returns
+  malformed JSON, the system retries once (2 attempts total), then defaults to a
+  templated thesis line instead of a generated one. Observed in production
+  (2026-08-02/08-03 logs). Affects thesis quality for top candidates but
+  doesn't block the scan. Fix belongs in the LLM retry/timeout logic or prompt
+  validation.
 - **Stale earnings scans are never recovered.** `work_queue` jobs stuck in
   `running` get reset to `pending` on agent-runner startup
   (`queue_worker.recover_stale_jobs`), but `earnings_scans` docs have no such
