@@ -1,4 +1,5 @@
 """Spec: specs/component-specs/backend/routers/analysis.md"""
+import re
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
@@ -13,6 +14,7 @@ router = APIRouter(prefix="/analysis", tags=["analysis"])
 def get_feed(
     page: int = 1,
     page_size: int = 20,
+    ticker: str | None = None,
     signal: str | None = None,
     sector: str | None = None,
     conviction: str | None = None,
@@ -21,6 +23,9 @@ def get_feed(
     db=Depends(db_dependency),
 ):
     filter: dict = {}
+    if ticker:
+        # substring match so partial typing narrows as-you-go (FilterBar search)
+        filter["ticker"] = {"$regex": re.escape(ticker), "$options": "i"}
     if signal:
         filter["signal"] = signal
     if sector:

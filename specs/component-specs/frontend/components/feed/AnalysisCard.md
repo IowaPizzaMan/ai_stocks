@@ -19,9 +19,17 @@ interface AnalysisCardProps {
 │ by cluster insider buying, 4/5 accumulation score,   │
 │ and NYMO oversold bounce conditions...               │
 │                                                      │
+│ [↑ Institutions buying]  [10 buys, 2 sells]          │
 │ ●●●  High conviction   ·  [+ Watchlist]             │
 └─────────────────────────────────────────────────────┘
 ```
+
+### Flag Row (optional, above the footer)
+When `analysis.recent_institutional_activity` and/or `analysis.recent_insider_summary` (see `backend/models/analysis.md`) are present, render small pill badges between the summary and the footer — same visual weight as `SignalBadge` but muted (`text-slate-400 border-slate-700`), not competing with the primary signal badge in the header:
+- `recent_institutional_activity` → "↑ Institutions buying" (emerald tint) / "↓ Institutions selling" (red tint) / "Institutions mixed" (slate)
+- `recent_insider_summary` → rendered as-is (e.g. "10 buys, 2 sells")
+
+Both are `null` until the backing scan/score exists (see `FilterBar.md` "Strategy Filters (Phase 2)") — the row simply doesn't render when both are absent, so today's cards are unaffected.
 
 ## Implementation
 

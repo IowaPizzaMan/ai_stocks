@@ -1,6 +1,7 @@
 // Feed filter bar + the Pull controls (ticker input, Pull, Run All, queue chip)
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useEnqueueAll, useEnqueueTicker, useQueueStatus } from "../../hooks/useQueue";
 
 const SIGNALS = ["bullish", "bearish", "neutral"];
@@ -9,11 +10,27 @@ const CONVICTIONS = ["high", "medium", "low"];
 export default function FilterBar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [ticker, setTicker] = useState("");
+  // Feed search — filters the feed in place as you type; distinct from the
+  // Pull input, which enqueues a new analysis.
+  const [search, setSearch] = useState(searchParams.get("ticker") ?? "");
+  const debouncedSearch = useDebounce(search.trim());
   const enqueue = useEnqueueTicker();
   const enqueueAll = useEnqueueAll();
   const { data: queue } = useQueueStatus();
 
   const busyCount = (queue?.pending_count ?? 0) + (queue?.running_count ?? 0);
+
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (debouncedSearch) next.set("ticker", debouncedSearch);
+        else next.delete("ticker");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [debouncedSearch, setSearchParams]);
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -70,6 +87,14 @@ export default function FilterBar() {
         )}
 
         <span className="mx-2 hidden h-5 w-px bg-zinc-800 sm:block" />
+
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Filter by ticker…"
+          aria-label="Filter feed by ticker"
+          className="w-36 rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs uppercase placeholder:normal-case placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
+        />
 
         {SIGNALS.map((s) => (
           <button

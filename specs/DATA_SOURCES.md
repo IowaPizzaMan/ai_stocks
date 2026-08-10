@@ -74,6 +74,15 @@
 | `v3/form-thirteen/{cik}?date=` | 13F holdings for a fund on a given date: ticker, shares, value, % |
 | `v3/form-thirteen-date/{cik}` | All 13F filing dates for a given fund |
 | `v3/stock-screener` | Screen stocks by market cap, sector, volume, price, country, etc. |
+| `v3/profile/{symbol}` | Company profile: name, description, sector, industry, exchange, CEO, employees, website URL, and a hosted **company logo image URL** (`image` field) — no separate logo API needed, see "Company Logos" below |
+
+### Field Notes & Data Quality Caveats (from reviewing a real payload — see `FundamentalsTab.md` for the full chart-by-chart breakdown)
+- **Duplicate fields across endpoints** — `ratios` and `key_metrics` both return several identical values: `enterpriseValueMultiple` (`ratios`) === `evToEBITDA` (`key_metrics`); `priceToFreeCashFlowRatio` (`ratios`) is the inverse of `freeCashFlowYield` (`key_metrics`); `currentRatio` appears identically in both. Pick one canonical source per metric rather than fetching/storing both.
+- **SG&A sub-line inconsistency** — `generalAndAdministrativeExpenses` and `sellingAndMarketingExpenses` flip between `0` and a real populated value across years for the same company, purely from FMP filing-categorization changes, not an actual business shift. Use the combined `sellingGeneralAndAdministrativeExpenses` field for anything trend-charted.
+- Same categorization-noise pattern hits `accruedExpenses` / `taxPayables` on the balance sheet.
+- **`interestCoverageRatio` reports `0`** (not null) when net interest expense is near-zero — treat as "N/A," not literal zero coverage.
+- **`priceToEarningsGrowthRatio` (PEG) is unstable** in low/negative-growth years since it divides by a near-zero growth rate — don't trend it without a sanity clamp.
+- **`returnOnEquity` and `debtToEquityRatio` can look distorted for heavy buyback companies** — shrinking `totalStockholdersEquity` from repurchases can push ROE past 100% or make leverage look like it's falling when debt is actually flat. Not a data bug; needs a caption/tooltip wherever shown.
 
 ---
 
@@ -205,6 +214,28 @@
 
 ---
 
+## Company Logos
+
+> ⚠️ **UNRESEARCHED — needs a quick spike, not a full phase.** Likely already solved by FMP.
+
+**Candidate source:** FMP `v3/profile/{symbol}` returns an `image` field — a hosted logo URL — as part of the company profile call already needed for name/sector/industry/website. If that URL proves reliable (uptime, coverage across the ticker universe, no extra API cost beyond the profile call already budgeted), no dedicated logo API is needed. Fallback candidates if FMP's coverage has gaps: Clearbit Logo API (`logo.clearbit.com/{domain}`, free, no key, keyed off the company website domain — see "Company Website" below) or `financialmodelingprep.com/image-stock/{symbol}.png` (undocumented CDN path FMP also serves logos from).
+
+**Where it'd be used:** `Navbar` search results, `AnalysisCard`, `Sidebar` watchlist rows, `StockDetail` header — anywhere a ticker is shown standalone, a small logo reduces scanning time vs. ticker text alone.
+
+## Company Website Scraping
+
+> ⚠️ **DEFERRED — not researched, no scoring/extraction design yet.** Placeholder for a future phase, same status as Quiver Quantitative above.
+
+**Idea:** Pull each company's website URL from FMP's `v3/profile/{symbol}` (`website` field), then crawl it with Playwright (already a project dependency for Dataroma scraping — see `component-specs/agent-runner/tools/superinvestor.py`) to pull qualitative signal that structured financial data doesn't capture — investor relations pages, press releases, product announcements. Open questions before this becomes a real spec: what pages to crawl (IR page? full site?), what to extract (raw text for the chunker/summarizer pipeline, same pattern as `superinvestor.py`'s Ollama extraction?), how to avoid re-crawling unchanged pages, and respectful crawl-rate limits per site (same concern noted for the Dataroma scraper).
+
+## Switching Primary Price Data Source
+
+> Under consideration, not yet decided.
+
+yfinance (current primary, see above) doesn't cover every ticker the user wants tracked — some tickers return empty/errored history. FMP's `v3/historical-price-full/{symbol}` is a viable replacement and is already paid for at $20/mo, but switching wholesale would materially increase FMP call volume against the 250/day (free tier) or paid-tier budget, competing with the financials/ratios/insider calls FMP already serves. Needs: (1) a coverage comparison — which tickers yfinance actually fails on, and whether FMP covers those specifically, (2) a decision on whether FMP replaces yfinance entirely for price or only backfills the gap tickers (keeping yfinance primary, FMP as a per-ticker fallback — consistent with the "Backup" column pattern already used elsewhere in the Coverage Map below). Also worth a broader pass on what else the $20/mo FMP tier unlocks beyond price data, since the plan tier isn't fully mapped in this doc yet.
+
+---
+
 ## Coverage Map — What Each Source Owns
 
 | Data Need | Primary Source | Backup |
@@ -229,7 +260,9 @@
 | Dark pool / off-exchange volume | Quiver | — |
 | ESG scores | yfinance | — |
 | Analyst ratings & price targets | yfinance · Finnhub · FMP | — |
+| Company logo | FMP `profile.image` (unresearched — see "Company Logos") | Clearbit Logo API · FMP CDN image path |
+| Company website / IR page content | FMP `profile.website` + Playwright crawl (deferred — see "Company Website Scraping") | — |
 
 ---
 
-*Last updated: 2026-08-01*
+*Last updated: 2026-08-03*

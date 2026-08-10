@@ -17,6 +17,9 @@ export interface AnalysisFeedItem {
   flags: string[];
   sector?: string | null;
   position_management?: PositionManagement;
+  // Feed flags — absent on analyses written before these existed
+  recent_institutional_activity?: "buying" | "selling" | "mixed" | null;
+  recent_insider_summary?: string | null; // e.g. "10 buys, 2 sells"
 }
 
 export interface Analysis extends AnalysisFeedItem {
@@ -85,6 +88,7 @@ export interface InsiderReport {
   mspr_trend: { direction: string; commentary: string };
   unusual_size: string;
   signal_strength: string;
+  as_of?: string | null; // most recent Form 4 transaction date in the lookback window
 }
 
 export interface InstitutionalReport {
@@ -105,6 +109,7 @@ export interface InstitutionalReport {
   superinvestor_moves: { fund: string; action: string; ticker: string; detail?: string }[];
   superinvestor_read: string;
   concentration_assessment: string;
+  as_of?: string | null; // same date as institutional_summary.as_of, at top level for consistency
 }
 
 export interface SentimentReport {
@@ -118,6 +123,16 @@ export interface SentimentReport {
   transcripts_available: boolean;
   bullish_keywords: { terms: string[]; count: number };
   cautious_keywords: { terms: string[]; count: number };
+  as_of?: string | null; // most recent headline date in the news window
+}
+
+export interface SectorSummary {
+  sector: string;
+  bullish_count: number;
+  bearish_count: number;
+  neutral_count: number;
+  ticker_count: number;
+  top_ticker: string | null;
 }
 
 export interface FeedResponse {
@@ -138,6 +153,7 @@ export interface TechnicalReport {
   accumulation_result?: { accumulation_score: number; signal: string; rationale?: string };
   gap_result?: { signal?: string };
   strat_result?: { signal?: string; tfc?: { status: string } };
+  as_of?: string | null; // latest daily price bar this read is based on
 }
 
 export interface FundamentalReport {
@@ -149,6 +165,7 @@ export interface FundamentalReport {
   balance_sheet_health?: { assessment: string };
   fcf_profile?: { assessment: string };
   valuation_assessment?: { view: string };
+  as_of?: string | null; // most recent reported statement date
 }
 
 export interface RecommendationReport {
@@ -167,6 +184,70 @@ export interface RecommendationReport {
     latest_gap: { direction: string; type: string; score: number } | null;
     exhaustion_present: boolean;
   };
+}
+
+// --- Market breadth (GET /market/breadth) ------------------------------------
+// Served from breadth_cache; the oscillator math and divergence detection run
+// in agent-runner/tools/breadth.py, not here.
+
+export type DivergenceType = "bullish" | "bearish" | "none";
+
+export interface BreadthPoint {
+  date: string;
+  value: number;
+}
+
+export interface SpyPoint {
+  date: string;
+  close: number;
+}
+
+export interface DivergenceAnchor {
+  date: string;
+  value: number;
+}
+
+export interface Divergence {
+  type: DivergenceType;
+  description: string;
+  // The two swing highs/lows on each series — the chart draws its
+  // opposite-sloping trend lines straight from these.
+  price_points: DivergenceAnchor[];
+  osc_points: DivergenceAnchor[];
+}
+
+export interface ResolvedDivergence {
+  type: Exclude<DivergenceType, "none">;
+  detected_on: string;
+  resolved: string;
+  anchor_dates: string[];
+  description?: string | null;
+  spy_change_5d: number | null; // SPY follow-through after the resolution date
+  spy_change_10d: number | null;
+}
+
+export interface MarketBreadth {
+  spy: SpyPoint[];
+  nymo: BreadthPoint[];
+  namo: BreadthPoint[];
+  divergence: Divergence;
+  divergence_history: ResolvedDivergence[];
+  as_of: string | null;
+  method: string;
+}
+
+export interface MarketFlowEvent {
+  event_id: string;
+  category: "market_flow";
+  kind: "breadth_divergence";
+  divergence_type: Exclude<DivergenceType, "none">;
+  headline: string;
+  body: string;
+  price_points: DivergenceAnchor[];
+  osc_points: DivergenceAnchor[];
+  nymo_current: number | null;
+  detected_on: string;
+  created_at: string;
 }
 
 export interface QueueJob {
@@ -277,6 +358,108 @@ export interface InstitutionalFlowResponse {
   total: number;
   page: number;
   page_size: number;
+}
+
+// Raw FMP payload shapes returned by GET /stocks/{ticker}/financials — the
+// backend passes these through unchanged (agent-runner/tools/financials.py
+// caches FMP's stable/ratios + stable/key-metrics responses verbatim), so
+// these field names are FMP's real field names, not an app-defined schema.
+// Only fields actually read by FundamentalsTab are typed explicitly; each
+// interface keeps an index signature for the rest of FMP's payload.
+// Arrays are newest-first (FMP convention) — reverse for chronological x-axes.
+export interface FMPIncomeStatement {
+  date: string;
+  period: string;
+  calendarYear?: string;
+  revenue: number;
+  grossProfit: number;
+  operatingIncome: number;
+  netIncome: number;
+  eps: number;
+  epsDiluted: number;
+  sellingGeneralAndAdministrativeExpenses?: number;
+  generalAndAdministrativeExpenses?: number;
+  sellingAndMarketingExpenses?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPBalanceSheetStatement {
+  date: string;
+  totalCurrentAssets: number;
+  totalCurrentLiabilities: number;
+  totalDebt: number;
+  cashAndCashEquivalents: number;
+  netDebt: number;
+  totalStockholdersEquity: number;
+  accruedExpenses?: number;
+  taxPayables?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPCashFlowStatement {
+  date: string;
+  netIncome?: number;
+  operatingCashFlow: number;
+  capitalExpenditure: number;
+  freeCashFlow: number;
+  commonStockRepurchased?: number;
+  commonDividendsPaid?: number;
+  [key: string]: unknown;
+}
+
+export interface FMPRatios {
+  date: string;
+  priceToEarningsRatio: number | null;
+  priceToSalesRatio: number | null;
+  priceToBookRatio: number | null;
+  enterpriseValueMultiple: number | null; // canonical EV/EBITDA — key_metrics.evToEBITDA is a duplicate, don't chart both
+  priceToFreeCashFlowRatio: number | null;
+  priceToEarningsGrowthRatio: number | null; // PEG — unstable near-zero growth, clamp before charting
+  dividendYield: number | null;
+  grossProfitMargin: number | null;
+  operatingProfitMargin: number | null;
+  ebitdaMargin: number | null;
+  netProfitMargin: number | null;
+  debtToEquityRatio: number | null;
+  currentRatio: number | null;
+  quickRatio: number | null;
+  operatingCashFlowRatio: number | null;
+  interestCoverageRatio: number | null; // renders as 0 near-zero net interest expense — treat as "N/A" below a threshold
+  [key: string]: unknown;
+}
+
+export interface FMPKeyMetrics {
+  date: string;
+  returnOnEquity: number | null; // can exceed 100% for heavy-buyback companies — needs a caption, not a bug
+  returnOnInvestedCapital: number | null;
+  returnOnAssets: number | null;
+  returnOnCapitalEmployed?: number | null;
+  freeCashFlowYield: number | null;
+  capexToRevenue?: number | null;
+  daysOfSalesOutstanding: number | null;
+  daysOfInventoryOutstanding: number | null;
+  daysOfPayablesOutstanding: number | null;
+  cashConversionCycle: number | null;
+  evToEBITDA?: number | null; // duplicate of ratios.enterpriseValueMultiple — don't chart this one
+  [key: string]: unknown;
+}
+
+export interface FMPGrowth {
+  date: string;
+  growthRevenue: number | null;
+  growthNetIncome: number | null;
+  growthEPS: number | null;
+  [key: string]: unknown;
+}
+
+export interface StockFinancials {
+  income_annual: FMPIncomeStatement[];
+  income_quarterly: FMPIncomeStatement[];
+  balance_annual: FMPBalanceSheetStatement[];
+  cashflow_annual: FMPCashFlowStatement[];
+  ratios: FMPRatios[];
+  key_metrics: FMPKeyMetrics[];
+  growth: FMPGrowth[];
 }
 
 export interface WatchlistItem {

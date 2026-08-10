@@ -1,15 +1,5 @@
 // Stock Detail tab content: Technicals / Fundamentals / Insider / Institutional / Sentiment.
 // Specs: specs/component-specs/frontend/components/stock/*.md (Phase 5 scope)
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import type {
   FundamentalReport,
   InsiderReport,
@@ -17,7 +7,10 @@ import type {
   SentimentReport,
   TechnicalReport,
 } from "../../api/types";
-import { CHART_DEFAULTS } from "../../lib/constants";
+import { useStockFinancials } from "../../hooks/usePriceHistory";
+import { formatDate } from "../../lib/time";
+import DataAsOf from "../shared/DataAsOf";
+import FundamentalsCharts from "./FundamentalsCharts";
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -35,11 +28,6 @@ function Pill({ children }: { children: React.ReactNode }) {
 function Empty({ what }: { what: string }) {
   return <p className="py-8 text-center text-sm text-zinc-600">No {what} in the latest analysis — pull a fresh one.</p>;
 }
-
-const tooltipStyle = {
-  contentStyle: { backgroundColor: "#09090b", border: "1px solid #27272a", borderRadius: 8, fontSize: 12 },
-  labelStyle: { color: "#a1a1aa" },
-};
 
 // --- Technicals --------------------------------------------------------------
 
@@ -89,6 +77,7 @@ export function TechnicalsTab({ technical }: { technical?: TechnicalReport }) {
       )}
 
       <Section title="Narratives">
+        <DataAsOf date={technical.as_of} className="mb-3 text-xs text-zinc-600" />
         <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
           <p><span className="text-zinc-500">Momentum — </span>{technical.momentum_summary}</p>
           <p><span className="text-zinc-500">TFC — </span>{technical.tfc_narrative}</p>
@@ -133,58 +122,31 @@ export function TechnicalsTab({ technical }: { technical?: TechnicalReport }) {
 
 // --- Fundamentals ------------------------------------------------------------
 
-export function FundamentalsTab({ fundamental }: { fundamental?: FundamentalReport }) {
-  if (!fundamental) return <Empty what="fundamental sub-report" />;
-  const revenue = (fundamental.revenue_trend?.history_annual ?? []) as {
-    period: string; revenue_bn: number | null; net_income_bn: number | null; yoy_growth_pct: number | null;
-  }[];
-  const margins = ((fundamental.margin_trend as unknown as { history_annual?: unknown })?.history_annual ?? []) as {
-    period: string; gross: number; operating: number; net: number;
-  }[];
+export function FundamentalsTab({ fundamental, ticker }: { fundamental?: FundamentalReport; ticker: string }) {
+  const { data: financials, isLoading } = useStockFinancials(ticker);
+
+  if (!fundamental && !financials && !isLoading) return <Empty what="fundamental data" />;
 
   return (
     <div className="space-y-4">
-      <Section title="Assessment">
-        <p className="mb-3 text-sm leading-relaxed text-zinc-300">{fundamental.narrative}</p>
-        <div className="flex flex-wrap gap-2">
-          <Pill>revenue: {fundamental.revenue_trend?.direction}</Pill>
-          <Pill>margins: {fundamental.margin_trend?.direction}</Pill>
-          <Pill>balance sheet: {fundamental.balance_sheet_health?.assessment}</Pill>
-          <Pill>FCF: {fundamental.fcf_profile?.assessment}</Pill>
-          <Pill>valuation: {fundamental.valuation_assessment?.view}</Pill>
-        </div>
-      </Section>
-
-      {revenue.length > 0 && (
-        <Section title="Revenue & net income (annual, $B)">
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={revenue}>
-              <CartesianGrid stroke={CHART_DEFAULTS.gridColor} vertical={false} />
-              <XAxis dataKey="period" tick={{ fill: CHART_DEFAULTS.textColor, fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: CHART_DEFAULTS.textColor, fontSize: 11 }} tickLine={false} axisLine={false} width={45} />
-              <Bar dataKey="revenue_bn" name="Revenue" fill={CHART_DEFAULTS.accentColor} opacity={0.7} isAnimationActive={false} />
-              <Bar dataKey="net_income_bn" name="Net income" fill={CHART_DEFAULTS.bullishColor} opacity={0.7} isAnimationActive={false} />
-              <Tooltip {...tooltipStyle} />
-            </ComposedChart>
-          </ResponsiveContainer>
+      {fundamental && (
+        <Section title="Assessment">
+          <DataAsOf date={fundamental.as_of} label="latest statement" className="mb-3 text-xs text-zinc-600" />
+          <p className="mb-3 text-sm leading-relaxed text-zinc-300">{fundamental.narrative}</p>
+          <div className="flex flex-wrap gap-2">
+            <Pill>revenue: {fundamental.revenue_trend?.direction}</Pill>
+            <Pill>margins: {fundamental.margin_trend?.direction}</Pill>
+            <Pill>balance sheet: {fundamental.balance_sheet_health?.assessment}</Pill>
+            <Pill>FCF: {fundamental.fcf_profile?.assessment}</Pill>
+            <Pill>valuation: {fundamental.valuation_assessment?.view}</Pill>
+          </div>
         </Section>
       )}
 
-      {margins.length > 0 && (
-        <Section title="Margins % (annual)">
-          <ResponsiveContainer width="100%" height={200}>
-            <ComposedChart data={margins}>
-              <CartesianGrid stroke={CHART_DEFAULTS.gridColor} vertical={false} />
-              <XAxis dataKey="period" tick={{ fill: CHART_DEFAULTS.textColor, fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: CHART_DEFAULTS.textColor, fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
-              <Line type="monotone" dataKey="gross" stroke="#facc15" dot strokeWidth={2} isAnimationActive={false} />
-              <Line type="monotone" dataKey="operating" stroke={CHART_DEFAULTS.accentColor} dot strokeWidth={2} isAnimationActive={false} />
-              <Line type="monotone" dataKey="net" stroke={CHART_DEFAULTS.bullishColor} dot strokeWidth={2} isAnimationActive={false} />
-              <Tooltip {...tooltipStyle} />
-            </ComposedChart>
-          </ResponsiveContainer>
-          <p className="mt-1 text-[10px] text-zinc-600">gross (yellow) · operating (blue) · net (green)</p>
-        </Section>
+      {financials ? (
+        <FundamentalsCharts financials={financials} />
+      ) : (
+        !isLoading && <Empty what="cached financial statements" />
       )}
     </div>
   );
@@ -197,6 +159,7 @@ export function InsiderTab({ insider }: { insider?: InsiderReport }) {
   return (
     <div className="space-y-4">
       <Section title={`Read — ${insider.overall_insider_signal} (${insider.signal_strength})`}>
+        <DataAsOf date={insider.as_of} label="most recent transaction" className="mb-3 text-xs text-zinc-600" />
         <p className="mb-3 text-sm leading-relaxed text-zinc-300">{insider.narrative}</p>
         <div className="flex flex-wrap gap-2">
           <Pill>net: {insider.net_direction.replaceAll("_", " ")}</Pill>
@@ -262,6 +225,7 @@ export function InstitutionalTab({ institutional }: { institutional?: Institutio
   return (
     <div className="space-y-4">
       <Section title={`Read — ${institutional.overall_institutional_signal}`}>
+        <DataAsOf date={institutional.as_of} label="13F data as of" className="mb-3 text-xs text-zinc-600" />
         <p className="mb-3 text-sm leading-relaxed text-zinc-300">{institutional.narrative}</p>
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><p className="text-xs text-zinc-500">Ownership</p><p className="font-mono text-zinc-200">{s.ownership_pct ?? "–"}%</p></div>
@@ -323,6 +287,7 @@ export function SentimentTab({ sentiment }: { sentiment?: SentimentReport }) {
         )}
         <p className="mt-3 text-xs text-zinc-600">
           based on {sentiment.news_count} headlines over 30 days
+          {formatDate(sentiment.as_of ?? "") && `, most recent ${formatDate(sentiment.as_of ?? "")}`}
           {sentiment.transcripts_available ? "" : " (earnings-call transcripts unavailable on the current data plan)"}
         </p>
       </Section>

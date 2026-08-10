@@ -41,6 +41,18 @@ def test_feed_filters(client, db):
     assert [i["ticker"] for i in items] == ["BBB"]
 
 
+def test_feed_ticker_filter_substring_case_insensitive(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("APP", NOW))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
+
+    items = client.get("/analysis/feed?ticker=ap").json()["items"]
+    assert sorted(i["ticker"] for i in items) == ["AAPL", "APP"]
+
+    # regex metacharacters in input must be escaped, not interpreted
+    assert client.get("/analysis/feed?ticker=A.P").json()["items"] == []
+
+
 def test_ticker_history(client, db):
     db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=1)))
     db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))

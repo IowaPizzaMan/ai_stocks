@@ -55,6 +55,14 @@ class AnalysisFeedItem(BaseModel):
     summary: str  # one paragraph
     sector: str | None = None
     # sub_reports intentionally excluded — too large for feed
+
+    # Feed flags (see FilterBar.md "Strategy Filters (Phase 2)" — same undecided
+    # status applies here; fields are spec'd so the card layout can be built,
+    # not yet backed by a scan/score in the agent pipeline)
+    recent_institutional_activity: Literal["buying", "selling", "mixed"] | None = None
+    # e.g. "10 buys, 2 sells" — derived from the same insider tool data as the
+    # per-ticker Insider tab, summarized over a trailing window (30d)
+    recent_insider_summary: str | None = None
 ```
 
 ### `AnalysisFeedResponse`

@@ -1,9 +1,16 @@
 """MacroAnalyst: contextualizes a ticker in the current macro regime.
 Spec: specs/component-specs/agent-runner/agents/macro_analyst.md
+
+Output is driven by shared macro data + sector, not by the ticker itself, so
+it's cached per sector for CACHE_DAYS — see `run()`'s `db` param.
 """
 import json
+from datetime import datetime, timedelta, timezone
 
 from llm import generate_json
+from tools.db import MACRO_ANALYSIS_CACHE
+
+CACHE_DAYS = 7
 
 SYSTEM = (
     "You track Federal Reserve policy, inflation readings, GDP trends, and yield curve "
@@ -55,12 +62,26 @@ def _compact(macro: dict, keep: int = 6) -> dict:
     return out
 
 
-def run(ticker: str, context: dict, client=None) -> dict:
+def run(ticker: str, context: dict, client=None, db=None) -> dict:
     """context: {'macro': get_macro_data() output, 'yield_curve':
-    get_yield_curve_status() output, 'sector': str | None}"""
+    get_yield_curve_status() output, 'sector': str | None}
+
+    `db`, when passed, caches the result per sector for CACHE_DAYS — the read
+    depends on shared macro data + sector, not the ticker, so a NVDA and an
+    AMD run the same week can share one macro read instead of paying for two.
+    Left as None (the default), the call is always fresh — used by tests that
+    call this directly with no database.
+    """
+    sector = context.get("sector") or "unknown"
+
+    if db is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=CACHE_DAYS)
+        cached = db[MACRO_ANALYSIS_CACHE].find_one({"sector": sector, "computed_at": {"$gt": cutoff}})
+        if cached:
+            return cached["result"]
+
     macro = _compact(context.get("macro") or {})
     yield_curve = context.get("yield_curve") or {}
-    sector = context.get("sector") or "unknown"
 
     prompt = f"""Assess the macro environment for {ticker} (sector: {sector}).
 
@@ -84,4 +105,11 @@ def run(ticker: str, context: dict, client=None) -> dict:
     report["rate_impact"]["fed_funds_rate"] = _latest(macro.get("FEDFUNDS"))
     report["growth_backdrop"]["yield_curve_spread"] = yield_curve.get("10y_2y_spread")
     report["growth_backdrop"]["curve_inverted"] = yield_curve.get("inverted")
+
+    if db is not None:
+        db[MACRO_ANALYSIS_CACHE].replace_one(
+            {"sector": sector},
+            {"sector": sector, "result": report, "computed_at": datetime.now(timezone.utc)},
+            upsert=True,
+        )
     return report

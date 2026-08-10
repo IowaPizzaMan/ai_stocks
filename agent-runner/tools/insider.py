@@ -72,6 +72,16 @@ def detect_cluster(transactions: list[dict],
     return best
 
 
+def summarize_counts(buy_count: int, sell_count: int) -> str | None:
+    """Feed-card summary of open-market activity ("10 buys, 2 sells"), or None
+    when there's nothing to say — absent renders as no badge, not "0 buys"."""
+    if not buy_count and not sell_count:
+        return None
+    buys = f"{buy_count} buy{'s' if buy_count != 1 else ''}"
+    sells = f"{sell_count} sell{'s' if sell_count != 1 else ''}"
+    return f"{buys}, {sells}"
+
+
 def get_insider_activity(ticker: str) -> dict:
     ticker = ticker.upper()
     to_date = date.today()
@@ -88,6 +98,10 @@ def get_insider_activity(ticker: str) -> dict:
                if t["transaction_type"] == "purchase" and t["is_open_market"])
     sells = sum(t["total_value"] for t in transactions
                 if t["transaction_type"] == "sale" and t["is_open_market"])
+    buy_count = sum(1 for t in transactions
+                    if t["transaction_type"] == "purchase" and t["is_open_market"])
+    sell_count = sum(1 for t in transactions
+                     if t["transaction_type"] == "sale" and t["is_open_market"])
 
     return {
         "transactions": transactions,
@@ -95,6 +109,9 @@ def get_insider_activity(ticker: str) -> dict:
         "cluster_signal": detect_cluster(transactions),
         "open_market_buy_value": round(buys, 2),
         "open_market_sell_value": round(sells, 2),
+        "open_market_buy_count": buy_count,
+        "open_market_sell_count": sell_count,
+        "recent_summary": summarize_counts(buy_count, sell_count),
         "net_direction": ("net_buyer" if buys > sells
                           else "net_seller" if sells > buys else "balanced"),
     }

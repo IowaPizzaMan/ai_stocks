@@ -1,4 +1,5 @@
 """MongoDB helpers for agents and tools. Spec: specs/component-specs/agent-runner/tools/db.md"""
+import math
 from datetime import datetime, timezone
 from functools import lru_cache
 
@@ -15,13 +16,18 @@ TICKER_INDEX = "ticker_index"
 FINANCIALS_CACHE = "financials_cache"
 TRANSCRIPTS_CACHE = "transcripts_cache"
 MACRO_CACHE = "macro_cache"
+MACRO_ANALYSIS_CACHE = "macro_analysis_cache"
 INSTITUTIONAL_CACHE = "institutional_cache"
+SUPERINVESTOR_MOVES_CACHE = "superinvestor_moves_cache"
 EARNINGS_SCANS = "earnings_scans"
 EARNINGS_CACHE = "earnings_cache"
 INSTITUTIONAL_FLOW = "institutional_flow"
 INSTITUTIONAL_FLOW_META = "institutional_flow_meta"
 BREADTH_CACHE = "breadth_cache"
 BREADTH_UNIVERSE = "breadth_universe"
+BREADTH_DIVERGENCES = "breadth_divergences"
+BREADTH_META = "breadth_meta"
+MARKET_FLOW_EVENTS = "market_flow_events"
 DATAROMA_META = "dataroma_meta"
 FMP_USAGE = "fmp_usage"
 
@@ -47,6 +53,26 @@ def ensure_indexes(db: Database | None = None) -> None:
     )
     db[TICKER_INDEX].create_index([("ticker", ASCENDING)], unique=True)
     db[TICKER_INDEX].create_index([("status", ASCENDING)])
+    # Non-ticker-specific pipeline steps, cached across all tickers sharing a
+    # sector (macro) or the whole run (superinvestor) — see crew.py callers.
+    db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
+    db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
+    db[BREADTH_DIVERGENCES].create_index([("resolved", DESCENDING)])
+    db[MARKET_FLOW_EVENTS].create_index([("event_id", ASCENDING)], unique=True)
+    db[MARKET_FLOW_EVENTS].create_index([("created_at", DESCENDING)])
+
+
+def sanitize_floats(value):
+    """Recursively replaces non-finite floats (NaN/Infinity) with None.
+    BSON round-trips them fine, but they crash the backend's JSON encoder
+    on the way back out, so keep them out of Mongo entirely."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: sanitize_floats(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_floats(v) for v in value]
+    return value
 
 
 def query_db(collection: str, filter: dict, limit: int = 100, db: Database | None = None) -> list:

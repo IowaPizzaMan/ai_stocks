@@ -56,3 +56,6 @@ frontend/dist/
 
 # HuggingFace cache
 .cache/
+
+# Local machine overrides (e.g. GPU passthrough) — not shared across hosts
+docker-compose.override.yml

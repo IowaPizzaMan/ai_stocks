@@ -80,6 +80,21 @@ def get_institutional_holdings(ticker: str, db: Database | None = None) -> dict:
     return data
 
 
+def recent_activity_direction(data: dict) -> str | None:
+    """Feed-card flag from the top-10 holder QoQ changes: "buying" when more
+    holders grew than trimmed, "selling" for the reverse, "mixed" on a tie,
+    None when there's no change data at all (renders as no badge)."""
+    increasing = data.get("top10_increasing") or 0
+    decreasing = data.get("top10_decreasing") or 0
+    if not increasing and not decreasing:
+        return None
+    if increasing > decreasing:
+        return "buying"
+    if decreasing > increasing:
+        return "selling"
+    return "mixed"
+
+
 def get_recent_13f_changes(since: datetime, universe: list[str] | None = None,
                            db: Database | None = None) -> list[dict]:
     """Market-wide variant for the Phase 7 flow scanner: holders whose latest

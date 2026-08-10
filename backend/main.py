@@ -13,6 +13,7 @@ from routers import (
     institutional_flow,
     logs,
     macro,
+    market,
     price,
     queue,
     sectors,
@@ -51,6 +52,7 @@ app.include_router(analysis.router)
 app.include_router(price.router)
 app.include_router(stocks.router)
 app.include_router(macro.router)
+app.include_router(market.router)
 app.include_router(watchlist.router)
 app.include_router(sectors.router)
 app.include_router(queue.router)

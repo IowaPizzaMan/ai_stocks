@@ -25,6 +25,13 @@ McClellan = EMA19(RANA) − EMA39(RANA)
 
 - `breadth_universe` — constituent lists, refreshed weekly (constituents change rarely)
 - `breadth_cache` — one document per (exchange, date): `{ exchange, date, advancers, decliners, rana, mcclellan }`. Daily runs only fetch/compute the gap since the latest stored date (same gap-fill pattern as `data_fetcher.py`)
+- **Divergence history** (added 2026-08-09) — when the daily run detects a
+  divergence resolving, append `{ type, resolved, anchor_dates,
+  spy_change_5d, spy_change_10d }` (forward SPY % changes filled in as
+  sessions complete). Backs the `BreadthDivergenceChart` ▲/▼ resolution
+  markers; can't be recomputed from a 30-day window. The same
+  new-divergence transition (from `none`/other-type) also emits a
+  `market_flow` feed event (see `BreadthDivergenceChart.md` → feed card).
 - Cost: one batched `yf.download(universe, period=...)` call per universe per day — no per-ticker calls, no FMP budget impact when the Wikipedia fallback is used for constituents
 
 ## Functions
@@ -99,8 +106,18 @@ Checks last 10 days for SPY vs. NYMO divergence patterns (bullish: SPY lower low
 def detect_divergence(nymo_records, namo_records) -> dict:
     spy = yf.download("SPY", period="30d", interval="1d", progress=False)
     # Compare recent lows/highs between SPY and NYMO
-    # Returns: { "type": "bullish" | "bearish" | "none", "description": str }
+    # Returns: { "type": "bullish" | "bearish" | "none", "description": str,
+    #            "price_points": [{date, value} x2], "osc_points": [{date, value} x2] }
 ```
+
+The `price_points` / `osc_points` anchor pairs (the two swing highs/lows on
+each series that constitute the divergence) are required by the frontend
+`BreadthDivergenceChart` (added 2026-08-09 — see
+`component-specs/frontend/components/stock/BreadthDivergenceChart.md`), which
+draws them as dot-marked, opposite-sloping trend lines instead of re-detecting
+swings client-side. The backend serves the whole payload (SPY + NYMO/NAMO
+history + divergence) from `breadth_cache` via a new `GET /market/breadth`
+route.
 
 ## Dependencies
 - `yfinance`

@@ -12,7 +12,7 @@ from pymongo import ReturnDocument
 
 from crew import Crew, TickerDelistedError
 from logging_config import get_logger
-from tools.db import ANALYSES, WORK_QUEUE, ensure_indexes, get_db, mark_ticker_removed
+from tools.db import ANALYSES, WORK_QUEUE, ensure_indexes, get_db, mark_ticker_removed, sanitize_floats
 
 logger = get_logger(__name__)
 
@@ -68,6 +68,7 @@ def claim_and_run_next(db=None, crew=None) -> bool:
         # earnings-scanner jobs opt in to parallel prefetch (user picked them
         # from a ranked list and is waiting on the result)
         result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")))
+        result = sanitize_floats(result)
         db[ANALYSES].insert_one(result)
         db[WORK_QUEUE].update_one(
             {"_id": job["_id"]},

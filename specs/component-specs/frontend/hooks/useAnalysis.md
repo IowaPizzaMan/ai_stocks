@@ -14,11 +14,14 @@ import { getFeed } from '@/lib/api'
 import { STALE_TIMES } from '@/lib/constants'
 
 interface FeedFilters {
+  ticker?: string             // substring search, see FilterBar.md "Ticker search"
   signal?: string
   sector?: string
   conviction?: string
   from_date?: string
   to_date?: string
+  institutional_activity?: 'buying' | 'selling'   // strategy filter, see FilterBar.md "Strategy Filters (Phase 2)"
+  ytd_performance?: 'positive' | 'negative'         // strategy filter
 }
 
 export function useFeed(filters: FeedFilters = {}) {

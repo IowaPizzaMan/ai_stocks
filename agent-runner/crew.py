@@ -57,6 +57,30 @@ def _earnings_dates(earnings: dict) -> list:
     return dates
 
 
+def _latest_price_date(daily: list[dict]) -> str | None:
+    """Date of the most recent daily bar — chronological (oldest→newest), so last."""
+    if not daily:
+        return None
+    date = daily[-1].get("Date") or daily[-1].get("date")
+    return str(date)[:10] if date is not None else None
+
+
+def _latest_statement_date(financials: dict) -> str | None:
+    """Most recent reported statement date — FMP arrays are newest-first."""
+    for key in ("income_quarterly", "income_annual"):
+        rows = financials.get(key) or []
+        if rows and rows[0].get("date"):
+            return str(rows[0]["date"])[:10]
+    return None
+
+
+def _latest_dated(items: list[dict], key: str = "date") -> str | None:
+    """Max date across a list of dicts — insider transactions and news aren't
+    guaranteed sorted, so don't assume order."""
+    dates = [item[key] for item in items if item.get(key)]
+    return max(dates) if dates else None
+
+
 def _price_summary(daily: list[dict]) -> dict:
     df = pd.DataFrame(daily)
     if df.empty or "Close" not in df:
@@ -152,27 +176,32 @@ class Crew:
             "indicators": data["indicators"],
             "price_summary": _price_summary(price_history["daily"]),
         }, client=self.client)
+        technical["as_of"] = _latest_price_date(price_history["daily"])
 
         fundamental = fundamental_analyst.run(ticker, {
             "financials": data["financials"],
             "earnings": data["earnings"],
         }, client=self.client)
+        fundamental["as_of"] = _latest_statement_date(data["financials"] or {})
 
         macro = macro_analyst.run(ticker, {
             "macro": data["macro"],
             "yield_curve": data["yield_curve"],
             "sector": record.get("sector"),
-        }, client=self.client)
+        }, client=self.client, db=self.db)
 
         insider = insider_analyst.run(ticker, {"insider": data["insider"]}, client=self.client)
+        insider["as_of"] = _latest_dated((data["insider"] or {}).get("transactions", []))
 
         institutional = institutional_analyst.run(ticker, {
             "institutional": data["institutional"],
             "superinvestor": superinvestor,
         }, client=self.client)
+        institutional["as_of"] = (data["institutional"] or {}).get("as_of")
 
         sentiment = sentiment_analyst.run(ticker, {"sentiment": data["sentiment"]},
                                           client=self.client)
+        sentiment["as_of"] = _latest_dated((data["sentiment"] or {}).get("news", []))
 
         recommendation = recommender_agent.run(ticker, {
             "market_flow": flow_out,
@@ -190,15 +219,19 @@ class Crew:
             "recommendation": recommendation,
         }
 
-        recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if r.get("Low") is not None]
+        recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if pd.notna(r.get("Low"))]
         synthesis = portfolio_strategist.run(ticker, sub_reports, recent_lows=recent_lows,
                                              client=self.client)
 
-        # 4. final analyses document
+        # 4. final analyses document — the two recent_* flags ride top-level
+        # (like sector/signal) so the feed projection serves them to the cards
         return {
             "ticker": ticker,
             "timestamp": datetime.now(timezone.utc),
             **synthesis,
+            "recent_institutional_activity":
+                institutional_tool.recent_activity_direction(data["institutional"] or {}),
+            "recent_insider_summary": (data["insider"] or {}).get("recent_summary"),
             "sub_reports": sub_reports,
         }
 

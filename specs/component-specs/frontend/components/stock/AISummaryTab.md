@@ -30,6 +30,19 @@ Card showing:
 - Trailing stop recommendation (text)
 - Position sizing guidance (text)
 
+### 4b. Market Timing (RecommenderAgent)
+Section titled `Market Timing — {recommendation}` showing the rationale text,
+current NYMO/NAMO readings, and caveats (already built, inline in
+`StockDetail.tsx` → `AISummaryTab`).
+
+**Divergence visual (requested 2026-08-09):** when the recommendation cites an
+SPY-vs-NYMO divergence, prose alone isn't enough — render
+`BreadthDivergenceChart` (see `BreadthDivergenceChart.md`) under the rationale:
+two stacked panes (SPY closes over NYMO oscillator, shared 30-day date axis)
+with the diverging swing points marked and connected by opposite-sloping trend
+lines. Show the chart whenever breadth data is available, not only when a
+divergence is flagged, so the SPY/NYMO relationship is always inspectable.
+
 ### 5. Per-Agent Breakdown (collapsible)
 Accordion with one section per sub-report:
 - Technical | Fundamental | Macro | Insider | Institutional | Sentiment | Recommendation
