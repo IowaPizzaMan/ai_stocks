@@ -2,9 +2,17 @@
 Continuity. Rule system: specs/the-strat-spec.md ("Pattern Identification
 Reference" section) — pure functions, no LLM calls.
 
-Works on the daily/weekly/monthly frames returned by tools/price.py
-get_price_history(); the 60-minute participation group isn't available from a
-daily data feed, so TFC here covers the three major groups we have.
+Works on the daily/weekly/monthly/quarterly/yearly frames returned by
+tools/price.py get_price_history(). The 60-minute participation group isn't
+available from a daily data feed, so it's out of scope here. TFC alignment
+itself is computed over weekly/monthly/quarterly/yearly only — Daily is
+intentionally excluded (per product decision: too noisy to count toward
+"all participation groups agree") but still checked separately for a notable
+candle (hammer/shooter/outside bar/kicking/reversal) worth calling out even
+when it doesn't move the alignment needle. Quarterly and yearly aren't part
+of the canonical Strat's 4 major groups (Monthly/Weekly/Daily/60-min) but are
+included anyway, per product decision, so Full TFC reflects the
+longer-horizon groups relevant to this app's position/swing trades.
 """
 import pandas as pd
 
@@ -134,10 +142,10 @@ def detect_patterns(df: pd.DataFrame) -> list[dict]:
     return patterns
 
 
-def _tfc(frames: dict[str, pd.DataFrame]) -> dict:
+def _tfc(last_sale: float, frames: dict[str, pd.DataFrame]) -> dict:
     """Time Frame Continuity: last sale vs each open bar's open, across the
-    participation groups we have (daily/weekly/monthly)."""
-    last_sale = float(frames["daily"]["Close"].iloc[-1])
+    participation groups being compared for alignment (weekly/monthly/
+    quarterly/yearly — daily is excluded here, see run())."""
     colors = {}
     for tf, df in frames.items():
         open_ = float(df["Open"].iloc[-1])
@@ -153,11 +161,30 @@ def _tfc(frames: dict[str, pd.DataFrame]) -> dict:
     return {**colors, "status": status, "last_sale": last_sale}
 
 
+_NOTABLE_EXCLUDE = {"inside_bar_setup"}
+
+
+def _daily_notable(df: pd.DataFrame, patterns: list[dict]) -> dict | None:
+    """The Daily bar doesn't count toward Full TFC, but a notable candle
+    there (hammer/shooter/outside bar/kicking/reversal) is still worth
+    surfacing. Notable = anything actionable besides the default inside-bar
+    equilibrium setup — an inside bar is the "nothing happened" state, not a
+    candle worth calling out on its own."""
+    i = len(df) - 1
+    reasons = [p["name"] for p in patterns if p["name"] not in _NOTABLE_EXCLUDE]
+    if bar_type(df, i) == "3" and "outside_bar" not in reasons:
+        reasons.append("outside_bar")
+    if not reasons:
+        return None
+    return {"bar_type": bar_type(df, i), "candle_color": _color(df, i), "reasons": reasons}
+
+
 def run(ticker: str, data: dict) -> dict:
     """`data` is a get_price_history() dict: {'daily': ..., 'weekly': ...,
-    'monthly': ...} of record lists or DataFrames."""
+    'monthly': ..., 'quarterly': ..., 'yearly': ...} of record lists or
+    DataFrames."""
     frames = {}
-    for tf in ("daily", "weekly", "monthly"):
+    for tf in ("daily", "weekly", "monthly", "quarterly", "yearly"):
         if tf not in data:
             raise KeyError(f"the_strat.run needs '{tf}' price data")
         df = _to_df(data[tf])
@@ -176,9 +203,11 @@ def run(ticker: str, data: dict) -> dict:
             "patterns": detect_patterns(df),
         }
 
-    tfc = _tfc(frames)
+    last_sale = float(frames["daily"]["Close"].iloc[-1])
+    tfc = _tfc(last_sale, {tf: df for tf, df in frames.items() if tf != "daily"})
+    daily_notable = _daily_notable(frames["daily"], timeframes["daily"]["patterns"])
 
-    actionable = [(tf, p) for tf in ("monthly", "weekly", "daily")
+    actionable = [(tf, p) for tf in ("yearly", "quarterly", "monthly", "weekly")
                   for p in timeframes[tf]["patterns"]]
     if tfc["status"] == "full_bullish":
         aligned = [f"{tf} {p['name']}" for tf, p in actionable if p["direction"] in ("long", "either")]
@@ -191,4 +220,9 @@ def run(ticker: str, data: dict) -> dict:
         if actionable:
             signal += "; setups present: " + ", ".join(f"{tf} {p['name']}" for tf, p in actionable)
 
-    return {"ticker": ticker, "timeframes": timeframes, "tfc": tfc, "signal": signal}
+    if daily_notable:
+        signal += (f"; notable daily candle ({daily_notable['candle_color']}): "
+                   + ", ".join(daily_notable["reasons"]))
+
+    return {"ticker": ticker, "timeframes": timeframes, "tfc": tfc,
+            "daily_notable_candle": daily_notable, "signal": signal}

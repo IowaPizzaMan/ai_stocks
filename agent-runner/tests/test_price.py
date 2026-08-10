@@ -62,10 +62,16 @@ def test_get_price_history_shape(fake_ticker):
     result = price.get_price_history("AAPL")
 
     assert result["ticker"] == "AAPL"
-    assert set(result) == {"daily", "weekly", "monthly", "ticker"}
+    assert set(result) == {"daily", "weekly", "monthly", "quarterly", "yearly", "ticker"}
     assert calls == [("1y", "1d"), ("2y", "1wk"), ("5y", "1mo")]
     first = result["daily"][0]
     assert {"Open", "High", "Low", "Close", "Volume", "Date"} <= set(first)
+
+    # quarterly/yearly are resampled from monthly, not a separate fetch
+    quarterly, yearly = result["quarterly"], result["yearly"]
+    assert quarterly and yearly
+    assert {"Open", "High", "Low", "Close", "Volume", "Date"} <= set(quarterly[0])
+    assert len(yearly) <= len(quarterly) <= len(result["monthly"])
 
 
 def test_compute_indicators_columns_and_ranges():

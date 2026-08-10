@@ -46,3 +46,15 @@ def test_price_empty_history_404(client, monkeypatch):
     monkeypatch.setattr(price_router, "_fetch_history",
                         lambda t, p, i: fake_history(0))
     assert client.get("/stocks/GONE/price").status_code == 404
+
+
+def test_price_drops_nan_bars(client, monkeypatch):
+    df = fake_history(3)
+    df.iloc[1, df.columns.get_loc("Close")] = float("nan")
+    monkeypatch.setattr(price_router, "_fetch_history", lambda t, p, i: df)
+
+    r = client.get("/stocks/NAN/price")
+    assert r.status_code == 200
+    bars = r.json()["bars"]
+    assert len(bars) == 2
+    assert [b["date"] for b in bars] == ["2026-07-01", "2026-07-03"]

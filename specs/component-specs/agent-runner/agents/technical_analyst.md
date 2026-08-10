@@ -29,14 +29,15 @@ Analyze {ticker} using the provided price and volume data.
 Don't just report the raw signal for each strategy — narrate the story behind it. Specifically:
 
 **The Strat / TFC:**
-- If there is an actionable signal on the daily chart, state whether it is reconfirmed or contradicted by the weekly, monthly, and yearly bars. Call out TFC conflict explicitly — e.g. "Daily/Weekly/Monthly are all green (bullish) but the Yearly bar is red — this is a short-term bounce inside a longer-term downtrend, not a Full TFC signal. Treat with a tighter stop until the Yearly turns." The reverse (short-term red within a green Yearly) should be flagged the same way.
+- Full TFC alignment is computed over Weekly/Monthly/Quarterly/Yearly only — Daily doesn't count toward it (`strat_result.tfc` has no `daily` key). State whether that alignment (or conflict) holds — e.g. "Weekly/Monthly/Quarterly/Yearly are all green (bullish) — Full TFC." or "Monthly/Weekly are green but the Quarterly and Yearly bars are red — this is a short-term bounce inside a longer-term downtrend, not a Full TFC signal. Treat with a tighter stop until the Quarterly and Yearly turn."
+- Separately, if `strat_result.daily_notable_candle` is present, call it out on its own terms — it's a real event (hammer/shooter/outside bar/kicking/reversal) worth flagging even though Daily doesn't move the alignment needle. Note whether it agrees or disagrees with the Weekly/Monthly/Quarterly/Yearly direction, e.g. "a bearish shooting star printed on the Daily today, right at the top of the range — worth watching even though it doesn't affect the underlying Full TFC bullish read."
 - State where price currently sits within the active Broadening Formation. If price is near the BOTTOM of the BF, call that out as a potential reversal/support zone and note what would confirm a bounce (e.g. hammer, Rev Strat). If price is near the TOP of the BF, call that out as a potential exhaustion/resistance zone and note what would confirm a rejection (e.g. shooting star, failed 2 going 3). If price is mid-range, say so and note there's no edge from BF positioning right now.
 - Note whether the current setup is a momentum trade (continuation, aligned with control TF) or a retracement trade (counter-trend), per the Momentum vs. Retracement rules.
 
 **Accumulation / Volume:**
 - Apply the same top/bottom framing to volume: is the accumulation happening while price is still near the bottom of its recent range (early-stage, more room to run) or after price has already pushed to the top of the range (later-stage, chase risk higher)? Call this out explicitly.
 - If distribution volume is appearing after a prior accumulation phase, flag that rotation clearly — don't just report the ratio.
-- Tie the accumulation narrative back to TFC where relevant (e.g. "accumulation score is 4 but the stock is at the top of its BF with the Yearly still red — institutional buying without confirmed longer-term trend support").
+- Tie the accumulation narrative back to TFC where relevant (e.g. "accumulation score is 4 but the stock is at the top of its BF with the Quarterly and Yearly still red — institutional buying without confirmed longer-term trend support").
 
 Return a structured JSON sub-report with keys: strat_result, accumulation_result, gap_result, key_levels, momentum_summary, tfc_narrative, bf_position_narrative, volume_narrative, overall_technical_signal (bullish/bearish/neutral), confidence.
 ```
@@ -54,7 +55,7 @@ Return a structured JSON sub-report with keys: strat_result, accumulation_result
   "gap_result": { "gap_type": "breakaway", "score": 4, "fill_probability": "low", "follow_through": "bullish" },
   "key_levels": { "support": [182.50, 178.00], "resistance": [195.00, 200.00] },
   "momentum_summary": "RSI 58 trending up, MACD positive cross 3 days ago",
-  "tfc_narrative": "Daily and Weekly are green with an actionable inside-bar breakout in force on the Daily, but the Yearly bar is still red. This is a short-term reconfirmation inside a longer-term downtrend, not Full TFC — treat as a retracement trade with a tighter stop until the Yearly flips.",
+  "tfc_narrative": "Weekly and Monthly are green, but the Quarterly and Yearly bars are still red — not Full TFC, treat as a retracement trade with a tighter stop until the Quarterly and Yearly flip. Daily printed a hammer today (a notable candle, though Daily doesn't count toward alignment) that agrees with the shorter-term green groups.",
   "bf_position_narrative": "Price is sitting near the top of the active broadening formation, roughly 2% below the prior BF high. This is a potential exhaustion zone — watch for a shooting star or failed 2 to confirm rejection before adding size.",
   "volume_narrative": "Accumulation score 4 with a 2.8x up/down volume ratio, but the buying has occurred after price already pushed to the top of its 60-day range — this is later-stage accumulation with more chase risk than an entry near the bottom of the range would carry.",
   "overall_technical_signal": "bullish",

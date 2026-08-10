@@ -540,3 +540,21 @@ When identifying patterns algorithmically from OHLC data:
 - Green = close > open; Red = close < open
 - Full TFC: all 4 major TFs (monthly, weekly, daily, 60-min) are same color
 - Conflict: 1 or 2 TFs differ from the others
+
+**Implementation note (this app):** `skills/the_strat.py` has no intraday feed,
+so 60-minute is out of scope. Full TFC alignment is computed over **weekly,
+monthly, quarterly, and yearly** — Daily is deliberately excluded from the
+alignment check itself (per product decision: it's the noisiest of the
+groups and shouldn't be able to single-handedly flip "all participation
+groups agree" to a conflict). Quarterly and yearly aren't part of Rob Smith's
+canonical 4 major groups above — they're added deliberately so Full TFC
+reflects the longer-horizon participation groups relevant to this app's
+position/swing trades.
+
+Daily isn't dropped entirely, though: it's still classified and checked for a
+**notable candle** — hammer, shooting star, outside bar, kicking pattern, or
+reversal (any actionable pattern besides a plain inside-bar equilibrium
+setup) — and called out separately (`daily_notable_candle` in `the_strat.run`'s
+output) even though it no longer moves the alignment needle. See
+`component-specs/agent-runner/tools/price.md` and
+`component-specs/agent-runner/agents/technical_analyst.md`.

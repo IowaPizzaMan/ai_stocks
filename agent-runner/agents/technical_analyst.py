@@ -84,7 +84,7 @@ def run(ticker: str, context: dict, client=None) -> dict:
 Write the sub-report:
 1. key_levels: pick 1-3 support and 1-3 resistance prices from the recent range and pattern trigger levels.
 2. momentum_summary: RSI/MACD/EMA read in one or two sentences.
-3. tfc_narrative: is any actionable daily signal reconfirmed or contradicted by weekly/monthly? Call out TFC conflict explicitly and what it means for stop placement.
+3. tfc_narrative: state the Full TFC alignment across weekly/monthly/quarterly/yearly (strat.tfc.status) — Daily doesn't count toward it. Call out conflict explicitly, including which group(s) dissent, and what it means for stop placement. Separately, if strat.daily_notable_candle is present, call it out on its own — a notable Daily candle (hammer/shooter/outside bar/kicking/reversal) is worth flagging even though it doesn't move the alignment needle; say whether it agrees or disagrees with the Weekly/Monthly/Quarterly/Yearly read.
 4. bf_position_narrative: where does price sit in its recent range — near the bottom (potential support/reversal zone), near the top (potential exhaustion/resistance), or mid-range (no edge)? Name what would confirm.
 5. volume_narrative: is accumulation early-stage (price still low in range) or later-stage (chase risk)? Flag distribution-after-accumulation rotation if present.
 6. overall_technical_signal and confidence."""
