@@ -3,9 +3,16 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import AnalysisCard from "../components/feed/AnalysisCard";
 import FilterBar from "../components/feed/FilterBar";
+import MarketFlowCard from "../components/feed/MarketFlowCard";
 import SkeletonCard from "../components/shared/SkeletonCard";
 import { useFeed } from "../hooks/useAnalysis";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
+import { useMarketBreadth, useMarketFlowEvents } from "../hooks/useMarketBreadth";
+
+// Market-flow events are pinned above the analyses rather than interleaved —
+// they're market-wide and have no ticker, so chronological position in a
+// per-ticker feed would bury them. They age out after two weeks.
+const MARKET_EVENT_MAX_AGE_DAYS = 14;
 
 export default function Feed() {
   const [searchParams] = useSearchParams();
@@ -18,7 +25,16 @@ export default function Feed() {
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeed(filters);
+  const { data: marketEvents } = useMarketFlowEvents();
+  const { data: breadth } = useMarketBreadth();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // A market-wide card is noise once the user has narrowed to a ticker/sector.
+  const filtered = Object.values(filters).some(Boolean);
+  const cutoff = Date.now() - MARKET_EVENT_MAX_AGE_DAYS * 86_400_000;
+  const pinnedEvents = filtered
+    ? []
+    : (marketEvents ?? []).filter((e) => new Date(e.created_at).getTime() >= cutoff);
 
   useEffect(() => {
     document.title = "StockAI — Feed";
@@ -34,6 +50,10 @@ export default function Feed() {
     <div className="mx-auto max-w-3xl space-y-4">
       <h1 className="sr-only">Analysis Feed</h1>
       <FilterBar />
+
+      {pinnedEvents.map((event) => (
+        <MarketFlowCard key={event.event_id} event={event} breadth={breadth} />
+      ))}
 
       {isLoading &&
         Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Analysis } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
+import BreadthDivergenceChart from "../components/stock/BreadthDivergenceChart";
 import PriceChart from "../components/stock/PriceChart";
 import TFCChartGrid from "../components/stock/TFCChartGrid";
 import {
@@ -14,6 +15,7 @@ import {
   TechnicalsTab,
 } from "../components/stock/tabs";
 import { useTickerAnalysis, useTickerRecord } from "../hooks/useAnalysis";
+import { useMarketBreadth } from "../hooks/useMarketBreadth";
 import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
@@ -248,6 +250,8 @@ function OverviewTab({ analysis }: { analysis: Analysis }) {
 
 function AISummaryTab({ analysis }: { analysis: Analysis }) {
   const { technical, fundamental, recommendation } = analysis.sub_reports ?? {};
+  // Market-wide, so it isn't part of the per-ticker analysis payload.
+  const { data: breadth } = useMarketBreadth();
   return (
     <div className="space-y-4">
       {technical && (
@@ -310,6 +314,14 @@ function AISummaryTab({ analysis }: { analysis: Analysis }) {
             NYMO {recommendation.nymo_current ?? "–"} ({recommendation.nymo_signal}) ·
             NAMO {recommendation.namo_current ?? "–"}
           </p>
+          {/* The rationale often cites a SPY/NYMO divergence — show it rather
+              than only describing it. Rendered whenever breadth data exists, so
+              the relationship stays inspectable with no divergence in force. */}
+          {breadth && (
+            <div className="mt-3">
+              <BreadthDivergenceChart breadth={breadth} />
+            </div>
+          )}
           {recommendation.caveats.length > 0 && (
             <ul className="mt-2 space-y-1 text-xs text-amber-400/90">
               {recommendation.caveats.map((c) => (

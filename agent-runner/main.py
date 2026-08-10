@@ -5,10 +5,12 @@ Three loops in one process:
 - earnings_scans poll (user-triggered calendar scans — checked first, a user
   is watching the progress spinner)
 - institutional flow scan once daily (market-wide, independent of the queue)
+- market breadth refresh once daily (NYMO/NAMO + SPY divergence tracking)
 """
 import time
 from datetime import datetime, timezone
 
+from breadth_worker import run_daily_breadth_if_due
 from earnings_scan_worker import claim_and_run_next_scan
 from institutional_flow_worker import run_daily_scan_if_due
 from logging_config import get_logger
@@ -25,7 +27,9 @@ def main() -> None:
     )
     while True:
         try:
-            run_daily_scan_if_due(now=datetime.now(timezone.utc))
+            now = datetime.now(timezone.utc)
+            run_daily_scan_if_due(now=now)
+            run_daily_breadth_if_due(now=now)
             scanned = claim_and_run_next_scan()
             worked = claim_and_run_next()
             if not (scanned or worked):

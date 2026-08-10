@@ -90,15 +90,42 @@
   end, so the 13F side scans a fixed 100-day lookback (deduped) rather than
   the since-last-scan window — new filings appear in one daily batch whenever
   yfinance's holder tables refresh, dated to the quarter end.
+- **Divergence swing detection is crude.** `tools/breadth.py::detect_divergence`
+  splits a fixed 10-session window in half and takes each half's min/max as
+  the swing anchors — they aren't true pivots, and a divergence that develops
+  over more than ~10 sessions is invisible. The anchors it reports (and the
+  chart draws) are therefore "extreme of each half", not necessarily the
+  swing a chartist would pick.
+- **The market-flow feed card's thumbnail shows *current* breadth, not the
+  event's snapshot.** `MarketFlowCard` passes live `/market/breadth` data to
+  the chart, so an event from a week ago renders today's series and today's
+  divergence state. The card's headline/body/NYMO reading are the real
+  snapshot; only the chart is live. Events age out of the feed after 14 days,
+  which bounds the mismatch.
+- **`nymo`/`namo` mean two different shapes.** In the agent-runner's
+  `get_market_breadth` payload they're objects (`history`/`current`/`zone`/
+  `trend`) feeding the LLM agents; in `GET /market/breadth` they're flat
+  `[{date, value}]` arrays for charting. Same key names, same domain, two
+  schemas — easy to confuse when editing either side.
 - **Flow notability is heuristic keyword scoring** — passive/high-conviction
   fund lists are short hardcoded substrings in
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
+- **TFC "all participation groups aligned" only covers Daily/Weekly/Monthly**,
+  not Quarterly or Yearly. `the_strat.py::_tfc` computes continuity over just
+  the three frames `get_price_history()` returns (60-min isn't available from
+  a daily feed, per the module's own docstring). The stock page's TFC banner
+  ("Full TFC — all participation groups are aligned green/red") reads as
+  all-timeframe agreement but is really daily/weekly/monthly only — and
+  `TFCChartGrid.tsx` shows a 1Y chart panel alongside that banner, which isn't
+  part of the alignment check at all. Clarify the banner copy or extend `_tfc`
+  to include quarterly/yearly if that's meant to be a true "all timeframes" read.
 
 ## Unbuilt / unfinished features
 
 - **Admin page was never scaffolded into a route.** Spec exists
   (`Admin.md`), no `frontend/src/pages/Admin.tsx` and no route in `App.tsx`.
+- *(nothing currently outstanding beyond the Admin page)*
 
 ## Upstream / API-tier constraints (facts, not fixable in code)
 
@@ -126,6 +153,16 @@
 
 ## Fixed
 
+- ~~SPY/NYMO divergence was described in prose but never drawn~~ — built
+  2026-08-09 (spec: `BreadthDivergenceChart.md`). `detect_divergence` now
+  returns the swing anchors, SPY closes are cached on the nyse `breadth_cache`
+  rows, `breadth_divergences` tracks open/resolved transitions with SPY
+  follow-through, `breadth_worker.py` guarantees a daily pass, and
+  `GET /market/breadth` + `/market/flow-events` serve it. The two-pane chart
+  (price over oscillator, opposite-sloping dashed trend lines), ±60 zone
+  shading, ▲/▼ resolution markers and the pinned market-flow feed card all
+  shipped with it. Verified against live data — it caught the same bearish
+  divergence the Market Timing text was describing.
 - ~~Sectors page/router unbuilt (fell through the cracks between phases)~~ —
   built 2026-08-03: `GET /sectors` rollup + `/sectors/{sector}` alias in the
   backend, and the full Sectors page (signal-mix summary chart, sector cards,

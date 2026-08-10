@@ -25,6 +25,9 @@ INSTITUTIONAL_FLOW = "institutional_flow"
 INSTITUTIONAL_FLOW_META = "institutional_flow_meta"
 BREADTH_CACHE = "breadth_cache"
 BREADTH_UNIVERSE = "breadth_universe"
+BREADTH_DIVERGENCES = "breadth_divergences"
+BREADTH_META = "breadth_meta"
+MARKET_FLOW_EVENTS = "market_flow_events"
 DATAROMA_META = "dataroma_meta"
 FMP_USAGE = "fmp_usage"
 
@@ -54,6 +57,9 @@ def ensure_indexes(db: Database | None = None) -> None:
     # sector (macro) or the whole run (superinvestor) — see crew.py callers.
     db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
     db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
+    db[BREADTH_DIVERGENCES].create_index([("resolved", DESCENDING)])
+    db[MARKET_FLOW_EVENTS].create_index([("event_id", ASCENDING)], unique=True)
+    db[MARKET_FLOW_EVENTS].create_index([("created_at", DESCENDING)])
 
 
 def sanitize_floats(value):

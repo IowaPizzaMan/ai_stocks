@@ -186,6 +186,70 @@ export interface RecommendationReport {
   };
 }
 
+// --- Market breadth (GET /market/breadth) ------------------------------------
+// Served from breadth_cache; the oscillator math and divergence detection run
+// in agent-runner/tools/breadth.py, not here.
+
+export type DivergenceType = "bullish" | "bearish" | "none";
+
+export interface BreadthPoint {
+  date: string;
+  value: number;
+}
+
+export interface SpyPoint {
+  date: string;
+  close: number;
+}
+
+export interface DivergenceAnchor {
+  date: string;
+  value: number;
+}
+
+export interface Divergence {
+  type: DivergenceType;
+  description: string;
+  // The two swing highs/lows on each series — the chart draws its
+  // opposite-sloping trend lines straight from these.
+  price_points: DivergenceAnchor[];
+  osc_points: DivergenceAnchor[];
+}
+
+export interface ResolvedDivergence {
+  type: Exclude<DivergenceType, "none">;
+  detected_on: string;
+  resolved: string;
+  anchor_dates: string[];
+  description?: string | null;
+  spy_change_5d: number | null; // SPY follow-through after the resolution date
+  spy_change_10d: number | null;
+}
+
+export interface MarketBreadth {
+  spy: SpyPoint[];
+  nymo: BreadthPoint[];
+  namo: BreadthPoint[];
+  divergence: Divergence;
+  divergence_history: ResolvedDivergence[];
+  as_of: string | null;
+  method: string;
+}
+
+export interface MarketFlowEvent {
+  event_id: string;
+  category: "market_flow";
+  kind: "breadth_divergence";
+  divergence_type: Exclude<DivergenceType, "none">;
+  headline: string;
+  body: string;
+  price_points: DivergenceAnchor[];
+  osc_points: DivergenceAnchor[];
+  nymo_current: number | null;
+  detected_on: string;
+  created_at: string;
+}
+
 export interface QueueJob {
   ticker: string;
   status: string;
