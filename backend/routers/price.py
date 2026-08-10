@@ -56,6 +56,8 @@ def get_price(ticker: str, resolution: str = "daily", db=Depends(db_dependency))
             "volume": int(row["Volume"]) if row["Volume"] == row["Volume"] else 0,
         }
         for idx, row in df.iterrows()
+        if row["Open"] == row["Open"] and row["High"] == row["High"]
+        and row["Low"] == row["Low"] and row["Close"] == row["Close"]
     ]
 
     db[PRICE_CACHE].replace_one(

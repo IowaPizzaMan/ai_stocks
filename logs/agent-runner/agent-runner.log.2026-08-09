@@ -1,0 +1,405 @@
+2026-08-09 23:00:24,028 agent-runner INFO agent-runner starting (poll=30s, model=qwen2.5:14b, ollama=http://ollama:11434)
+2026-08-09 23:00:24,040 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 23:01:18,931 agent-runner.agents.institutional_flow_scanner INFO flow scan built 37 events (34 dataroma, 3 13F)
+2026-08-09 23:01:18,949 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 35 new events
+2026-08-09 23:02:48,957 agent-runner.queue_worker INFO claimed job 6a7906fc674b45b305805173 for QUBT
+2026-08-09 23:02:52,328 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (402 Client Error: Payment Required for url: https://financialmodelingprep.com/stable/sp500-constituent?apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s); using scrape fallback
+2026-08-09 23:03:05,807 agent-runner.tools.breadth WARNING FMP constituents failed for nasdaq100 (402 Client Error: Payment Required for url: https://financialmodelingprep.com/stable/nasdaq-constituent?apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s); using scrape fallback
+2026-08-09 23:03:48,884 agent-runner.queue_worker INFO QUBT analysis done (signal=neutral conviction=medium)
+2026-08-09 23:25:18,908 agent-runner.queue_worker INFO claimed job 6a790c41674b45b305805174 for AAPL
+2026-08-09 23:26:14,046 agent-runner.queue_worker INFO AAPL analysis done (signal=neutral conviction=medium)
+2026-08-09 23:29:44,057 agent-runner.queue_worker INFO claimed job 6a790d50674b45b305805175 for INTC
+2026-08-09 23:30:26,589 agent-runner.queue_worker INFO INTC analysis done (signal=neutral conviction=medium)
+2026-08-09 18:34:29,132 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:34:29,133 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:34:29,134 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 18:34:29,135 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:34:29,136 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:34:29,138 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-09 18:34:29,161 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-09 18:35:17,297 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:35:17,297 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:35:17,297 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 18:35:17,297 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:35:17,297 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:35:17,297 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-09 18:35:17,335 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-09 18:35:17,336 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:35:17,336 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:35:17,336 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:35:17,336 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:35:17,338 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:35:17,338 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-09 18:35:17,338 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:35:17,338 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:35:17,388 agent-runner.crew INFO AAPL: yfinance check failed but financials resolve — proceeding
+2026-08-09 18:35:17,582 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: yahoo hiccup
+2026-08-09 18:35:17,582 agent-runner.agents.earnings_scanner INFO eps revisions unavailable for TST: nope
+2026-08-09 18:35:17,582 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:35:17,582 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:35:17,593 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-09 18:35:17,593 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:35:17,593 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-09 18:35:17,594 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-09 18:35:17,594 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-09 18:35:17,596 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-09 18:35:17,596 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 194, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-09 18:35:17,601 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP daily usage at 240 calls (free tier: 250)
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP daily usage at 241 calls (free tier: 250)
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP daily usage at 242 calls (free tier: 250)
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP daily usage at 243 calls (free tier: 250)
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP quota nearly exhausted (244 calls today) — skipping ratios for AAPL
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP quota nearly exhausted (245 calls today) — skipping key_metrics for AAPL
+2026-08-09 18:35:17,603 agent-runner.tools.financials WARNING FMP quota nearly exhausted (246 calls today) — skipping growth for AAPL
+2026-08-09 18:35:17,605 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-09 18:35:17,642 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-09 18:35:17,644 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-09 18:35:17,644 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-09 18:35:17,645 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,646 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-09 18:35:17,646 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,646 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 18:35:17,646 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-09 18:35:17,646 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,649 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:35:17,649 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:35:17,651 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-09 18:35:17,651 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:35:17,651 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-09 18:35:17,651 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:35:17,653 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,653 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,653 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,655 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,655 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,655 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 18:35:17,655 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,655 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,655 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 18:35:17,655 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 18:35:17,657 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 18:35:17,657 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-09 18:35:17,657 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,659 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,659 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 18:35:17,659 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,659 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:35:17,659 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:35:17,662 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-09 18:35:17,663 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-09 18:35:17,663 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-09 23:39:30,307 agent-runner INFO agent-runner starting (poll=30s, model=qwen2.5:14b, ollama=http://ollama:11434)
+2026-08-09 23:39:30,314 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 23:39:31,272 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 23:39:31,273 agent-runner.breadth_worker INFO breadth refresh complete — NYMO 16.0, divergence bearish
+2026-08-09 23:44:31,322 agent-runner.queue_worker INFO claimed job 6a7910def58076bdc155fca4 for BSX
+2026-08-09 23:44:32,585 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-09 23:44:32,887 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-09 23:44:33,290 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-09 23:44:33,701 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-09 23:44:34,041 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-09 23:44:34,268 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-09 23:44:34,503 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-09 23:45:23,933 agent-runner.queue_worker INFO BSX analysis done (signal=neutral conviction=medium)
+2026-08-09 18:54:21,656 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:54:21,656 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:54:21,656 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 18:54:21,656 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:54:21,656 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 18:54:21,656 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-09 18:54:21,693 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-09 18:54:21,693 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:54:21,693 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:54:21,693 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:54:21,693 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:54:21,695 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:54:21,695 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-09 18:54:21,695 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 18:54:21,697 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 18:54:21,744 agent-runner.crew INFO AAPL: yfinance check failed but financials resolve — proceeding
+2026-08-09 18:54:21,924 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: yahoo hiccup
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner INFO eps revisions unavailable for TST: nope
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 18:54:21,924 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-09 18:54:21,924 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-09 18:54:21,924 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-09 18:54:21,924 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-09 18:54:21,924 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 194, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-09 18:54:21,939 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP daily usage at 240 calls (free tier: 250)
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP daily usage at 241 calls (free tier: 250)
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP daily usage at 242 calls (free tier: 250)
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP daily usage at 243 calls (free tier: 250)
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP quota nearly exhausted (244 calls today) — skipping ratios for AAPL
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP quota nearly exhausted (245 calls today) — skipping key_metrics for AAPL
+2026-08-09 18:54:21,939 agent-runner.tools.financials WARNING FMP quota nearly exhausted (246 calls today) — skipping growth for AAPL
+2026-08-09 18:54:21,939 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-09 18:54:21,972 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,988 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:54:21,988 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 18:54:21,989 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 18:54:21,989 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-09 18:54:21,989 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-09 18:54:21,989 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-09 19:16:06,571 agent-runner.crew INFO AAPL: yfinance check failed but financials resolve — proceeding
+2026-08-09 19:16:12,370 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:16:12,370 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:16:12,370 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 19:16:12,370 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:16:12,370 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:16:12,370 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-09 19:16:12,403 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:16:12,403 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:16:12,403 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:16:12,463 agent-runner.crew INFO AAPL: yfinance check failed but financials resolve — proceeding
+2026-08-09 19:16:12,654 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: yahoo hiccup
+2026-08-09 19:16:12,657 agent-runner.agents.earnings_scanner INFO eps revisions unavailable for TST: nope
+2026-08-09 19:16:12,658 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:16:12,659 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:16:12,660 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-09 19:16:12,661 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:16:12,661 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-09 19:16:12,661 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-09 19:16:12,661 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-09 19:16:12,661 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-09 19:16:12,661 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 194, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-09 19:16:12,661 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP daily usage at 240 calls (free tier: 250)
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP daily usage at 241 calls (free tier: 250)
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP daily usage at 242 calls (free tier: 250)
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP daily usage at 243 calls (free tier: 250)
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP quota nearly exhausted (244 calls today) — skipping ratios for AAPL
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP quota nearly exhausted (245 calls today) — skipping key_metrics for AAPL
+2026-08-09 19:16:12,670 agent-runner.tools.financials WARNING FMP quota nearly exhausted (246 calls today) — skipping growth for AAPL
+2026-08-09 19:16:12,672 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-09 19:16:12,710 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-09 19:16:12,710 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-09 19:16:12,711 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-09 19:16:12,712 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,713 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-09 19:16:12,713 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,714 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 19:16:12,715 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-09 19:16:12,717 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,719 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:16:12,719 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:16:12,721 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-09 19:16:12,722 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:16:12,722 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-09 19:16:12,723 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:16:12,723 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,724 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,725 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,725 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,725 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,726 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 19:16:12,727 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,727 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,727 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 19:16:12,727 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 19:16:12,728 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 19:16:12,728 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-09 19:16:12,729 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,729 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,729 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 19:16:12,730 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,730 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:16:12,731 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:16:12,732 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-09 19:16:12,733 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-09 19:16:12,733 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-09 19:19:22,941 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:19:22,957 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:19:22,957 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-09 19:19:22,957 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:19:22,957 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-09 19:19:22,957 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-09 19:19:22,991 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:19:22,991 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-09 19:19:22,991 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-09 19:19:23,041 agent-runner.crew INFO AAPL: yfinance check failed but financials resolve — proceeding
+2026-08-09 19:19:23,214 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: yahoo hiccup
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner INFO eps revisions unavailable for TST: nope
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-09 19:19:23,214 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-09 19:19:23,224 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-09 19:19:23,224 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-09 19:19:23,224 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-09 19:19:23,224 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 194, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-09 19:19:23,224 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP daily usage at 240 calls (free tier: 250)
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP daily usage at 241 calls (free tier: 250)
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP daily usage at 242 calls (free tier: 250)
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP daily usage at 243 calls (free tier: 250)
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP quota nearly exhausted (244 calls today) — skipping ratios for AAPL
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP quota nearly exhausted (245 calls today) — skipping key_metrics for AAPL
+2026-08-09 19:19:23,224 agent-runner.tools.financials WARNING FMP quota nearly exhausted (246 calls today) — skipping growth for AAPL
+2026-08-09 19:19:23,224 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-09 19:19:23,257 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-09 19:19:23,257 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-09 19:19:23,257 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-09 19:19:23,257 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,273 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-09 19:19:23,274 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-09 19:19:23,274 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-09 19:19:23,274 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-09 19:19:23,274 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope

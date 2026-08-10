@@ -13,9 +13,9 @@ interface TechnicalsTabProps {
 ## Sections
 
 ### 1. The Strat Summary
-- Bar type classification table (daily/weekly/monthly)
+- Bar type classification table (daily/weekly/monthly/quarterly/yearly)
 - Active patterns list (e.g., "2-1-2 Long", "Reversal Strat")
-- TFC (Time Frame Continuity) state — color-coded row per timeframe
+- TFC (Time Frame Continuity) state — color-coded row per timeframe. Daily is excluded from the alignment status itself (`strat_result.tfc` has no `daily` key — see `the-strat-spec.md` → "Implementation note (this app)"), so don't color-code a Daily row as if it were part of the alignment; instead surface `strat_result.daily_notable_candle` (when non-null) as its own callout — e.g. a small badge or line reading "Notable daily candle: hammer (green)" — separate from the Weekly/Monthly/Quarterly/Yearly alignment rows
 
 ### 2. Accumulation Score Gauge
 - Visual gauge (0–5) showing the accumulation score

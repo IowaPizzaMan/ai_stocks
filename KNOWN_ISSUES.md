@@ -111,16 +111,6 @@
   fund lists are short hardcoded substrings in
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
-- **TFC "all participation groups aligned" only covers Daily/Weekly/Monthly**,
-  not Quarterly or Yearly. `the_strat.py::_tfc` computes continuity over just
-  the three frames `get_price_history()` returns (60-min isn't available from
-  a daily feed, per the module's own docstring). The stock page's TFC banner
-  ("Full TFC — all participation groups are aligned green/red") reads as
-  all-timeframe agreement but is really daily/weekly/monthly only — and
-  `TFCChartGrid.tsx` shows a 1Y chart panel alongside that banner, which isn't
-  part of the alignment check at all. Clarify the banner copy or extend `_tfc`
-  to include quarterly/yearly if that's meant to be a true "all timeframes" read.
-
 ## Unbuilt / unfinished features
 
 - **Admin page was never scaffolded into a route.** Spec exists
@@ -153,6 +143,33 @@
 
 ## Fixed
 
+- ~~`GET /stocks/{ticker}/price` 500s whenever a bar has a NaN OHLC value~~ —
+  fixed 2026-08-09. Found via `logs/backend/backend.log.2026-08-09`: repeated
+  crashes on `GET /stocks/INTC/price`
+  (`ValueError: Out of range float values are not JSON compliant: nan`).
+  `price.py`'s bar-building guarded `volume` against NaN but not
+  `open`/`high`/`low`/`close`, so a NaN from yfinance reached
+  `json.dumps(..., allow_nan=False)` (Starlette's default) and crashed before
+  the cache write, so every retry re-fetched and re-crashed. Bars with a NaN
+  in any OHLC field are now dropped before serializing.
+- ~~TFC "all participation groups aligned" only covered Daily/Weekly/Monthly~~
+  — fixed 2026-08-09, per user request: `get_price_history()` now also
+  resamples Quarterly and Yearly frames from the monthly fetch (no separate
+  yfinance calls; 60-min is still out of scope — no intraday feed). Full TFC
+  alignment (`the_strat.py::_tfc`/`run`, `strat_result.tfc.status`) is
+  computed over **Weekly/Monthly/Quarterly/Yearly only** — Daily is
+  deliberately excluded from the alignment check itself (also per user
+  request: it's the noisiest group and shouldn't be able to single-handedly
+  flip "all groups agree" to a conflict). Daily isn't dropped, though — it's
+  still classified and checked for a **notable candle** (hammer/shooting
+  star/outside bar/kicking/reversal — anything beyond a plain inside-bar
+  equilibrium setup), surfaced as `strat_result.daily_notable_candle` and
+  folded into the `tfc_narrative` LLM prompt as a separate callout,
+  independent of the alignment status. `TFCChartGrid.tsx` still shows a 1D
+  visual panel (a zoom window, not an alignment group) that plays no part in
+  the banner status, while Quarterly/Yearly (no panel of their own) can flip
+  it to "In Conflict" — see `TFCChartGrid.md` → "Note on Strat Alignment" if
+  that mismatch is confusing in practice.
 - ~~SPY/NYMO divergence was described in prose but never drawn~~ — built
   2026-08-09 (spec: `BreadthDivergenceChart.md`). `detect_divergence` now
   returns the swing anchors, SPY closes are cached on the nyse `breadth_cache`

@@ -11,12 +11,28 @@ def _history(ticker: str, period: str, interval: str) -> pd.DataFrame:
     return yf.Ticker(ticker).history(period=period, interval=interval)
 
 
+def _resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+    """Aggregates an OHLCV frame up to a coarser bar resolution (used for the
+    quarterly/yearly participation groups, which yfinance has no matching
+    `interval` for)."""
+    agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
+    return df.resample(rule).agg(agg).dropna(subset=["Open"])
+
+
 def get_price_history(ticker: str, period: str = "1y") -> dict:
-    """OHLCV history at daily/weekly/monthly resolution — skills need all three for TFC."""
+    """OHLCV history at daily/weekly/monthly/quarterly/yearly resolution —
+    skills need all five for TFC. Quarterly and yearly are resampled from the
+    monthly fetch rather than pulled from yfinance separately (it has no "1y"
+    interval, and "3mo" would be a second, mostly-redundant network call)."""
+    daily = _history(ticker, period, "1d")
+    weekly = _history(ticker, "2y", "1wk")
+    monthly = _history(ticker, "5y", "1mo")
     return {
-        "daily": _history(ticker, period, "1d").reset_index().to_dict(orient="records"),
-        "weekly": _history(ticker, "2y", "1wk").reset_index().to_dict(orient="records"),
-        "monthly": _history(ticker, "5y", "1mo").reset_index().to_dict(orient="records"),
+        "daily": daily.reset_index().to_dict(orient="records"),
+        "weekly": weekly.reset_index().to_dict(orient="records"),
+        "monthly": monthly.reset_index().to_dict(orient="records"),
+        "quarterly": _resample(monthly, "QE").reset_index().to_dict(orient="records"),
+        "yearly": _resample(monthly, "YE").reset_index().to_dict(orient="records"),
         "ticker": ticker,
     }
 

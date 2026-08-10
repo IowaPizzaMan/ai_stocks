@@ -6,21 +6,32 @@ All price-related data fetching and technical indicator computation. Three expor
 ## Functions
 
 ### `get_price_history(ticker: str, period: str = "1y") -> dict`
-Fetches OHLCV history via yfinance.
+Fetches OHLCV history via yfinance, at five resolutions — skills need all
+five for TFC (see `the-strat-spec.md` → "Time Frame Continuity (TFC)" and its
+"Implementation Note" on this app's quarterly/yearly extension). yfinance has
+no `"1y"` interval and its `"3mo"` interval would be a second, mostly
+redundant network call, so quarterly and yearly are resampled from the
+monthly fetch instead of pulled separately.
 
 ```python
 import yfinance as yf
 
 def get_price_history(ticker: str, period: str = "1y") -> dict:
     tk = yf.Ticker(ticker)
-    # Fetch multiple timeframes — skills need daily + weekly + monthly for TFC
     daily = tk.history(period=period, interval="1d")
     weekly = tk.history(period="2y", interval="1wk")
     monthly = tk.history(period="5y", interval="1mo")
+
+    def resample(df, rule):
+        agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
+        return df.resample(rule).agg(agg).dropna(subset=["Open"])
+
     return {
         "daily": daily.reset_index().to_dict(orient="records"),
         "weekly": weekly.reset_index().to_dict(orient="records"),
         "monthly": monthly.reset_index().to_dict(orient="records"),
+        "quarterly": resample(monthly, "QE").reset_index().to_dict(orient="records"),
+        "yearly": resample(monthly, "YE").reset_index().to_dict(orient="records"),
         "ticker": ticker
     }
 ```

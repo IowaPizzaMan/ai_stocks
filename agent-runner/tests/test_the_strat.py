@@ -108,27 +108,105 @@ def test_kicking_bullish():
     assert kick["in_force_above"] == 108
 
 
-def run_input(daily, weekly, monthly):
-    return {"daily": daily, "weekly": weekly, "monthly": monthly}
+def run_input(daily, weekly, monthly, quarterly=None, yearly=None):
+    return {
+        "daily": daily, "weekly": weekly, "monthly": monthly,
+        "quarterly": monthly if quarterly is None else quarterly,
+        "yearly": monthly if yearly is None else yearly,
+    }
 
 
 def test_full_tfc_bullish():
     daily = bars([BASE, (100, 111, 95, 110)])
     weekly = bars([BASE, (100, 112, 95, 110)])
     monthly = bars([BASE, (99, 113, 95, 110)])
-    out = the_strat.run("AAPL", run_input(daily, weekly, monthly))
+    quarterly = bars([BASE, (98, 114, 95, 110)])
+    yearly = bars([BASE, (95, 115, 90, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, monthly, quarterly, yearly))
     assert out["tfc"]["status"] == "full_bullish"
     assert out["tfc"]["last_sale"] == 110
     assert "full TFC bullish" in out["signal"]
 
 
+def test_daily_excluded_from_tfc_alignment():
+    # Daily's own bar is red (close 100 < its own open 115) — but "last sale"
+    # for TFC purposes is that same 100, which is still above every other
+    # group's open, so Full TFC should hold: Daily's color doesn't count.
+    daily = bars([BASE, (115, 118, 90, 100)])
+    weekly = bars([BASE, (95, 112, 90, 110)])
+    monthly = bars([BASE, (94, 113, 90, 110)])
+    quarterly = bars([BASE, (93, 114, 90, 110)])
+    yearly = bars([BASE, (90, 115, 85, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, monthly, quarterly, yearly))
+    assert out["tfc"]["status"] == "full_bullish"
+    assert out["tfc"]["last_sale"] == 100
+    assert "daily" not in out["tfc"]
+    assert set(out["tfc"]) >= {"weekly", "monthly", "quarterly", "yearly", "status", "last_sale"}
+
+
 def test_tfc_conflict():
-    daily = bars([BASE, (100, 111, 95, 110)])       # green vs open 100
+    daily = bars([BASE, (100, 111, 95, 110)])       # green — irrelevant to TFC status
     weekly = bars([BASE, (115, 118, 95, 110)])      # last sale 110 < weekly open 115 → red
     monthly = bars([BASE, (99, 113, 95, 110)])
     out = the_strat.run("AAPL", run_input(daily, weekly, monthly))
     assert out["tfc"]["status"] == "conflict"
     assert "conflict" in out["signal"]
+
+
+def test_tfc_conflict_from_quarterly_or_yearly():
+    # weekly/monthly all green; quarterly alone dissents → still conflict
+    daily = bars([BASE, (100, 111, 95, 110)])
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    monthly = bars([BASE, (99, 113, 95, 110)])
+    quarterly = bars([BASE, (115, 118, 95, 110)])   # last sale 110 < quarterly open 115 → red
+    out = the_strat.run("AAPL", run_input(daily, weekly, monthly, quarterly=quarterly))
+    assert out["tfc"]["status"] == "conflict"
+    assert out["tfc"]["quarterly"] == "red"
+    assert out["tfc"]["yearly"] == "green"  # defaults to monthly bar, unaffected
+
+
+def test_tfc_covers_four_groups_timeframes_still_report_five():
+    daily = bars([BASE, (100, 111, 95, 110)])
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    monthly = bars([BASE, (99, 113, 95, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, monthly))
+    assert set(out["tfc"]) == {"weekly", "monthly", "quarterly", "yearly", "status", "last_sale"}
+    assert set(out["timeframes"]) == {"daily", "weekly", "monthly", "quarterly", "yearly"}
+
+
+def test_daily_notable_hammer_called_out():
+    daily = bars([BASE, (105, 112, 95, 110), (95, 102, 80, 100)])  # last bar is a hammer
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, weekly))
+    notable = out["daily_notable_candle"]
+    assert notable is not None
+    assert "hammer" in notable["reasons"]
+    assert "notable daily candle" in out["signal"]
+
+
+def test_daily_notable_outside_bar_called_out():
+    daily = bars([BASE, (100, 108, 92, 104), (90, 115, 85, 100)])  # last bar breaks both sides
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, weekly))
+    notable = out["daily_notable_candle"]
+    assert notable is not None
+    assert "outside_bar" in notable["reasons"]
+
+
+def test_daily_plain_bar_not_notable():
+    daily = bars([BASE, (100, 108, 92, 104), (105, 109, 96, 107)])  # ordinary 2U, nothing special
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, weekly))
+    assert out["daily_notable_candle"] is None
+    assert "notable daily candle" not in out["signal"]
+
+
+def test_daily_inside_bar_alone_not_notable():
+    # An inside bar is the default "nothing happened" state, not a notable candle.
+    daily = bars([BASE, BASE, (100, 108, 92, 104)])
+    weekly = bars([BASE, (100, 112, 95, 110)])
+    out = the_strat.run("AAPL", run_input(daily, weekly, weekly))
+    assert out["daily_notable_candle"] is None
 
 
 def test_run_reports_timeframe_details():

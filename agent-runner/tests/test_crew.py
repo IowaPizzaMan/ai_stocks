@@ -19,7 +19,13 @@ def make_history(rows=120, seed=11):
         "Close": close, "Volume": rng.integers(1_000_000, 3_000_000, rows),
     })
     records = df.to_dict(orient="records")
-    return {"daily": records, "weekly": records[::5], "monthly": records[::21], "ticker": "AAPL"}
+    # rows=120 by default — ::63 and ::100 each still land >= 2 records, which
+    # is all the_strat.run needs (it only classifies the last couple of bars)
+    return {
+        "daily": records, "weekly": records[::5], "monthly": records[::21],
+        "quarterly": records[::63], "yearly": records[::100],
+        "ticker": "AAPL",
+    }
 
 
 class SchemaFakeLLM:
