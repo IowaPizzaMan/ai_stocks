@@ -2,27 +2,31 @@
 
 Not in the original component specs — added in Phase 5 because PriceChart.md
 needs a dedicated price endpoint ("fetched from ... a dedicated price
-endpoint") and none existed. Serves yfinance bars at the resolution the chart
-requests, cached in Mongo for an hour so chart flipping doesn't hammer Yahoo.
+endpoint") and none existed. Serves FMP bars (stable API) at the resolution
+the chart requests, cached in Mongo for an hour so chart flipping doesn't
+hammer FMP. Migrated off yfinance per specs/017-fmp-migration-admin.
 """
 from datetime import datetime, timedelta, timezone
 
-import yfinance as yf
+import pandas as pd
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 
 from deps import db_dependency
+from settings import settings
 
 router = APIRouter(tags=["price"])
 
 PRICE_CACHE = "price_cache"
 CACHE_MINUTES = 60
+FMP_BASE = "https://financialmodelingprep.com/stable/"
 
-# resolution -> (yfinance interval, period fetched)
-# each fetches ≥200 bars of history so the client's 200-period MAs are real
+# resolution -> (period, interval) fetched
+# each fetches enough history so the client's 200-period MAs are real
 RESOLUTIONS = {
-    "daily": ("1d", "2y"),
-    "weekly": ("1wk", "5y"),
-    "monthly": ("1mo", "max"),
+    "daily": ("2y", "1d"),
+    "weekly": ("5y", "1wk"),
+    "monthly": ("max", "1mo"),
 }
 
 
@@ -41,7 +45,7 @@ def get_price(ticker: str, resolution: str = "daily", db=Depends(db_dependency))
     if cached:
         return {"ticker": ticker, "resolution": resolution, "bars": cached["bars"]}
 
-    interval, period = RESOLUTIONS[resolution]
+    period, interval = RESOLUTIONS[resolution]
     df = _fetch_history(ticker, period, interval)
     if df is None or df.empty:
         raise HTTPException(status_code=404, detail=f"No price data for {ticker}.")
@@ -69,6 +73,43 @@ def get_price(ticker: str, resolution: str = "daily", db=Depends(db_dependency))
     return {"ticker": ticker, "resolution": resolution, "bars": bars}
 
 
-def _fetch_history(ticker: str, period: str, interval: str):
+def _fetch_eod(ticker: str) -> pd.DataFrame:
+    url = f"{FMP_BASE}historical-price-eod/full?symbol={ticker}&apikey={settings.fmp_api_key}"
+    r = requests.get(url, timeout=15)
+    r.raise_for_status()
+    raw = r.json()
+    rows = raw.get("historical", raw) if isinstance(raw, dict) else raw
+    if not rows:
+        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.set_index("date").sort_index()
+    return df.rename(columns={"open": "Open", "high": "High", "low": "Low",
+                              "close": "Close", "volume": "Volume"}
+                     )[["Open", "High", "Low", "Close", "Volume"]]
+
+
+def _resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+    agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
+    return df.resample(rule).agg(agg).dropna(subset=["Open"])
+
+
+def _slice_period(df: pd.DataFrame, period: str) -> pd.DataFrame:
+    if df.empty or period in ("max", None):
+        return df
+    if period.endswith("y"):
+        cutoff = df.index.max() - pd.DateOffset(years=int(period[:-1]))
+        return df[df.index >= cutoff]
+    return df
+
+
+def _fetch_history(ticker: str, period: str, interval: str) -> pd.DataFrame:
     """Isolated for test monkeypatching."""
-    return yf.Ticker(ticker).history(period=period, interval=interval)
+    daily = _fetch_eod(ticker)
+    if interval == "1d":
+        return _slice_period(daily, period)
+    if interval == "1wk":
+        return _slice_period(_resample(daily, "W"), period)
+    if interval == "1mo":
+        return _slice_period(_resample(daily, "ME"), period)
+    raise ValueError(f"unsupported interval: {interval}")

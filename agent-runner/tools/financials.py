@@ -1,81 +1,80 @@
-"""FMP financials + yfinance earnings data, cached in Mongo.
+"""FMP financials + earnings/estimates data, cached in Mongo.
 Spec: specs/component-specs/agent-runner/tools/financials.md
 """
 from datetime import datetime, timedelta, timezone
 
 import requests
-import yfinance as yf
 from pymongo.database import Database
 
 from logging_config import get_logger
-from settings import settings
-from tools.db import FINANCIALS_CACHE, get_db, track_fmp_call
+from tools.db import FINANCIALS_CACHE, get_db
+from tools.fmp_client import FmpBudgetExceededError, fmp_get
 
 logger = get_logger(__name__)
 
-# The legacy /api/v3 endpoints 403 for accounts created after FMP's 2025
-# migration — this key only works against the "stable" API.
-FMP_BASE = "https://financialmodelingprep.com/stable/"
 CACHE_DAYS = 90
 
-# FMP free tier: 250 calls/day. Warn near the ceiling; drop nice-to-have
-# endpoints just under it so essential statements still get through.
-WARN_AT = 200
-SKIP_NON_ESSENTIAL_AT = 240
-
-# key -> (path template, essential)
+# key -> path template ("essential" no longer gates the fetch — the shared
+# fmp_client throttle/budget guard in tools/fmp_client.py handles that
+# uniformly now; every endpoint here degrades to [] on 402/403/budget-exceeded
+# so the crew run always proceeds)
 ENDPOINTS = {
-    "income_annual": ("income-statement?symbol={t}&period=annual&limit=4", True),
-    # free tier 402s quarterly history deeper than ~4 periods (limit=8 rejected)
-    "income_quarterly": ("income-statement?symbol={t}&period=quarter&limit=4", True),
-    "balance_annual": ("balance-sheet-statement?symbol={t}&period=annual&limit=4", True),
-    "cashflow_annual": ("cash-flow-statement?symbol={t}&period=annual&limit=4", True),
-    "ratios": ("ratios?symbol={t}&period=annual&limit=4", False),
-    "key_metrics": ("key-metrics?symbol={t}&period=annual&limit=4", False),
-    "growth": ("income-statement-growth?symbol={t}&limit=4", False),
+    "income_annual": "income-statement?symbol={t}&period=annual&limit=4",
+    "income_quarterly": "income-statement?symbol={t}&period=quarter&limit=4",
+    "balance_annual": "balance-sheet-statement?symbol={t}&period=annual&limit=4",
+    "cashflow_annual": "cash-flow-statement?symbol={t}&period=annual&limit=4",
+    "ratios": "ratios?symbol={t}&period=annual&limit=4",
+    "key_metrics": "key-metrics?symbol={t}&period=annual&limit=4",
+    "growth": "income-statement-growth?symbol={t}&limit=4",
 }
 
 
-def fmp_get(path: str) -> list | dict:
-    sep = "&" if "?" in path else "?"
-    url = f"{FMP_BASE}{path}{sep}apikey={settings.fmp_api_key}"
-    r = requests.get(url, timeout=15)
-    r.raise_for_status()
-    return r.json()
+def _fetch_statement(ticker: str, key: str, db: Database | None) -> list | dict:
+    """One FMP statement fetch, degraded to [] on the two temporary
+    conditions (plan restriction, budget cap) so the crew run proceeds."""
+    try:
+        return fmp_get(ENDPOINTS[key].format(t=ticker), db=db)
+    except requests.HTTPError as exc:
+        status = exc.response.status_code if exc.response is not None else None
+        if status not in (402, 403):
+            raise
+        # this plan covers fundamentals for only a subset of symbols
+        # (verified 2026-08-02: AAPL 200, APP 402 on the same day/key) —
+        # degrade to empty so the crew run proceeds
+        logger.info("FMP %s for %s/%s — not covered on this plan, skipping", status, ticker, key)
+        return []
+    except FmpBudgetExceededError:
+        logger.warning("FMP daily soft cap exceeded — skipping %s for %s", key, ticker)
+        return []
 
 
 def get_financials(ticker: str, db: Database | None = None) -> dict:
     """Income/balance/cashflow/ratios for a ticker, served from the 90-day
-    Mongo cache when possible (~7 FMP calls on a cold fetch, 0 after)."""
+    Mongo cache when possible (~7 FMP calls on a cold fetch, 0 after).
+
+    A cached statement type that is empty because an earlier fetch hit a
+    temporary condition (402/403 plan restriction or budget cap) is NOT
+    settled: it's re-fetched on every call until FMP answers 200
+    (specs/018-fix-financials-cache-gap — the BSX bug, where an all-402
+    fetch was served as "no data" for the rest of the 90-day window).
+    Confirmed keys are never re-fetched inside the window, and a partial
+    retry deliberately leaves fetched_at alone so the window doesn't slide."""
     db = db if db is not None else get_db()
     ticker = ticker.upper()
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=CACHE_DAYS)
     cached = db[FINANCIALS_CACHE].find_one({"ticker": ticker, "fetched_at": {"$gt": cutoff}})
     if cached:
-        return cached["data"]
+        data = cached["data"]
+        retry_keys = [k for k in ENDPOINTS if not data.get(k)]
+        if not retry_keys:
+            return data
+        for key in retry_keys:
+            data[key] = _fetch_statement(ticker, key, db)
+        db[FINANCIALS_CACHE].update_one({"ticker": ticker}, {"$set": {"data": data}})
+        return data
 
-    data = {}
-    for key, (template, essential) in ENDPOINTS.items():
-        count = track_fmp_call(db=db)
-        if count >= SKIP_NON_ESSENTIAL_AT and not essential:
-            logger.warning("FMP quota nearly exhausted (%s calls today) — skipping %s for %s", count, key, ticker)
-            data[key] = []
-            continue
-        if count >= WARN_AT:
-            logger.warning("FMP daily usage at %s calls (free tier: 250)", count)
-        try:
-            data[key] = fmp_get(template.format(t=ticker))
-        except requests.HTTPError as exc:
-            status = exc.response.status_code if exc.response is not None else None
-            if status not in (402, 403):
-                raise
-            # free tier covers fundamentals for only a subset of symbols
-            # (verified 2026-08-02: AAPL 200, APP 402 on the same day/key) —
-            # degrade to empty so the crew run proceeds on yfinance data
-            logger.info("FMP %s for %s/%s — not covered on this plan, skipping", status, ticker, key)
-            data[key] = []
-
+    data = {key: _fetch_statement(ticker, key, db) for key in ENDPOINTS}
     db[FINANCIALS_CACHE].replace_one(
         {"ticker": ticker},
         {"ticker": ticker, "data": data, "fetched_at": datetime.now(timezone.utc)},
@@ -84,12 +83,16 @@ def get_financials(ticker: str, db: Database | None = None) -> dict:
     return data
 
 
-def get_earnings_data(ticker: str) -> dict:
-    """Earnings history, estimates, and analyst recs via yfinance (no rate limit).
-    Individual sections degrade to empty on failure — yfinance endpoints are
-    per-ticker flaky and one gap shouldn't sink the whole report."""
-    tk = yf.Ticker(ticker)
+def get_earnings_data(ticker: str, db: Database | None = None) -> dict:
+    """Earnings snapshot for the fundamental analyst: recent/upcoming dates,
+    forward estimates, and analyst grade activity — sourced from FMP.
+    Individual sections degrade to empty on failure so one gap doesn't sink
+    the whole report.
 
+    eps_trend/eps_revisions have no FMP equivalent on this plan (documented
+    drop — specs/017-fmp-migration-admin/contracts/fmp-migration-map.md row
+    5) and are kept as empty for shape compatibility with existing callers
+    (agents/fundamental_analyst.py reads earnings.get("eps_trend"))."""
     def section(fn):
         try:
             result = fn()
@@ -99,11 +102,9 @@ def get_earnings_data(ticker: str) -> dict:
             return []
 
     return {
-        "earnings_dates": section(
-            lambda: tk.get_earnings_dates(limit=8).reset_index().to_dict(orient="records")
-        ),
-        "eps_trend": section(lambda: tk.get_eps_trend().to_dict()),
-        "eps_revisions": section(lambda: tk.get_eps_revisions().to_dict()),
-        "forward_estimates": section(lambda: tk.get_earnings_estimate().to_dict()),
-        "analyst_recs": section(lambda: tk.get_recommendations().to_dict(orient="records")),
+        "earnings_dates": section(lambda: fmp_get(f"earnings?symbol={ticker}&limit=8", db=db)),
+        "eps_trend": {},
+        "eps_revisions": [],
+        "forward_estimates": section(lambda: fmp_get(f"analyst-estimates?symbol={ticker}&limit=4", db=db)),
+        "analyst_recs": section(lambda: fmp_get(f"grades?symbol={ticker}&limit=10", db=db)),
     }

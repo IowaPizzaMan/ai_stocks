@@ -136,7 +136,7 @@ def run(ticker: str, context: dict, client=None) -> dict:
 ## Free cash flow (annual)
 {json.dumps(histories["fcf_annual"])}
 
-## Analyst estimates & revisions (yfinance, may be partial)
+## Analyst estimates & revisions (FMP, may be partial)
 {json.dumps({k: earnings.get(k) for k in ("eps_trend", "forward_estimates")}, default=str)[:2000]}
 
 Evaluate: revenue trajectory (accelerating/decelerating?), margin direction, balance-sheet

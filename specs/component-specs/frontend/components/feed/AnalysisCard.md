@@ -1,5 +1,13 @@
 # frontend/src/components/feed/AnalysisCard.tsx
 
+> **Replaced in feature 019 (`specs/019-feed-checkerboard-grid/`).** The Feed page no longer
+> renders a single-column list of these cards — it renders a dense, signal-grouped grid of
+> compact tiles (`AnalysisTile.tsx`, see `AnalysisTile.md`). This file has been deleted from
+> `frontend/src/components/feed/`; the doc below is kept as a historical record of what it did.
+> The face content it displayed (summary, flags, institutional/insider activity, watchlist add)
+> now lives in `AnalysisTile`'s hover/focus preview (`TilePreview.tsx`) and on the stock detail
+> page — see `AnalysisTile.md`.
+
 ## Purpose
 Card component displaying one analysis result in the feed. Clicking the card navigates to `/stock/:ticker`. This is the primary unit of the home feed — needs to be visually compact but information-dense.
 

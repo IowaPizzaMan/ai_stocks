@@ -1,6 +1,5 @@
 """Unit tests for the earnings scanner agent + scan worker — offline."""
 import mongomock
-import pandas as pd
 import pytest
 
 import earnings_scan_worker
@@ -67,29 +66,17 @@ def test_insider_signal_levels():
 
 
 def test_eps_revision_direction(monkeypatch):
-    class FakeTicker:
-        def __init__(self, ticker):
-            pass
-
-        def get_eps_revisions(self):
-            return pd.DataFrame(
-                {"upLast7days": [1, 0], "upLast30days": [4, 1],
-                 "downLast7Days": [0, 0], "downLast30days": [1, 0]},
-                index=["0q", "+1q"])
-
-    monkeypatch.setattr(scanner.yf, "Ticker", FakeTicker)
+    grades = [{"action": "upgrade"}, {"action": "upgrade"}, {"action": "maintain"},
+              {"action": "downgrade"}]
+    monkeypatch.setattr(scanner, "fmp_get", lambda path: grades)
     assert scanner._eps_revision_direction("TST") == "up"
 
 
 def test_eps_revision_direction_degrades_to_flat(monkeypatch):
-    class BrokenTicker:
-        def __init__(self, ticker):
-            pass
+    def _raise(path):
+        raise RuntimeError("nope")
 
-        def get_eps_revisions(self):
-            raise RuntimeError("nope")
-
-    monkeypatch.setattr(scanner.yf, "Ticker", BrokenTicker)
+    monkeypatch.setattr(scanner, "fmp_get", _raise)
     assert scanner._eps_revision_direction("TST") == "flat"
 
 

@@ -2,44 +2,61 @@
 
 Indicators are computed directly with pandas (pandas-ta 0.3.x was pulled from
 PyPI and 0.4.x is an incompatible py3.12-only rewrite — see spec).
+
+Sourced from FMP (stable API) as of specs/017-fmp-migration-admin — yfinance
+is retired. get_price_history() fetches one full daily history per ticker
+and derives weekly/monthly/quarterly/yearly by local resample instead of
+three separate network calls (previously one yfinance call per resolution).
 """
 import pandas as pd
-import yfinance as yf
+
+from tools.fmp_client import FmpBudgetExceededError, fetch_eod_history, fmp_get
 
 
-def _history(ticker: str, period: str, interval: str) -> pd.DataFrame:
-    return yf.Ticker(ticker).history(period=period, interval=interval)
+def _slice_period(df: pd.DataFrame, period: str) -> pd.DataFrame:
+    """Approximates yfinance's `period` window (e.g. '1y', '5d', 'max') on an
+    already-fetched, ascending-date DataFrame."""
+    if df.empty or period in ("max", None):
+        return df
+    if period.endswith("mo"):
+        cutoff = df.index.max() - pd.DateOffset(months=int(period[:-2]))
+    elif period.endswith("y"):
+        cutoff = df.index.max() - pd.DateOffset(years=int(period[:-1]))
+    elif period.endswith("d"):
+        return df.tail(int(period[:-1]))
+    else:
+        return df
+    return df[df.index >= cutoff]
 
 
 def _resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
-    """Aggregates an OHLCV frame up to a coarser bar resolution (used for the
-    quarterly/yearly participation groups, which yfinance has no matching
-    `interval` for)."""
+    """Aggregates an OHLCV frame up to a coarser bar resolution (weekly,
+    monthly, and — from monthly — quarterly/yearly, none of which FMP's daily
+    endpoint returns directly)."""
     agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
     return df.resample(rule).agg(agg).dropna(subset=["Open"])
 
 
 def get_price_history(ticker: str, period: str = "1y") -> dict:
     """OHLCV history at daily/weekly/monthly/quarterly/yearly resolution —
-    skills need all five for TFC. Quarterly and yearly are resampled from the
-    monthly fetch rather than pulled from yfinance separately (it has no "1y"
-    interval, and "3mo" would be a second, mostly-redundant network call)."""
-    daily = _history(ticker, period, "1d")
-    weekly = _history(ticker, "2y", "1wk")
-    monthly = _history(ticker, "5y", "1mo")
+    skills need all five for TFC. One FMP fetch backs all five; weekly/
+    monthly/quarterly/yearly are resampled locally."""
+    daily_full = fetch_eod_history(ticker)
+    monthly_full = _resample(daily_full, "ME")
     return {
-        "daily": daily.reset_index().to_dict(orient="records"),
-        "weekly": weekly.reset_index().to_dict(orient="records"),
-        "monthly": monthly.reset_index().to_dict(orient="records"),
-        "quarterly": _resample(monthly, "QE").reset_index().to_dict(orient="records"),
-        "yearly": _resample(monthly, "YE").reset_index().to_dict(orient="records"),
+        "daily": _slice_period(daily_full, period).reset_index().to_dict(orient="records"),
+        "weekly": _slice_period(_resample(daily_full, "W"), "2y").reset_index().to_dict(orient="records"),
+        "monthly": _slice_period(monthly_full, "5y").reset_index().to_dict(orient="records"),
+        "quarterly": _resample(monthly_full, "QE").reset_index().to_dict(orient="records"),
+        "yearly": _resample(monthly_full, "YE").reset_index().to_dict(orient="records"),
         "ticker": ticker,
     }
 
 
 def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Adds indicator columns to an OHLCV frame (index: date; columns include
-    Open/High/Low/Close/Volume). Pure function so it's testable without yfinance."""
+    Open/High/Low/Close/Volume). Pure function so it's testable without a
+    live data source."""
     out = df.copy()
     close, high, low = out["Close"], out["High"], out["Low"]
 
@@ -82,33 +99,25 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 def get_technical_indicators(ticker: str) -> list[dict]:
     """Last 30 days of indicator signals on 1y of daily bars."""
-    df = _history(ticker, "1y", "1d")
+    df = _slice_period(fetch_eod_history(ticker), "1y")
     return compute_indicators(df).tail(30).reset_index().to_dict(orient="records")
 
 
 def get_accumulation_score(ticker: str, lookback_days: int = 60) -> dict:
     from skills import accumulation
 
-    df = _history(ticker, f"{lookback_days}d", "1d")
+    df = _slice_period(fetch_eod_history(ticker), f"{lookback_days}d")
     return accumulation.run(ticker, df)
 
 
 def is_ticker_valid(ticker: str) -> bool:
-    """Cheap existence check before a full crew run. Strong-but-not-absolute signal:
-    crew.py only treats a ticker as delisted when financials also come back empty."""
-    tk = yf.Ticker(ticker)
+    """Cheap existence check before a full crew run. Strong-but-not-absolute
+    signal: crew.py only treats a ticker as delisted when financials also
+    come back empty."""
     try:
-        has_price = tk.fast_info.get("lastPrice") is not None
-    except Exception:
-        has_price = False
-
-    if has_price:
-        return True
-
-    # fast_info can be flaky for thinly-traded names — fall back to a short history
-    # pull before concluding the ticker is actually gone
-    try:
-        hist = tk.history(period="5d", interval="1d")
+        data = fmp_get(f"quote?symbol={ticker}")
+    except FmpBudgetExceededError:
+        return True  # can't verify under budget pressure — don't false-flag as delisted
     except Exception:
         return False
-    return not hist.empty
+    return bool(data) and isinstance(data, list) and data[0].get("price") is not None

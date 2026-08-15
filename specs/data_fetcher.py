@@ -1,6 +1,13 @@
 """
 data_fetcher.py — Cache-aware data layer for StockAI
 
+RETIRED (specs/017-fmp-migration-admin, 2026-08-15): this was a design
+reference that never had a live importer in agent-runner/ — the equivalent
+agent-runner/data_fetcher.py had zero live imports (confirmed) and was
+deleted. Actual live data access is agent-runner/tools/*.py (price.py,
+breadth.py, financials.py, earnings_calendar.py, institutional.py), all
+FMP-sourced as of this feature. Kept here only as historical design context.
+
 Strategy:
   - First call for any ticker/series: fetch full available history, store in MongoDB.
   - Every subsequent call: query MongoDB for the latest stored record, fetch only the gap.

@@ -1,5 +1,7 @@
 # agent-runner/tools/earnings_calendar.py
 
+> **Sourcing updated 2026-08-15** (specs/017-fmp-migration-admin): `get_earnings_calendar()` was already Finnhub-sourced and is **unchanged**. `get_earnings_history()` (the post-earnings reaction-move calculator) previously used yfinance (`get_earnings_dates` + `history`); it's now FMP (`earnings` for dates/EPS, the shared EOD fetch for the price series). `backend/earnings_data.py` mirrors this same change independently (duplicated fetch layer, per that file's own docstring). See `contracts/fmp-migration-map.md` row 4.
+
 ## Purpose
 Fetches the upcoming earnings calendar from FMP (broad sweep across all companies) and enriches each company with historical post-earnings move data from Finnhub. This is the data foundation for the EarningsScannerAgent.
 

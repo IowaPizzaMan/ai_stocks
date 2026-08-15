@@ -4,6 +4,7 @@ services:
   mongodb:
     image: mongo:7
     restart: unless-stopped
+    command: ["mongod", "--quiet"]
     ports:
       - "27017:27017"
     volumes:

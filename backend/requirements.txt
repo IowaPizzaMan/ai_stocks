@@ -4,14 +4,16 @@ pymongo>=4.8,<5.0
 pydantic>=2.8,<3.0
 pydantic-settings>=2.4,<3.0
 
-# price endpoint for charts (cached in Mongo, 1h TTL)
-yfinance>=0.2.50
+# price endpoint for charts (cached in Mongo, 1h TTL) — FMP-sourced
 pandas>=2.2
 
-# earnings calendar fetch (Finnhub + Nasdaq screener)
+# earnings calendar (Finnhub + Nasdaq screener) + FMP price/earnings fetch
 requests>=2.32
 
 # tests
 pytest>=8.0
 httpx>=0.27
 mongomock>=4.1
+
+# lint / format
+ruff>=0.6

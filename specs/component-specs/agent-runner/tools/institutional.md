@@ -1,6 +1,8 @@
 # agent-runner/tools/institutional.py
 
-## Purpose
+> **Sourcing updated 2026-08-15** (specs/017-fmp-migration-admin): this module is now **read-only**. It previously fetched live from yfinance (13F/institutional endpoints all 402/403'd on FMP for this account). yfinance is retired, and the user confirmed 13F is **not entitled** on the paid FMP plan either. `get_institutional_holdings()` now serves only whatever was cached before the migration — no live fetch of any kind — always flagged `stale: true`. The `fund_holdings` (ETF/fund holdings, entitled) and `insider_feed` (market-wide insider activity, entitled) datasets from specs/017-fmp-migration-admin are the intended replacement signals. The pseudocode below describes the pre-migration fetch behavior; see `agent-runner/tools/institutional.py` for the current read-only implementation.
+
+## Purpose (historical — see note above)
 Fetches 13F institutional holdings data from FMP. Tracks QoQ changes in institutional ownership. SEC EDGAR as fallback.
 
 ## Functions

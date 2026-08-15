@@ -1,4 +1,4 @@
-2026-08-09 23:29:19,444 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:22:02,127 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -56,7 +56,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:29:20,471 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:22:03,167 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -114,7 +114,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:29:22,492 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:22:05,184 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -172,7 +172,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:29:26,507 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:22:09,201 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -230,7 +230,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:31:00,185 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:23:26,024 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -288,7 +288,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:31:01,213 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:23:27,040 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -346,7 +346,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:31:03,230 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:23:29,058 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
@@ -404,413 +404,7 @@ Traceback (most recent call last):
     return _iterencode(o, 0)
            ^^^^^^^^^^^^^^^^^
 ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:31:07,246 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:28,696 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:29,742 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:31,759 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:33,851 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:34,880 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:36,895 backend.main ERROR unhandled exception on GET /stocks/INTC/price
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 96, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 154, in simple_response
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
-    await route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1780, in handle
-    await self.original_router.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 2789, in handle
-    await included_router._handle_selected(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1800, in _handle_selected
-    await original_route.handle(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 1279, in handle
-    await app(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 747, in app
-    response = actual_response_class(content, **response_args)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 192, in __init__
-    super().__init__(content, status_code, headers, media_type, background)
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 45, in __init__
-    self.body = self.render(content)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/starlette/responses.py", line 195, in render
-    return json.dumps(
-           ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-ValueError: Out of range float values are not JSON compliant: nan
-2026-08-09 23:40:40,912 backend.main ERROR unhandled exception on GET /stocks/INTC/price
+2026-08-10 00:23:33,084 backend.main ERROR unhandled exception on GET /stocks/INTC/price
 Traceback (most recent call last):
   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
     await self.app(scope, receive, _send)

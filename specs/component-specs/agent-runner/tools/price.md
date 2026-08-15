@@ -1,5 +1,7 @@
 # agent-runner/tools/price.py
 
+> **Sourcing updated 2026-08-15** (specs/017-fmp-migration-admin): this module is now FMP-sourced, not yfinance. `get_price_history()` makes **one** FMP EOD fetch per ticker (`historical-price-eod/full`) and derives daily/weekly/monthly/quarterly/yearly by local pandas resample — previously three separate yfinance calls. `is_ticker_valid()` now checks FMP's `quote` endpoint instead of `fast_info`/`history`. The pseudocode below is retained for the resample/indicator logic, which is unchanged; treat any yfinance call shown as illustrative of the *replaced* behavior, not current code. See `specs/017-fmp-migration-admin/contracts/fmp-migration-map.md` (rows 1, 2, 7) and the real implementation in `agent-runner/tools/price.py` / `agent-runner/tools/fmp_client.py` for ground truth.
+
 ## Purpose
 All price-related data fetching and technical indicator computation. Three exported functions, all used by TechnicalAnalyst.
 

@@ -3,7 +3,6 @@
 ollama>=0.4
 
 # Data sources
-yfinance>=0.2.50
 fredapi>=0.5
 finnhub-python>=2.4
 requests>=2.32
@@ -23,3 +22,6 @@ pydantic-settings>=2.4,<3.0
 # tests
 pytest>=8.0
 mongomock>=4.1
+
+# lint / format
+ruff>=0.6

@@ -11,18 +11,16 @@ the scan doc's total_screened.
 """
 from concurrent.futures import ThreadPoolExecutor
 
-import pandas as pd
-import yfinance as yf
-
 from llm import generate_json
 from logging_config import get_logger
 from tools import earnings_calendar as calendar_tool
 from tools import insider as insider_tool
 from tools import price as price_tool
+from tools.fmp_client import fmp_get
 
 logger = get_logger(__name__)
 
-MAX_CANDIDATES = 40   # enrichment cap: ~2 Finnhub + ~4 yfinance calls each
+MAX_CANDIDATES = 40   # enrichment cap: ~2 Finnhub + ~4 FMP calls each
 TOP_COUNT = 10        # candidates that get an LLM-written thesis
 MOVE_CAP_PCT = 15.0   # avg abs move is normalized against this ceiling
 FETCH_WORKERS = 6
@@ -55,19 +53,21 @@ THESES_SCHEMA = {
 
 
 def _eps_revision_direction(ticker: str) -> str:
-    """Have analysts raised or lowered current-quarter estimates recently?"""
+    """Have analysts recently upgraded or downgraded the stock — used as a
+    proxy for estimate-revision direction. FMP has no direct EPS-revision-
+    count endpoint on this plan; recent grade-change actions are the closest
+    native signal (specs/017-fmp-migration-admin/contracts/
+    fmp-migration-map.md row 5 — documented substitution, previously
+    yfinance's get_eps_revisions())."""
     try:
-        rev = yf.Ticker(ticker).get_eps_revisions()
-        if rev is None or rev.empty:
-            return "flat"
-        row = rev.loc["0q"] if "0q" in rev.index else rev.iloc[0]
-        up = sum(float(v) for k, v in row.items()
-                 if "uplast" in k.lower() and not pd.isna(v))
-        down = sum(float(v) for k, v in row.items()
-                   if "downlast" in k.lower() and not pd.isna(v))
+        grades = fmp_get(f"grades?symbol={ticker}&limit=10")
     except Exception as exc:
-        logger.info("eps revisions unavailable for %s: %s", ticker, exc)
+        logger.info("analyst grades unavailable for %s: %s", ticker, exc)
         return "flat"
+
+    actions = [(g.get("action") or "").lower() for g in (grades or [])]
+    up = actions.count("upgrade")
+    down = actions.count("downgrade")
     if up > down:
         return "up"
     if down > up:

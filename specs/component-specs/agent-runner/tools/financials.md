@@ -1,5 +1,7 @@
 # agent-runner/tools/financials.py
 
+> **Sourcing updated 2026-08-15** (specs/017-fmp-migration-admin): `get_financials()`'s FMP fetch now routes through the shared `tools/fmp_client.py` (throttle + budget guard), and the old free-tier `WARN_AT`/`SKIP_NON_ESSENTIAL_AT` counters were removed in favor of that shared guard. `get_earnings_data()` previously fetched via yfinance (estimates/trend/revisions/recs); it's now FMP (`earnings`, `analyst-estimates`, `grades`). `eps_trend`/`eps_revisions` have no FMP equivalent on this plan and are a **documented drop** — kept as empty values for shape compatibility with `agents/fundamental_analyst.py`. See `contracts/fmp-migration-map.md` row 5.
+
 ## Purpose
 Fetches and caches company financial statements and earnings data from FMP, with MongoDB as the cache layer. Re-fetches quarterly or when a new period is detected.
 

@@ -1,5 +1,4 @@
 """Unit tests for skills/gap_analysis.py against specs/gap_analysis_rules.md."""
-from datetime import date
 
 import pandas as pd
 import pytest

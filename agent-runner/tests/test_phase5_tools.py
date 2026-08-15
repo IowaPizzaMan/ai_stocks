@@ -1,8 +1,7 @@
 """Unit tests for Phase 5 tools (insider/institutional/sentiment/superinvestor) — offline."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import mongomock
-import pandas as pd
 import pytest
 
 from tools import insider, institutional, sentiment, superinvestor
@@ -74,46 +73,41 @@ def test_cluster_window_excludes_spread_out_buys():
     assert insider.detect_cluster(txns)["detected"] is False
 
 
-# --- institutional -----------------------------------------------------------
+# --- institutional (read-only since specs/017-fmp-migration-admin) -----------
 
-class FakeHolderTicker:
-    def __init__(self, symbol):
-        self.institutional_holders = pd.DataFrame({
-            "Date Reported": pd.to_datetime(["2026-03-31", "2026-03-31"]),
-            "Holder": ["Blackrock Inc.", "Vanguard"],
-            "pctHeld": [0.05, 0.04],
-            "Shares": [1000, 900],
-            "Value": [100000, 90000],
-            "pctChange": [-0.01, 0.02],
-        })
-        self.mutualfund_holders = pd.DataFrame()
-        self.major_holders = pd.DataFrame(
-            {"Value": [0.016, 0.657, 0.668, 7659.0]},
-            index=["insidersPercentHeld", "institutionsPercentHeld",
-                   "institutionsFloatPercentHeld", "institutionsCount"],
-        )
+CACHED_HOLDERS = {
+    "top_holders": [
+        {"Date Reported": "2026-03-31", "Holder": "Blackrock Inc.", "pctChange": -0.01},
+        {"Date Reported": "2026-03-31", "Holder": "Vanguard", "pctChange": 0.02},
+    ],
+    "fund_holders": [],
+    "ownership_pct": 65.7,
+    "institutions_count": 7659,
+    "insiders_pct": 1.6,
+    "top10_increasing": 1,
+    "top10_decreasing": 1,
+    "as_of": "2026-03-31",
+}
 
 
-def test_institutional_holdings_and_cache(db, monkeypatch):
-    monkeypatch.setattr(institutional.yf, "Ticker", FakeHolderTicker)
+def test_institutional_holdings_serves_cache_readonly_and_flags_stale(db):
+    db[INSTITUTIONAL_CACHE].insert_one({"ticker": "AAPL", "data": CACHED_HOLDERS})
+
     out = institutional.get_institutional_holdings("aapl", db=db)
-
     assert out["ownership_pct"] == 65.7
-    assert out["institutions_count"] == 7659
-    assert out["top10_increasing"] == 1 and out["top10_decreasing"] == 1
     assert out["top_holders"][0]["Holder"] == "Blackrock Inc."
-    assert out["top_holders"][0]["Date Reported"] == "2026-03-31"
-    assert db[INSTITUTIONAL_CACHE].count_documents({}) == 1
-
-    # cached — second call must not construct a Ticker
-    monkeypatch.setattr(institutional.yf, "Ticker",
-                        lambda t: pytest.fail("should be cached"))
-    again = institutional.get_institutional_holdings("AAPL", db=db)
-    assert again["ownership_pct"] == 65.7
+    assert out["stale"] is True  # never refreshed — 13F not entitled
 
 
-def test_recent_13f_changes_filters_by_date(db, monkeypatch):
-    monkeypatch.setattr(institutional.yf, "Ticker", FakeHolderTicker)
+def test_institutional_holdings_empty_when_never_cached(db):
+    out = institutional.get_institutional_holdings("NEVER", db=db)
+    assert out["top_holders"] == [] and out["ownership_pct"] is None
+    assert out["stale"] is True
+
+
+def test_recent_13f_changes_filters_by_date(db):
+    db[INSTITUTIONAL_CACHE].insert_one({"ticker": "AAPL", "data": CACHED_HOLDERS})
+
     changes = institutional.get_recent_13f_changes(
         datetime(2026, 3, 1, tzinfo=timezone.utc), universe=["AAPL"], db=db)
     assert len(changes) == 2

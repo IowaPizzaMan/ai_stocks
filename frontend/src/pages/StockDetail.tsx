@@ -40,7 +40,7 @@ export default function StockDetail() {
   const activeTab = location.hash.replace("#", "") || "overview";
 
   const [deepDiveTf, setDeepDiveTf] = useState<Timeframe>("1Y");
-  const { data: analyses, isLoading } = useTickerAnalysis(symbol);
+  const { data: analysis, isLoading } = useTickerAnalysis(symbol);
   const { data: record } = useTickerRecord(symbol);
   const { data: queue } = useQueueStatus();
   const { data: priceData } = useStockPriceHistory(symbol, ["1D", "1W", "1M", "1Y", "5Y", "MAX"]);
@@ -51,7 +51,7 @@ export default function StockDetail() {
     document.title = `StockAI — ${symbol}`;
   }, [symbol]);
 
-  const latest = analyses?.[0];
+  const latest = analysis ?? undefined;
   const queuedJob = [...(queue?.pending ?? []), ...(queue?.running ?? [])].find(
     (j) => j.ticker === symbol,
   );
