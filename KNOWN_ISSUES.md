@@ -6,14 +6,6 @@
 
 ## Open bugs
 
-- **Empty financials from a temporary FMP condition are cached as settled for
-  90 days.** A fetch where every statement type 402s ("not covered on this
-  plan") writes an all-empty `financials_cache` doc that then short-circuits
-  every later analysis run — confirmed live with BSX (402 on all 7 endpoints
-  2026-08-09; FMP had the data again by 2026-08-15 but the app kept serving
-  the empty cache). Fix is specced and planned as
-  `specs/018-fix-financials-cache-gap/` (per-key `outcomes` marker +
-  retry-on-every-run for unavailable keys); awaiting implement.
 - **`analyst-estimates` FMP call is malformed — every earnings snapshot loses
   forward estimates.** `get_earnings_data` requests
   `analyst-estimates?symbol=X&limit=4`, which the stable API rejects with 400
@@ -170,6 +162,18 @@
 
 ## Fixed
 
+- ~~Empty financials from a temporary FMP condition are cached as settled for
+  90 days~~ — fixed 2026-08-15. A fetch where every statement type 402s ("not
+  covered on this plan") wrote an all-empty `financials_cache` doc that then
+  short-circuited every later analysis run — confirmed live with BSX (402 on
+  all 7 endpoints 2026-08-09; FMP had the data again by 2026-08-15 but the app
+  kept serving the empty cache) and reproduced identically for ticker J (all
+  7 endpoints empty since 2026-08-04). Fixed via
+  `specs/018-fix-financials-cache-gap/`: each statement key now carries a
+  per-key `outcomes` marker (`confirmed` vs `unavailable`); only `unavailable`
+  keys are re-fetched on a warm cache hit, promoting to `confirmed` once FMP
+  returns 200, while confirmed keys (even genuinely empty ones) stay settled
+  for the full 90-day window.
 - ~~`GET /stocks/{ticker}/price` 500s whenever a bar has a NaN OHLC value~~ —
   fixed 2026-08-09. Found via `logs/backend/backend.log.2026-08-09`: repeated
   crashes on `GET /stocks/INTC/price`

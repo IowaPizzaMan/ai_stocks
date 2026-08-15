@@ -64,14 +64,14 @@ Existing two-service layout — no new directories. All behavior change is in `a
 
 ### Tests for User Story 2 (write first — must fail against US1-only code) ⚠️
 
-- [ ] T006 [US2] Add failing outcome-recording tests to `agent-runner/tests/test_financials.py`: (a) full fetch with one key 402ing → doc's `outcomes` = `unavailable` for that key, `confirmed` for the rest (extend `test_restricted_symbol_402_degrades_to_empty`); (b) full fetch under `FmpBudgetExceededError` → all keys `unavailable` (extend `test_budget_exceeded_degrades_to_empty`); (c) full fetch returning 200 with empty payload for a key → `confirmed`, and a subsequent warm call does NOT re-fetch it (AC US2-2); (d) warm-hit retry that succeeds promotes the key `unavailable` → `confirmed` and a third call makes zero fetches (state-transition table in data-model.md)
-- [ ] T007 [US2] Add failing invariant test to `agent-runner/tests/test_financials.py`: whenever a doc is written, `outcomes` and `data` cover exactly `set(ENDPOINTS)` and every `unavailable` key has `data[key] == []` (data-model.md validation rules)
+- [X] T006 [US2] Add failing outcome-recording tests to `agent-runner/tests/test_financials.py`: (a) full fetch with one key 402ing → doc's `outcomes` = `unavailable` for that key, `confirmed` for the rest (extend `test_restricted_symbol_402_degrades_to_empty`); (b) full fetch under `FmpBudgetExceededError` → all keys `unavailable` (extend `test_budget_exceeded_degrades_to_empty`); (c) full fetch returning 200 with empty payload for a key → `confirmed`, and a subsequent warm call does NOT re-fetch it (AC US2-2); (d) warm-hit retry that succeeds promotes the key `unavailable` → `confirmed` and a third call makes zero fetches (state-transition table in data-model.md)
+- [X] T007 [US2] Add failing invariant test to `agent-runner/tests/test_financials.py`: whenever a doc is written, `outcomes` and `data` cover exactly `set(ENDPOINTS)` and every `unavailable` key has `data[key] == []` (data-model.md validation rules)
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Record and consume outcomes in `agent-runner/tools/financials.py`: full fetch writes `outcomes[key] = "confirmed" | "unavailable"` per the contract's outcome-recording table (contracts/financials-cache.md); warm-hit retry-eligibility switches from the legacy empty-value rule to `outcomes[key] == "unavailable"` when the field is present (legacy rule kept as fallback for docs without it); successful retries update both `data[key]` and `outcomes[key]` in the same `$set`
-- [ ] T009 [US2] Run `python -m pytest tests/test_financials.py -v` and `ruff check .` from `agent-runner/` — full suite green
-- [ ] T010 [US2] Run backend consumer regression from `backend/`: `python -m pytest tests/test_routers.py -v` — `GET /stocks/{ticker}/financials` response shape unchanged (`outcomes` must NOT leak into the response; contract's HTTP section)
+- [X] T008 [US2] Record and consume outcomes in `agent-runner/tools/financials.py`: full fetch writes `outcomes[key] = "confirmed" | "unavailable"` per the contract's outcome-recording table (contracts/financials-cache.md); warm-hit retry-eligibility switches from the legacy empty-value rule to `outcomes[key] == "unavailable"` when the field is present (legacy rule kept as fallback for docs without it); successful retries update both `data[key]` and `outcomes[key]` in the same `$set`
+- [X] T009 [US2] Run `python -m pytest tests/test_financials.py -v` and `ruff check .` from `agent-runner/` — full suite green
+- [X] T010 [US2] Run backend consumer regression from `backend/`: `python -m pytest tests/test_routers.py -v` — `GET /stocks/{ticker}/financials` response shape unchanged (`outcomes` must NOT leak into the response; contract's HTTP section)
 
 **Checkpoint**: Both stories complete — retry is precise, confirmed results are settled for the window, consumers unchanged.
 
@@ -81,10 +81,10 @@ Existing two-service layout — no new directories. All behavior change is in `a
 
 **Purpose**: Spec sync (constitution II), issue-log hygiene, and end-to-end validation.
 
-- [ ] T011 [P] Rewrite the "Caching logic" section of `specs/component-specs/agent-runner/tools/financials.md` to describe the `outcomes` map, per-key warm-hit retry, legacy-doc derivation, and `fetched_at` preservation (sync obligation in contracts/financials-cache.md)
-- [ ] T012 [P] Move the "Empty financials from a temporary FMP condition are cached as settled for 90 days" entry in `KNOWN_ISSUES.md` from Open bugs to the fixed section (strikethrough style used by existing entries), noting the fix shipped via `specs/018-fix-financials-cache-gap/`
-- [ ] T013 Live validation per `specs/018-fix-financials-cache-gap/quickstart.md` step 2: rebuild/restart agent-runner (`docker compose up -d --build agent-runner`), trigger a BSX analysis run, confirm via mongosh that the BSX doc's keys populate with `confirmed` outcomes and original `fetched_at`, and that `GET http://localhost:8000/stocks/BSX/financials` + the Stock Detail page show financial data (SC-001)
-- [ ] T014 Final gate: full `python -m pytest` + `ruff check .` in `agent-runner/`, and `python -m pytest` in `backend/` (constitution Development Workflow gate)
+- [X] T011 [P] Rewrite the "Caching logic" section of `specs/component-specs/agent-runner/tools/financials.md` to describe the `outcomes` map, per-key warm-hit retry, legacy-doc derivation, and `fetched_at` preservation (sync obligation in contracts/financials-cache.md)
+- [X] T012 [P] Move the "Empty financials from a temporary FMP condition are cached as settled for 90 days" entry in `KNOWN_ISSUES.md` from Open bugs to the fixed section (strikethrough style used by existing entries), noting the fix shipped via `specs/018-fix-financials-cache-gap/`
+- [X] T013 Live validation per `specs/018-fix-financials-cache-gap/quickstart.md` step 2: rebuild/restart agent-runner (`docker compose up -d --build agent-runner`), trigger a BSX analysis run, confirm via mongosh that the BSX doc's keys populate with `confirmed` outcomes and original `fetched_at`, and that `GET http://localhost:8000/stocks/BSX/financials` + the Stock Detail page show financial data (SC-001)
+- [X] T014 Final gate: full `python -m pytest` + `ruff check .` in `agent-runner/`, and `python -m pytest` in `backend/` (constitution Development Workflow gate)
 
 ---
 

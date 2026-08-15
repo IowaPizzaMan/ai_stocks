@@ -163,6 +163,92 @@ def test_budget_exceeded_degrades_to_empty(db, monkeypatch):
     assert all(v == [] for v in data.values())
 
 
+def test_full_fetch_records_outcomes_confirmed_and_unavailable(db, monkeypatch):
+    """A full fetch with one key 402ing must record `unavailable` for that
+    key and `confirmed` for the rest (spec 018 US2, contract outcome table)."""
+    import requests
+
+    def _fmp_get(path, db=None):
+        if "income-statement" in path and "annual" in path and "growth" not in path:
+            response = requests.Response()
+            response.status_code = 402
+            raise requests.HTTPError("402 Payment Required", response=response)
+        return [{"path": path}]
+
+    monkeypatch.setattr(financials, "fmp_get", _fmp_get)
+    financials.get_financials("APP", db=db)
+
+    doc = db[FINANCIALS_CACHE].find_one({"ticker": "APP"})
+    assert doc["outcomes"]["income_annual"] == "unavailable"
+    for key in financials.ENDPOINTS:
+        if key != "income_annual":
+            assert doc["outcomes"][key] == "confirmed"
+
+
+def test_full_fetch_budget_exceeded_marks_all_unavailable(db, monkeypatch):
+    def _raise(path, db=None):
+        raise FmpBudgetExceededError("cap exceeded")
+
+    monkeypatch.setattr(financials, "fmp_get", _raise)
+    financials.get_financials("AAPL", db=db)
+
+    doc = db[FINANCIALS_CACHE].find_one({"ticker": "AAPL"})
+    assert all(v == "unavailable" for v in doc["outcomes"].values())
+
+
+def test_confirmed_empty_payload_not_retried_on_warm_hit(db, fake_fmp):
+    """A 200 response with an empty payload is a settled `confirmed` result,
+    not eligible for retry (contract: HTTP 200 empty payload -> confirmed)."""
+    financials.get_financials("ZZZZ", db=db)  # cold fetch, fake_fmp always returns [{"path": path}]
+    # overwrite one key to look like a genuinely-empty-but-confirmed result
+    db[FINANCIALS_CACHE].update_one(
+        {"ticker": "ZZZZ"},
+        {"$set": {"data.growth": [], "outcomes.growth": "confirmed"}},
+    )
+    fake_fmp.clear()
+
+    data = financials.get_financials("ZZZZ", db=db)
+
+    assert fake_fmp == []  # growth not retried despite being empty
+    assert data["growth"] == []
+
+
+def test_warm_hit_retry_promotes_unavailable_to_confirmed(db, fake_fmp):
+    """A retry that succeeds must flip `outcomes[key]` from unavailable to
+    confirmed, so a third call makes zero fetches (data-model.md transitions)."""
+    seeded = {k: [{"path": k}] for k in financials.ENDPOINTS}
+    seeded["ratios"] = []
+    outcomes = {k: "confirmed" for k in financials.ENDPOINTS}
+    outcomes["ratios"] = "unavailable"
+    db[FINANCIALS_CACHE].insert_one({
+        "ticker": "BSX",
+        "data": seeded,
+        "outcomes": outcomes,
+        "fetched_at": datetime.now(timezone.utc),
+    })
+
+    financials.get_financials("BSX", db=db)
+    doc = db[FINANCIALS_CACHE].find_one({"ticker": "BSX"})
+    assert doc["outcomes"]["ratios"] == "confirmed"
+
+    fake_fmp.clear()
+    financials.get_financials("BSX", db=db)
+    assert fake_fmp == []  # third call: fully confirmed, zero fetches
+
+
+def test_financials_cache_doc_invariant_data_outcomes_match_endpoints(db, fake_fmp):
+    """Whenever a doc is written, outcomes and data cover exactly ENDPOINTS,
+    and every unavailable key has data[key] == [] (data-model.md validation)."""
+    financials.get_financials("AAPL", db=db)
+
+    doc = db[FINANCIALS_CACHE].find_one({"ticker": "AAPL"})
+    assert set(doc["data"]) == set(financials.ENDPOINTS)
+    assert set(doc["outcomes"]) == set(financials.ENDPOINTS)
+    for key, outcome in doc["outcomes"].items():
+        if outcome == "unavailable":
+            assert doc["data"][key] == []
+
+
 def test_get_earnings_data_degrades_per_section(monkeypatch):
     def _fmp_get(path, db=None):
         if path.startswith("earnings?"):
