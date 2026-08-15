@@ -78,3 +78,24 @@ def test_ensure_indexes_idempotent(db):
     dbmod.ensure_indexes(db=db)
     names = db[dbmod.TICKER_INDEX].index_information()
     assert any("ticker" in str(k) for k in names)
+
+
+def test_ensure_indexes_unique_ticker_index_is_fail_soft(db):
+    now = datetime.now(timezone.utc)
+    db[dbmod.ANALYSES].insert_many([
+        {"ticker": "DUP", "timestamp": now, "signal": "buy"},
+        {"ticker": "DUP", "timestamp": now, "signal": "sell"},
+    ])
+
+    dbmod.ensure_indexes(db=db)  # duplicates present — must not raise
+    info = db[dbmod.ANALYSES].index_information()
+    assert not any(
+        spec.get("unique") and spec.get("key") == [("ticker", 1)] for spec in info.values()
+    )
+
+    db[dbmod.ANALYSES].delete_one({"ticker": "DUP", "signal": "sell"})
+    dbmod.ensure_indexes(db=db)  # no more duplicates — index should now build
+    info = db[dbmod.ANALYSES].index_information()
+    assert any(
+        spec.get("unique") and spec.get("key") == [("ticker", 1)] for spec in info.values()
+    )

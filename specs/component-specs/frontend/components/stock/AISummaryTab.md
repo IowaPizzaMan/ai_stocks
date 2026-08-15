@@ -72,11 +72,7 @@ function AgentBreakdown({ name, report }: { name: string, report: any }) {
 }
 ```
 
-### 6. Analysis History Timeline
-Compact list of previous analyses for this ticker — date, signal badge, one-line summary.
-Shows how the AI's verdict has evolved over time.
-
 ## Dependencies
-- `useTickerAnalysis` (for history)
+- `useTickerAnalysis` (current analysis only — see specs/016-dedupe-analysis-feed)
 - `useStockSignals` (for sub-reports)
 - `SignalBadge`, `ConvictionMeter`

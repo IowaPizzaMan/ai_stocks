@@ -45,6 +45,32 @@ def test_compute_mcclellan_all_advancing():
     assert df["mcclellan"].iloc[-1] >= 0
 
 
+# --- FMP-sourced downloads ----------------------------------------------------
+
+def test_download_closes_fetches_per_symbol_and_excludes_failures(monkeypatch):
+    def fake_fetch(ticker, db=None):
+        if ticker == "BAD":
+            raise RuntimeError("not covered")
+        idx = pd.date_range("2026-01-01", periods=5, freq="B")
+        return pd.DataFrame({"Close": [100.0, 101, 102, 103, 104]}, index=idx)
+
+    monkeypatch.setattr("tools.fmp_client.fetch_eod_history", fake_fetch)
+    wide = breadth._download_closes(["AAA", "BAD", "BBB"], "3d")
+
+    assert set(wide.columns) == {"AAA", "BBB"}  # BAD excluded, not raised
+    assert len(wide) == 3  # tail(3) applied after combining
+
+
+def test_download_spy_fetches_and_slices_tail(monkeypatch):
+    idx = pd.date_range("2026-01-01", periods=10, freq="B")
+    frame = pd.DataFrame({"Close": range(10)}, index=idx)
+    monkeypatch.setattr("tools.fmp_client.fetch_eod_history", lambda ticker, db=None: frame)
+
+    series = breadth._download_spy("4d")
+    assert len(series) == 4
+    assert list(series) == [6, 7, 8, 9]
+
+
 # --- interpretation ----------------------------------------------------------
 
 def test_classify_zone():

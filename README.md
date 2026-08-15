@@ -1,3 +1,6 @@
+# left off at speckit-checklist 016-dedupe-analysis-feed
+
+
 # StockAI
 
 Local-first, single-user stock research app. CrewAI agents + a local Ollama LLM analyze tickers from a work queue and write results to MongoDB; FastAPI serves them to a React UI.
@@ -24,7 +27,7 @@ cp .env.example .env       # fill in API keys (FMP, Finnhub, FRED)
 docker compose up -d --build
 
 # GPU server:
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build --no-attach mongodb
 
 # First run: pull the model into the ollama container
 docker compose exec ollama ollama pull qwen2.5:14b

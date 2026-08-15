@@ -3,8 +3,12 @@ from functools import lru_cache
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.database import Database
+from pymongo.errors import OperationFailure
 
+from logging_config import get_logger
 from settings import settings
+
+logger = get_logger(__name__)
 
 # Collection names — keep in sync with agent-runner/tools/db.py
 ANALYSES = "analyses"
@@ -25,6 +29,21 @@ BREADTH_DIVERGENCES = "breadth_divergences"
 BREADTH_META = "breadth_meta"
 MARKET_FLOW_EVENTS = "market_flow_events"
 
+# 017-fmp-migration-admin — keep in sync with agent-runner/tools/db.py
+FMP_ENTITLEMENTS = "fmp_entitlements"
+DATASET_META = "dataset_meta"
+SECTOR_PERFORMANCE = "sector_performance"
+MARKET_MOVERS = "market_movers"
+ECONOMIC_CALENDAR_EVENTS = "economic_calendar_events"
+TREASURY_RATES = "treasury_rates"
+MARKET_RISK_PREMIUM = "market_risk_premium"
+ECONOMIC_INDICATORS = "economic_indicators"
+CONGRESS_TRADES = "congress_trades"
+FUND_HOLDINGS = "fund_holdings"
+STOCK_NEWS = "stock_news"
+MARKET_NEWS = "market_news"
+COMPANY_INFO = "company_info"
+
 
 @lru_cache(maxsize=1)
 def get_db() -> Database:
@@ -36,7 +55,15 @@ def ensure_indexes(db: Database) -> None:
     """Idempotent index bootstrap — called once at API startup."""
     db[ANALYSES].create_index([("ticker", ASCENDING), ("timestamp", DESCENDING)])
     db[ANALYSES].create_index([("timestamp", DESCENDING)])
+    try:
+        db[ANALYSES].create_index([("ticker", ASCENDING)], unique=True)
+    except OperationFailure:
+        logger.warning(
+            "unique ticker index on analyses blocked by existing duplicates — "
+            "run scripts/dedupe_analyses.py"
+        )
     db[WORK_QUEUE].create_index([("status", ASCENDING), ("created_at", ASCENDING)])
+    db[WORK_QUEUE].create_index([("job_type", ASCENDING), ("created_at", DESCENDING)])
     db[TICKER_INDEX].create_index([("ticker", ASCENDING)], unique=True)
     db[TICKER_INDEX].create_index([("status", ASCENDING)])
     db[INSTITUTIONAL_FLOW].create_index([("filed_at", DESCENDING)])

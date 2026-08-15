@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 
 
 class TickerDelistedError(Exception):
-    """Raised when a ticker fails the yfinance existence check AND has no financials."""
+    """Raised when a ticker fails the FMP existence check AND has no financials."""
 
     def __init__(self, ticker: str):
         self.ticker = ticker
@@ -142,7 +142,7 @@ class Crew:
             fin = self.get_financials(ticker, db=self.db)
             if not fin or not any(fin.get(k) for k in ("income_annual", "income_quarterly")):
                 raise TickerDelistedError(ticker)
-            logger.info("%s: yfinance check failed but financials resolve — proceeding", ticker)
+            logger.info("%s: FMP existence check failed but financials resolve — proceeding", ticker)
 
         # 1. data prefetch
         data = self._prefetch(ticker, parallel_prefetch)

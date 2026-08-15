@@ -3,7 +3,7 @@
 ## Purpose
 Provides McClellan Oscillator readings (NYMO for NYSE, NAMO for NASDAQ) — the primary market timing inputs for the RecommenderAgent and market_flow skill.
 
-> **Sourcing (verified 2026-08-02):** the `$NYMO` / `$NAMO` symbols are StockCharts-proprietary and are **not fetchable** from Yahoo (`$NYMO`, `^NYMO`, `$NAMO`, `^NYAD`, `^TRIN` all return zero rows via yfinance), FMP, Finnhub, or FRED. This tool therefore **computes the oscillator locally** from advance/decline counts over proxy universes, using data sources already in the stack. Verified end-to-end: Wikipedia constituent list → one batched `yf.download` of 503 tickers → advance/decline counts → ratio-adjusted McClellan, produces values in the expected range.
+> **Sourcing (verified 2026-08-02, updated 2026-08-15):** the `$NYMO` / `$NAMO` symbols are StockCharts-proprietary and are **not fetchable** from Yahoo, FMP, Finnhub, or FRED. This tool therefore **computes the oscillator locally** from advance/decline counts over proxy universes. As of specs/017-fmp-migration-admin, universe closes are sourced from **FMP** (`historical-price-eod/full`, one call per symbol through the shared throttle) instead of a batched `yf.download` — see `contracts/fmp-migration-map.md` row 3 and research D4. A batch-quote endpoint could cut this to one call per universe if entitled; the per-symbol approach is the safe default that works regardless of plan tier.
 
 ## Approach
 

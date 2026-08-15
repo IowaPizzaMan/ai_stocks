@@ -71,6 +71,21 @@ def test_successful_job_writes_analysis_and_marks_done(db):
     assert db[ANALYSES].count_documents({"ticker": "AAPL"}) == 1
 
 
+def test_second_job_for_same_ticker_replaces_analysis(db):
+    enqueue(db, "AAPL")
+    crew = FakeCrew(result={"ticker": "AAPL", "signal": "bullish", "conviction": "high"})
+    assert queue_worker.claim_and_run_next(db=db, crew=crew) is True
+
+    enqueue(db, "AAPL")
+    crew2 = FakeCrew(result={"ticker": "AAPL", "signal": "bearish", "conviction": "low"})
+    assert queue_worker.claim_and_run_next(db=db, crew=crew2) is True
+
+    assert db[ANALYSES].count_documents({"ticker": "AAPL"}) == 1
+    doc = db[ANALYSES].find_one({"ticker": "AAPL"})
+    assert doc["signal"] == "bearish"
+    assert doc["conviction"] == "low"
+
+
 def test_fifo_order(db):
     old = datetime.now(timezone.utc) - timedelta(hours=2)
     enqueue(db, "NEWER")

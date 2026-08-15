@@ -12,7 +12,17 @@ from pymongo import ReturnDocument
 
 from crew import Crew, TickerDelistedError
 from logging_config import get_logger
-from tools.db import ANALYSES, WORK_QUEUE, ensure_indexes, get_db, mark_ticker_removed, sanitize_floats
+from tools.admin_jobs import JOB_DATASETS, JOB_HANDLERS, STALE_MINUTES
+from tools.db import (
+    ANALYSES,
+    WORK_QUEUE,
+    ensure_indexes,
+    get_db,
+    mark_ticker_removed,
+    sanitize_floats,
+    write_db,
+    write_dataset_meta,
+)
 
 logger = get_logger(__name__)
 
@@ -26,15 +36,33 @@ def _utcnow() -> datetime:
 
 
 def recover_stale_jobs(db) -> int:
-    """Reset jobs stuck in 'running' from a prior crash back to 'pending'."""
-    cutoff = _utcnow() - timedelta(minutes=STALE_RUNNING_MINUTES)
+    """Reset jobs stuck in 'running' from a prior crash back to 'pending'.
+    Admin jobs may override the default 30-minute staleness allowance via
+    tools.admin_jobs.STALE_MINUTES (e.g. a long-running scrape)."""
+    now = _utcnow()
+    modified = 0
+    for job_type, minutes in STALE_MINUTES.items():
+        cutoff = now - timedelta(minutes=minutes)
+        result = db[WORK_QUEUE].update_many(
+            {"status": "running", "job_type": job_type, "started_at": {"$lt": cutoff}},
+            {"$set": {"status": "pending", "updated_at": now}},
+        )
+        modified += result.modified_count
+
+    default_cutoff = now - timedelta(minutes=STALE_RUNNING_MINUTES)
     result = db[WORK_QUEUE].update_many(
-        {"status": "running", "started_at": {"$lt": cutoff}},
-        {"$set": {"status": "pending", "updated_at": _utcnow()}},
+        {
+            "status": "running",
+            "job_type": {"$nin": list(STALE_MINUTES.keys())},
+            "started_at": {"$lt": default_cutoff},
+        },
+        {"$set": {"status": "pending", "updated_at": now}},
     )
-    if result.modified_count:
-        logger.warning("reset %s stale running job(s) to pending", result.modified_count)
-    return result.modified_count
+    modified += result.modified_count
+
+    if modified:
+        logger.warning("reset %s stale running job(s) to pending", modified)
+    return modified
 
 
 def _startup(db) -> None:
@@ -43,6 +71,43 @@ def _startup(db) -> None:
         ensure_indexes(db)
         recover_stale_jobs(db)
         _started = True
+
+
+def _run_admin_job(db, job) -> bool:
+    """Dispatches a non-ticker work_queue job (job_type set, no ticker) to
+    its registered handler. Returns True (job was claimed and processed)."""
+    job_type = job["job_type"]
+    handler = JOB_HANDLERS.get(job_type)
+    dataset = JOB_DATASETS.get(job_type)
+
+    if handler is None:
+        logger.error("no handler registered for job_type=%s", job_type)
+        db[WORK_QUEUE].update_one(
+            {"_id": job["_id"]},
+            {"$set": {"status": "failed", "error": "no handler for job_type",
+                      "completed_at": _utcnow(), "updated_at": _utcnow()}},
+        )
+        return True
+
+    try:
+        record_count = handler(db)
+        if dataset:
+            write_dataset_meta(dataset, "success", record_count=record_count or 0, db=db)
+        db[WORK_QUEUE].update_one(
+            {"_id": job["_id"]},
+            {"$set": {"status": "done", "completed_at": _utcnow(), "updated_at": _utcnow()}},
+        )
+        logger.info("admin job %s done (job_type=%s, record_count=%s)", job["_id"], job_type, record_count)
+    except Exception as exc:
+        logger.exception("admin job %s failed (job_type=%s)", job["_id"], job_type)
+        if dataset:
+            write_dataset_meta(dataset, "failed", db=db)
+        db[WORK_QUEUE].update_one(
+            {"_id": job["_id"]},
+            {"$set": {"status": "failed", "error": str(exc),
+                      "completed_at": _utcnow(), "updated_at": _utcnow()}},
+        )
+    return True
 
 
 def claim_and_run_next(db=None, crew=None) -> bool:
@@ -60,6 +125,10 @@ def claim_and_run_next(db=None, crew=None) -> bool:
     if job is None:
         return False
 
+    job_type = job.get("job_type")
+    if job_type and job_type != "ticker_analysis":
+        return _run_admin_job(db, job)
+
     ticker = job["ticker"]
     logger.info("claimed job %s for %s", job["_id"], ticker)
     crew = crew if crew is not None else Crew(db=db)
@@ -69,7 +138,7 @@ def claim_and_run_next(db=None, crew=None) -> bool:
         # from a ranked list and is waiting on the result)
         result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")))
         result = sanitize_floats(result)
-        db[ANALYSES].insert_one(result)
+        write_db(ANALYSES, result, upsert_key="ticker", db=db)
         db[WORK_QUEUE].update_one(
             {"_id": job["_id"]},
             {"$set": {"status": "done", "completed_at": _utcnow(), "updated_at": _utcnow()}},

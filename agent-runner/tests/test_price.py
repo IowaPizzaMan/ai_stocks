@@ -1,7 +1,8 @@
-"""Unit tests for tools/price.py — yfinance is faked; no network."""
+"""Unit tests for tools/price.py — FMP is faked; no network."""
 import numpy as np
 import pandas as pd
 import pytest
+import requests
 
 from tools import price
 
@@ -11,7 +12,7 @@ def make_ohlcv(rows: int = 300, seed: int = 7) -> pd.DataFrame:
     close = 100 + np.cumsum(rng.normal(0, 1, rows))
     high = close + rng.uniform(0.1, 2, rows)
     low = close - rng.uniform(0.1, 2, rows)
-    return pd.DataFrame(
+    df = pd.DataFrame(
         {
             "Open": close + rng.normal(0, 0.5, rows),
             "High": high,
@@ -21,53 +22,39 @@ def make_ohlcv(rows: int = 300, seed: int = 7) -> pd.DataFrame:
         },
         index=pd.date_range("2025-01-01", periods=rows, freq="B", name="Date"),
     )
-
-
-class FakeTicker:
-    def __init__(self, ticker, history_df=None, fast_info=None, raise_fast_info=False):
-        self._df = history_df if history_df is not None else make_ohlcv()
-        self._fast_info = fast_info or {}
-        self._raise = raise_fast_info
-        self.history_calls = []
-
-    def history(self, period=None, interval=None):
-        self.history_calls.append((period, interval))
-        return self._df
-
-    @property
-    def fast_info(self):
-        if self._raise:
-            raise RuntimeError("fast_info unavailable")
-        return self._fast_info
+    return df
 
 
 @pytest.fixture
-def fake_ticker(monkeypatch):
+def fake_eod(monkeypatch):
+    """Monkeypatches fetch_eod_history to return a fixed frame, recording
+    every (ticker) call — mirrors the old fake_ticker fixture's role."""
     calls: list = []
 
-    def factory(**kwargs):
-        def _ctor(symbol):
-            tk = FakeTicker(symbol, **kwargs)
-            tk.history_calls = calls  # shared across instances — one Ticker per fetch
-            return tk
+    def factory(df=None):
+        frame = df if df is not None else make_ohlcv()
 
-        monkeypatch.setattr(price.yf, "Ticker", _ctor)
+        def _fetch(ticker, db=None):
+            calls.append(ticker)
+            return frame
+
+        monkeypatch.setattr(price, "fetch_eod_history", _fetch)
         return calls
 
     return factory
 
 
-def test_get_price_history_shape(fake_ticker):
-    calls = fake_ticker()
+def test_get_price_history_shape(fake_eod):
+    calls = fake_eod()
     result = price.get_price_history("AAPL")
 
     assert result["ticker"] == "AAPL"
     assert set(result) == {"daily", "weekly", "monthly", "quarterly", "yearly", "ticker"}
-    assert calls == [("1y", "1d"), ("2y", "1wk"), ("5y", "1mo")]
+    # single fetch backs all five resolutions (previously three separate calls)
+    assert calls == ["AAPL"]
     first = result["daily"][0]
     assert {"Open", "High", "Low", "Close", "Volume", "Date"} <= set(first)
 
-    # quarterly/yearly are resampled from monthly, not a separate fetch
     quarterly, yearly = result["quarterly"], result["yearly"]
     assert quarterly and yearly
     assert {"Open", "High", "Low", "Close", "Volume", "Date"} <= set(quarterly[0])
@@ -88,29 +75,44 @@ def test_compute_indicators_columns_and_ranges():
     assert (tail["BB_UPPER"] >= tail["BB_MID"]).all()
     assert (tail["BB_MID"] >= tail["BB_LOWER"]).all()
     assert (tail["ATR_14"] > 0).all()
-    # MACD histogram is line minus signal by construction
     np.testing.assert_allclose(
         tail["MACD_HIST"], tail["MACD"] - tail["MACD_SIGNAL"], rtol=1e-9
     )
 
 
-def test_get_technical_indicators_returns_last_30(fake_ticker):
-    fake_ticker()
+def test_get_technical_indicators_returns_last_30(fake_eod):
+    fake_eod()
     records = price.get_technical_indicators("MSFT")
     assert len(records) == 30
     assert "RSI_14" in records[0]
 
 
-def test_is_ticker_valid_via_fast_info(fake_ticker):
-    fake_ticker(fast_info={"lastPrice": 123.45})
+def test_is_ticker_valid_true_when_quote_has_price(monkeypatch):
+    monkeypatch.setattr(price, "fmp_get", lambda path: [{"symbol": "AAPL", "price": 231.5}])
     assert price.is_ticker_valid("AAPL") is True
 
 
-def test_is_ticker_valid_falls_back_to_history(fake_ticker):
-    fake_ticker(fast_info={}, history_df=make_ohlcv(rows=5))
-    assert price.is_ticker_valid("THIN") is True
-
-
-def test_is_ticker_valid_false_when_all_empty(fake_ticker):
-    fake_ticker(raise_fast_info=True, history_df=pd.DataFrame())
+def test_is_ticker_valid_false_when_empty_list(monkeypatch):
+    monkeypatch.setattr(price, "fmp_get", lambda path: [])
     assert price.is_ticker_valid("GONE") is False
+
+
+def test_is_ticker_valid_false_on_http_error(monkeypatch):
+    def _raise(path):
+        response = requests.Response()
+        response.status_code = 404
+        raise requests.HTTPError("404", response=response)
+
+    monkeypatch.setattr(price, "fmp_get", _raise)
+    assert price.is_ticker_valid("GONE") is False
+
+
+def test_is_ticker_valid_true_under_budget_pressure(monkeypatch):
+    """Can't verify under budget pressure — don't false-flag as delisted."""
+    from tools.fmp_client import FmpBudgetExceededError
+
+    def _raise(path):
+        raise FmpBudgetExceededError("cap exceeded")
+
+    monkeypatch.setattr(price, "fmp_get", _raise)
+    assert price.is_ticker_valid("AAPL") is True

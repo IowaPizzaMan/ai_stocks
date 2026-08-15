@@ -53,14 +53,62 @@ def test_feed_ticker_filter_substring_case_insensitive(client, db):
     assert client.get("/analysis/feed?ticker=A.P").json()["items"] == []
 
 
-def test_ticker_history(client, db):
-    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=1)))
+def test_feed_shows_one_card_after_reanalysis(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=1),
+                                          signal="bearish", conviction="low"))
+    # simulates the write-path upsert (agent-runner/queue_worker.py) replacing
+    # the ticker's prior record with a newer analysis
+    db[ANALYSES].replace_one(
+        {"ticker": "AAPL"},
+        analysis_doc("AAPL", NOW, signal="bullish", conviction="high"),
+        upsert=True,
+    )
+
+    r = client.get("/analysis/feed").json()
+    aapl_items = [i for i in r["items"] if i["ticker"] == "AAPL"]
+    assert len(aapl_items) == 1
+    assert aapl_items[0]["signal"] == "bullish"
+    assert aapl_items[0]["conviction"] == "high"
+
+
+def test_feed_total_reflects_distinct_tickers_not_run_count(client, db):
+    for i in range(25):
+        db[ANALYSES].insert_one(analysis_doc(f"T{i:02d}", NOW - timedelta(hours=i)))
+    # an extra historical record for an already-represented ticker must not
+    # inflate the distinct-ticker total
+    db[ANALYSES].replace_one(
+        {"ticker": "T00"},
+        analysis_doc("T00", NOW),
+        upsert=True,
+    )
+
+    r = client.get("/analysis/feed").json()
+    assert r["total"] == 25
+
+
+def test_feed_filters_match_latest_value_per_ticker(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=1), signal="bearish"))
+    db[ANALYSES].replace_one(
+        {"ticker": "AAPL"},
+        analysis_doc("AAPL", NOW, signal="bullish"),
+        upsert=True,
+    )
+
+    assert [i["ticker"] for i in client.get("/analysis/feed?signal=bullish").json()["items"]] == ["AAPL"]
+    assert client.get("/analysis/feed?signal=bearish").json()["items"] == []
+
+
+def test_ticker_analysis_returns_single_latest_object(client, db):
     db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
     db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
 
     r = client.get("/analysis/aapl").json()
-    assert len(r) == 2
-    assert r[0]["sub_reports"]  # full docs include sub_reports
+    assert r["ticker"] == "AAPL"
+    assert r["sub_reports"]  # full doc includes sub_reports
+
+
+def test_ticker_analysis_unknown_ticker_returns_null(client, db):
+    assert client.get("/analysis/zzzz").json() is None
 
 
 def test_sector_endpoint_latest_per_ticker(client, db):

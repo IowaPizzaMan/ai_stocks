@@ -1,7 +1,6 @@
 """Unit tests for the Phase 3 agents — LLM client faked; no network."""
 import json
 
-import pytest
 
 from agents import fundamental_analyst, portfolio_strategist, technical_analyst
 

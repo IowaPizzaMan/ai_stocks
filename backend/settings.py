@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:14b"
 
     finnhub_api_key: str = ""  # earnings calendar fetch (routers/earnings.py)
+    fmp_api_key: str = ""  # price chart fetch (routers/price.py)
 
 
 settings = Settings()

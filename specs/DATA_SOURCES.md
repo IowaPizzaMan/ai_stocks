@@ -4,77 +4,42 @@
 
 ---
 
-## yfinance (Yahoo Finance)
+## yfinance (Yahoo Finance) — RETIRED
 
-**Access:** No API key required · No enforced rate limit · Python library  
-**Primary use:** Price history, market breadth signals, basic fundamentals  
+**Retired 2026-08-15** (specs/017-fmp-migration-admin) — the paid FMP subscription fully replaced yfinance as the price/breadth/earnings/institutional data source; `yfinance` was removed from both services' dependencies and zero live code paths reference it. See "Switching Primary Price Data Source" (now resolved, see below) and `specs/017-fmp-migration-admin/contracts/fmp-migration-map.md` for the full per-call-site disposition (what moved to FMP, what was dropped, and why).
 
-| Method / Property | Data Returned |
-|---|---|
-| `.history(period, interval)` | OHLCV bars (open, high, low, close, volume, adj close), dividends, splits — any interval from 1m to 1mo |
-| `.get_info()` | Quote metadata: market cap, P/E, beta, sector, industry, exchange, 52-wk range, avg volume |
-| `.get_fast_info()` | Lightweight real-time snapshot: last price, market cap, shares outstanding |
-| `.get_income_stmt(freq)` | Income statement (yearly or quarterly): revenue, gross profit, EBIT, EBITDA, net income, EPS |
-| `.get_balance_sheet(freq)` | Balance sheet (yearly or quarterly): cash, total assets, total liabilities, equity, debt |
-| `.get_cash_flow(freq)` | Cash flow statement (yearly or quarterly): operating, investing, financing cash flows, free cash flow |
-| `.get_earnings(freq)` | Earnings summary per period (revenue + EPS, yearly/quarterly/trailing) |
-| `.get_earnings_dates(limit)` | Upcoming + historical earnings dates with EPS estimate, reported EPS, surprise % |
-| `.get_earnings_estimate()` | Forward EPS estimates for 0Q, +1Q, 0Y, +1Y with analyst count, low/high/avg/growth |
-| `.get_revenue_estimate()` | Forward revenue estimates for 0Q, +1Q, 0Y, +1Y |
-| `.get_eps_trend()` | EPS trend revisions: current vs 7/30/60/90 days ago |
-| `.get_eps_revisions()` | Analyst revision counts (up/down) over last 7 and 30 days |
-| `.get_growth_estimates()` | Growth estimates for stock, industry, sector, index (0Q through +5Y) |
-| `.get_analyst_price_targets()` | Price target: current, low, high, mean, median |
-| `.get_recommendations()` | Analyst rec counts by period: strongBuy, buy, hold, sell, strongSell |
-| `.get_upgrades_downgrades()` | Firm-level upgrades/downgrades with from/to grade and action |
-| `.get_institutional_holders()` | Top institutional holders: name, shares, date reported, % out |
-| `.get_mutualfund_holders()` | Top mutual fund holders: name, shares, date reported, % out |
-| `.get_insider_purchases()` | Insider purchase summary: insider buys/sells counts and share totals |
-| `.get_insider_transactions()` | Individual insider transactions: name, shares, value, date, type |
-| `.get_insider_roster_holders()` | Insider roster: names, positions, share counts, % ownership |
-| `.get_major_holders()` | % shares held by institutions, insiders, public float |
-| `.get_shares_full(start, end)` | Historical share count time series (up to 18 months) |
-| `.get_valuation_measures(freq)` | Market cap, P/E, P/S, P/B, EV/EBITDA, EV/Revenue (quarterly/monthly/yearly) |
-| `.get_sustainability()` | ESG scores: environmental, social, governance, total ESG, controversy level |
-| `.get_calendar()` | Next earnings date, ex-dividend date, dividend date |
-| `.get_sec_filings()` | List of recent SEC filings with type, date, and URL |
-| `.get_dividends()` / `.get_splits()` | Historical dividend amounts and split ratios |
-| `.get_news(count, tab)` | Recent news articles: headline, URL, publisher, publish time |
-| `.option_chain(date)` | Options chains: calls/puts with strike, bid/ask, IV, OI, delta, gamma |
-| `yf.download(universe_tickers)` (batched) | Daily closes for the S&P 500 / NASDAQ-100 universes — used to **compute** the McClellan Oscillator (NYMO/NAMO) locally. ⚠️ The `$NYMO`/`$NAMO` StockCharts symbols are NOT on Yahoo (verified 2026-08-02: `$NYMO`, `^NYMO`, `$NAMO`, `^NYAD`, `^TRIN` all return no data); see `component-specs/agent-runner/tools/breadth.md` |
-| `.live()` / `WebSocket` | Real-time streaming price via WebSocket (up to any number of symbols) |
+**What was dropped, not migrated** (FR-003 dispositions): options chains (`option_chain` — never wired into any view), real-time WebSocket streaming (never used; the app's no-polling design doesn't need it), ESG scores (`get_sustainability` — not consumed anywhere; may return via FMP's ESG family if a consuming view is ever built), and live institutional-holder refresh (`get_institutional_holders`/`get_mutualfund_holders`/`get_major_holders` — FMP's 13F/ownership family is **not entitled** on the current plan; `agent-runner/tools/institutional.py` now serves only its pre-migration cached data, read-only, flagged `stale: true`).
 
 ---
 
 ## Financial Modeling Prep (FMP)
 
-**Access:** API key required · 250 calls/day (free tier) · Cache aggressively — re-fetch quarterly only  
-**Base URL:** `https://financialmodelingprep.com/api/`  
-**Primary use:** Comprehensive financials, ratios, insider filings, 13F institutional data  
+**Access:** API key required · **Paid tier as of 2026-08-15** (upgraded from the 250 calls/day free tier — see specs/017-fmp-migration-admin) · 250 calls/min soft throttle (headroom under the plan's actual limit), configurable daily soft cap (disabled by default; set to 225 to survive a downgrade back to free-tier without code changes) · Cache-first via `agent-runner/tools/fmp_client.py`  
+**Base URL:** `https://financialmodelingprep.com/stable/` — the legacy `v3`/`v4` paths below are **outdated** (they 403 on accounts created after FMP's 2025 API migration); kept struck through for historical reference only until each row is re-verified against `stable/`.  
+**Primary use:** Price history (primary, replacing yfinance), comprehensive financials, ratios, earnings, insider filings, congressional trading, ETF/fund holdings, news, company info, economics data. **Not entitled on this plan:** 13F institutional ownership, earnings-call transcripts (both excluded per user decision — see `specs/017-fmp-migration-admin/fmp-gap-review.md`).
 
 | Endpoint | Data Returned |
 |---|---|
-| `v3/income-statement/{symbol}?period=annual\|quarter` | Revenue, COGS, gross profit, R&D, EBIT, EBITDA, net income, EPS (diluted/basic) |
-| `v3/balance-sheet-statement/{symbol}?period=annual\|quarter` | Cash, receivables, inventory, PP&E, total assets, debt, equity, working capital |
-| `v3/cash-flow-statement/{symbol}?period=annual\|quarter` | Operating/investing/financing cash flows, capex, free cash flow, dividends paid |
-| `v3/income-statement-growth/{symbol}` | YoY growth rates for revenue, EBITDA, EPS, net income |
-| `v3/cash-flow-statement-growth/{symbol}` | YoY growth rates for free cash flow, capex, operating cash flow |
-| `v3/ratios/{symbol}?period=annual\|quarter` | P/E, P/B, P/S, EV/EBITDA, debt/equity, current ratio, ROE, ROA, gross/net margin |
-| `v3/key-metrics/{symbol}?period=annual\|quarter` | FCF yield, ROIC, revenue per share, net cash/debt, PE ratio, dividend yield |
-| `v3/enterprise-values/{symbol}` | Market cap, EV, EV/EBITDA, EV/Revenue by quarter |
-| `v3/analyst-estimates/{symbol}` | Forward EPS + revenue estimates with analyst counts, low/avg/high |
-| `v3/analyst-stock-recommendations/{symbol}` | Analyst rating trends (buy/hold/sell counts by month) |
-| `v3/quote/{symbol}` | Real-time/delayed quote: price, change, volume, market cap, PE, 52-wk range |
-| `v3/historical-price-full/{symbol}` | Full OHLCV daily history with adjusted prices |
-| `v3/earning_calendar` | Upcoming earnings dates with EPS estimates |
-| `v4/insider-trading?symbol={symbol}` | Insider transactions: name, title, shares, price, value, date, type (Form 3/4/5) |
-| `v4/insider-trading-rss-feed` | RSS feed of latest insider filings across all tickers |
-| `v3/cik_list` | All registered institutional managers with CIK numbers |
-| `v3/cik-search/{name}` | Look up CIK by fund/institution name |
-| `v3/form-thirteen/{cik}?date=` | 13F holdings for a fund on a given date: ticker, shares, value, % |
-| `v3/form-thirteen-date/{cik}` | All 13F filing dates for a given fund |
-| `v3/stock-screener` | Screen stocks by market cap, sector, volume, price, country, etc. |
-| `v3/profile/{symbol}` | Company profile: name, description, sector, industry, exchange, CEO, employees, website URL, and a hosted **company logo image URL** (`image` field) — no separate logo API needed, see "Company Logos" below |
+| ~~`v3/income-statement/{symbol}?period=annual\|quarter`~~ → `stable/income-statement?symbol=&period=` | Revenue, COGS, gross profit, R&D, EBIT, EBITDA, net income, EPS (diluted/basic) |
+| ~~`v3/balance-sheet-statement/{symbol}?period=annual\|quarter`~~ → `stable/balance-sheet-statement?symbol=&period=` | Cash, receivables, inventory, PP&E, total assets, debt, equity, working capital |
+| ~~`v3/cash-flow-statement/{symbol}?period=annual\|quarter`~~ → `stable/cash-flow-statement?symbol=&period=` | Operating/investing/financing cash flows, capex, free cash flow, dividends paid |
+| ~~`v3/income-statement-growth/{symbol}`~~ → `stable/income-statement-growth?symbol=` | YoY growth rates for revenue, EBITDA, EPS, net income |
+| ~~`v3/ratios/{symbol}?period=`~~ → `stable/ratios?symbol=&period=` | P/E, P/B, P/S, EV/EBITDA, debt/equity, current ratio, ROE, ROA, gross/net margin |
+| ~~`v3/key-metrics/{symbol}?period=`~~ → `stable/key-metrics?symbol=&period=` | FCF yield, ROIC, revenue per share, net cash/debt, PE ratio, dividend yield |
+| `stable/historical-price-eod/full?symbol=` | **Primary price source (replaces yfinance).** Full daily OHLCV, dividend/split adjusted; agent-runner and backend each fetch this once per ticker and derive weekly/monthly/quarterly/yearly by local resample |
+| `stable/historical-chart/{1min\|5min\|15min\|30min\|1hour\|4hour}?symbol=` | Intraday bars — entitlement not yet fully probed (see `fmp-gap-review.md`) |
+| `stable/quote?symbol=` (comma-separated for batch) | Real-time/delayed quote — used for the cheap ticker-existence/delisting check (replaces yfinance's `fast_info` check) |
+| `stable/earnings?symbol=&limit=` | Per-ticker earnings dates + EPS actual/estimate — feeds both the post-earnings reaction-move calculation and the fundamental analyst's earnings snapshot (replaces yfinance's `get_earnings_dates`) |
+| `stable/analyst-estimates?symbol=&limit=` | Forward EPS/revenue estimates (replaces yfinance's `get_earnings_estimate`) |
+| `stable/grades?symbol=&limit=` | Analyst upgrade/downgrade actions — used both as the analyst-recs feed and, aggregated, as a proxy for EPS-revision direction (yfinance's `get_eps_revisions` had no clean FMP equivalent; documented substitution) |
+| `stable/insider-trading/latest` | Market-wide insider transaction feed — **entitled**, adopted |
+| `stable/senate-latest`, `stable/house-latest` | Congressional trading disclosures — **entitled**, adopted |
+| `stable/etf/holdings?symbol=` (and fund equivalents) | ETF & mutual-fund holdings — **entitled**, adopted; replaces the retired Dataroma superinvestor scraper (not a like-for-like signal — see fmp-gap-review.md) |
+| `stable/profile?symbol=` | Company profile: name, description, sector, industry, exchange, CEO, employees, website URL, logo image URL — **entitled**, adopted for per-ticker company info |
+| `stable/sector-performance-snapshot`, `stable/biggest-gainers` / `biggest-losers` / `most-actives` | Sector performance, market movers — market-wide, adopted |
+| `stable/economic-calendar`, `stable/treasury-rates`, `stable/market-risk-premium` | Economics data — adopted; FRED remains canonical for its existing 12 macro series (no duplicate storage) |
+| ~~`v4/insider-trading?symbol=`~~, ~~`v3/form-thirteen/{cik}`~~ | 13F institutional ownership — **NOT entitled on this plan** (user-verified 2026-08-15); institutional holder data now served read-only from pre-migration cache, flagged stale |
+| ~~`v3/stock-screener`~~ | Screen stocks by market cap, sector, volume, price, country, etc. (unchanged status — not yet migrated to `stable/`) |
 
 ### Field Notes & Data Quality Caveats (from reviewing a real payload — see `FundamentalsTab.md` for the full chart-by-chart breakdown)
 - **Duplicate fields across endpoints** — `ratios` and `key_metrics` both return several identical values: `enterpriseValueMultiple` (`ratios`) === `evToEBITDA` (`key_metrics`); `priceToFreeCashFlowRatio` (`ratios`) is the inverse of `freeCashFlowYield` (`key_metrics`); `currentRatio` appears identically in both. Pick one canonical source per metric rather than fetching/storing both.
@@ -228,11 +193,9 @@
 
 **Idea:** Pull each company's website URL from FMP's `v3/profile/{symbol}` (`website` field), then crawl it with Playwright (already a project dependency for Dataroma scraping — see `component-specs/agent-runner/tools/superinvestor.py`) to pull qualitative signal that structured financial data doesn't capture — investor relations pages, press releases, product announcements. Open questions before this becomes a real spec: what pages to crawl (IR page? full site?), what to extract (raw text for the chunker/summarizer pipeline, same pattern as `superinvestor.py`'s Ollama extraction?), how to avoid re-crawling unchanged pages, and respectful crawl-rate limits per site (same concern noted for the Dataroma scraper).
 
-## Switching Primary Price Data Source
+## Switching Primary Price Data Source — RESOLVED
 
-> Under consideration, not yet decided.
-
-yfinance (current primary, see above) doesn't cover every ticker the user wants tracked — some tickers return empty/errored history. FMP's `v3/historical-price-full/{symbol}` is a viable replacement and is already paid for at $20/mo, but switching wholesale would materially increase FMP call volume against the 250/day (free tier) or paid-tier budget, competing with the financials/ratios/insider calls FMP already serves. Needs: (1) a coverage comparison — which tickers yfinance actually fails on, and whether FMP covers those specifically, (2) a decision on whether FMP replaces yfinance entirely for price or only backfills the gap tickers (keeping yfinance primary, FMP as a per-ticker fallback — consistent with the "Backup" column pattern already used elsewhere in the Coverage Map below). Also worth a broader pass on what else the $20/mo FMP tier unlocks beyond price data, since the plan tier isn't fully mapped in this doc yet.
+**Resolved 2026-08-15** (specs/017-fmp-migration-admin): FMP fully replaced yfinance as the price source — not a per-ticker fallback, a wholesale switch, per the user's explicit "switch everything" direction. The original budget concern (FMP's 250/day free-tier ceiling competing with financials/ratios/insider calls) is moot now that the subscription is paid; the new `fmp_client.py` throttle (250 calls/min soft limit, configurable daily soft cap) replaces the old per-call quota anxiety. See `specs/017-fmp-migration-admin/contracts/fmp-migration-map.md` for the full migration and `fmp-gap-review.md` for what else the paid tier unlocked.
 
 ---
 
@@ -240,29 +203,34 @@ yfinance (current primary, see above) doesn't cover every ticker the user wants 
 
 | Data Need | Primary Source | Backup |
 |---|---|---|
-| Price history (OHLCV) | yfinance | FMP |
-| Real-time quotes | Finnhub | yfinance fast_info |
-| Income / balance / cash flow | FMP (cached) | yfinance · SEC EDGAR (XBRL) |
-| Key ratios (PE, EV/EBITDA, FCF yield, etc.) | FMP | yfinance |
-| Earnings estimates & surprises | yfinance · Finnhub | FMP |
-| Earnings call transcripts | Finnhub | — |
-| Insider transactions (Form 4) | FMP · Finnhub | SEC EDGAR · Quiver |
+| Price history (OHLCV) | **FMP** (`stable/historical-price-eod/full`) | — |
+| Real-time quotes | Finnhub | FMP `quote` |
+| Income / balance / cash flow | FMP (cached) | SEC EDGAR (XBRL) |
+| Key ratios (PE, EV/EBITDA, FCF yield, etc.) | FMP | — |
+| Earnings estimates & surprises | FMP (`earnings`, `analyst-estimates`) | Finnhub |
+| Earnings call transcripts | Finnhub | — (FMP transcripts **not entitled** on this plan) |
+| Insider transactions (Form 4) | FMP (per-ticker + market-wide `insider-trading/latest`) · Finnhub | SEC EDGAR · Quiver |
 | Insider sentiment (MSPR) | Finnhub | — |
-| 13F institutional holdings | FMP · Quiver | SEC EDGAR |
-| Superinvestor portfolios | Dataroma (scraped) | Quiver sec13F |
-| Congressional trades | Quiver | Finnhub (limited) |
+| 13F institutional holdings | **Not entitled on current FMP plan** — `institutional.py` serves pre-migration cache read-only, flagged stale | SEC EDGAR · Quiver (future) |
+| ETF & fund holdings | FMP (`etf/holdings`) — replaces Dataroma superinvestor tracking (not a like-for-like signal) | — |
+| Superinvestor portfolios | Dataroma (scraped) — **being retired**, see specs/017-fmp-migration-admin | Quiver sec13F (future) |
+| Congressional trades | FMP (`senate-latest`, `house-latest`) | Quiver (limited) |
 | Macro indicators (CPI, PCE, rates, GDP) | FRED | — |
-| Yield curve data | FRED | yfinance (DGS tickers) |
-| Market breadth (NYMO, NAMO) | Computed locally from batched yfinance closes over S&P 500 / NASDAQ-100 universes (`breadth.py`) | Constituent lists: FMP `sp500_constituent`/`nasdaq_constituent`, fallback Wikipedia |
-| News & news sentiment | Finnhub | Quiver news |
+| Yield curve data | FRED (long history) · FMP `treasury-rates` (full daily curve snapshot — different shape, same underlying data) | — |
+| Market breadth (NYMO, NAMO) | Computed locally from per-symbol FMP EOD closes over S&P 500 / NASDAQ-100 universes (`breadth.py`) | Constituent lists: FMP `sp500-constituent`/`nasdaq-constituent`, fallback Wikipedia/slickcharts scrape |
+| Sector performance | FMP `sector-performance-snapshot` | — |
+| Market movers (gainers/losers/actives) | FMP `biggest-gainers`/`biggest-losers`/`most-actives` | — |
+| Economic calendar / market risk premium | FMP | — |
+| News & news sentiment | FMP (articles, market-wide + per-ticker) · Finnhub (sentiment aggregates, MSPR) | Quiver news |
 | Social sentiment (Reddit/Twitter) | Finnhub | Quiver (WSB) |
 | Government contracts | Quiver | — |
 | Dark pool / off-exchange volume | Quiver | — |
-| ESG scores | yfinance | — |
-| Analyst ratings & price targets | yfinance · Finnhub · FMP | — |
-| Company logo | FMP `profile.image` (unresearched — see "Company Logos") | Clearbit Logo API · FMP CDN image path |
+| ESG scores | — (dropped with yfinance; no consuming view) | FMP ESG family (entitlement unprobed) |
+| Analyst ratings & price targets | FMP (`grades`) · Finnhub | — |
+| Company info / profile | FMP `profile` — per-ticker, 90-day refresh | — |
+| Company logo | FMP `profile.image` | Clearbit Logo API · FMP CDN image path |
 | Company website / IR page content | FMP `profile.website` + Playwright crawl (deferred — see "Company Website Scraping") | — |
 
 ---
 
-*Last updated: 2026-08-03*
+*Last updated: 2026-08-15 (specs/017-fmp-migration-admin)*

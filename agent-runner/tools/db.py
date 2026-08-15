@@ -5,8 +5,12 @@ from functools import lru_cache
 
 from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
 from pymongo.database import Database
+from pymongo.errors import OperationFailure
 
+from logging_config import get_logger
 from settings import settings
+
+logger = get_logger(__name__)
 
 # Collection names — keep in sync with backend/db.py
 ANALYSES = "analyses"
@@ -31,6 +35,21 @@ MARKET_FLOW_EVENTS = "market_flow_events"
 DATAROMA_META = "dataroma_meta"
 FMP_USAGE = "fmp_usage"
 
+# 017-fmp-migration-admin — keep in sync with backend/db.py
+FMP_ENTITLEMENTS = "fmp_entitlements"
+DATASET_META = "dataset_meta"
+SECTOR_PERFORMANCE = "sector_performance"
+MARKET_MOVERS = "market_movers"
+ECONOMIC_CALENDAR_EVENTS = "economic_calendar_events"
+TREASURY_RATES = "treasury_rates"
+MARKET_RISK_PREMIUM = "market_risk_premium"
+ECONOMIC_INDICATORS = "economic_indicators"
+CONGRESS_TRADES = "congress_trades"
+FUND_HOLDINGS = "fund_holdings"
+STOCK_NEWS = "stock_news"
+MARKET_NEWS = "market_news"
+COMPANY_INFO = "company_info"
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -46,7 +65,15 @@ def ensure_indexes(db: Database | None = None) -> None:
     """Idempotent index bootstrap — called once at agent-runner startup."""
     db = db if db is not None else get_db()
     db[WORK_QUEUE].create_index([("status", ASCENDING), ("created_at", ASCENDING)])
+    db[WORK_QUEUE].create_index([("job_type", ASCENDING), ("created_at", DESCENDING)])
     db[ANALYSES].create_index([("ticker", ASCENDING), ("timestamp", DESCENDING)])
+    try:
+        db[ANALYSES].create_index([("ticker", ASCENDING)], unique=True)
+    except OperationFailure:
+        logger.warning(
+            "unique ticker index on analyses blocked by existing duplicates — "
+            "run scripts/dedupe_analyses.py"
+        )
     db[FINANCIALS_CACHE].create_index([("ticker", ASCENDING), ("fetched_at", DESCENDING)])
     db[TRANSCRIPTS_CACHE].create_index(
         [("ticker", ASCENDING), ("year", ASCENDING), ("quarter", ASCENDING)], unique=True
@@ -144,3 +171,22 @@ def track_fmp_call(db: Database | None = None) -> int:
         return_document=ReturnDocument.AFTER,
     )
     return result["count"]
+
+
+def write_dataset_meta(
+    dataset: str,
+    status: str,
+    record_count: int = 0,
+    source: str = "fmp",
+    db: Database | None = None,
+) -> None:
+    """Freshness envelope for a market-wide/admin-job dataset (research D9).
+    `status` is "success" or "failed" — only "success" advances
+    last_success_at, so a failed run never claims fresher data than it wrote
+    (data-model.md validation rule)."""
+    db = db if db is not None else get_db()
+    update = {"$set": {"last_run_status": status, "source": source}}
+    if status == "success":
+        update["$set"]["last_success_at"] = _utcnow()
+        update["$set"]["record_count"] = record_count
+    db[DATASET_META].update_one({"dataset": dataset}, update, upsert=True)

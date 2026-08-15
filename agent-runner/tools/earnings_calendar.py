@@ -9,9 +9,9 @@ Sourcing (probed live 2026-08-02 — deviations from the spec's pseudocode):
   the pre-screen joins against the **Nasdaq screener API** universe (one call
   for all US-listed stocks, browser UA, cached 24h) — same public-screen
   fallback pattern as breadth's constituent scrape.
-- Finnhub candles are 403 premium, and `stock/earnings` "period" is the fiscal
-  quarter end, NOT the report date → post-earnings moves are computed from
-  **yfinance** (report timestamps via get_earnings_dates, prices via history).
+- Post-earnings moves (get_earnings_history) are computed from **FMP** as of
+  specs/017-fmp-migration-admin: dates/EPS via `earnings`, prices via the
+  shared fmp_client EOD fetch — previously yfinance.
 
 Cache docs live in `earnings_cache` and are shared with the API container —
 keep shapes in sync with backend/earnings_data.py.
@@ -20,12 +20,12 @@ from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 import requests
-import yfinance as yf
 from pymongo.database import Database
 
 from logging_config import get_logger
 from tools.db import EARNINGS_CACHE, get_db
 from tools.finnhub_client import finnhub_get
+from tools.fmp_client import fetch_eod_history, fmp_get
 
 logger = get_logger(__name__)
 
@@ -133,12 +133,11 @@ def get_earnings_calendar(days_ahead: int = 7, db: Database | None = None) -> li
 
 # --- per-ticker history --------------------------------------------------------
 
-def _reaction_move(daily_closes: pd.Series, report_ts: pd.Timestamp) -> float | None:
+def _reaction_move(daily_closes: pd.Series, report_date: str, is_bmo: bool) -> float | None:
     """% move on the session that first prices the report: the report day itself
     for a before-open print, the next session for an after-close one."""
     idx = daily_closes.index
-    report_day = report_ts.normalize().tz_localize(None)
-    is_bmo = report_ts.hour < 12
+    report_day = pd.Timestamp(report_date).normalize()
 
     pos = idx.searchsorted(report_day)
     if not is_bmo:
@@ -153,39 +152,50 @@ def _reaction_move(daily_closes: pd.Series, report_ts: pd.Timestamp) -> float | 
 
 def get_earnings_history(ticker: str, num_quarters: int = 8,
                          db: Database | None = None) -> dict:
-    """Historical EPS surprises + the realized post-earnings move per quarter."""
+    """Historical EPS surprises + the realized post-earnings move per quarter.
+    Sourced from FMP: `earnings` for dates/EPS, the shared EOD fetch for the
+    price series used to measure the reaction move."""
     db = db if db is not None else get_db()
     ticker = ticker.upper()
     cached = _cache_get(db, {"type": "history", "ticker": ticker}, HISTORY_CACHE_HOURS)
     if cached:
         return cached["data"]
 
-    tk = yf.Ticker(ticker)
     try:
-        dates = tk.get_earnings_dates(limit=num_quarters + 6)
+        raw = fmp_get(f"earnings?symbol={ticker}&limit={num_quarters + 6}", db=db)
     except Exception as exc:
         logger.info("earnings dates unavailable for %s: %s", ticker, exc)
-        dates = None
+        raw = []
+
+    reported = sorted(
+        (e for e in (raw or []) if e.get("epsActual") is not None and e.get("date")),
+        key=lambda e: e["date"], reverse=True,
+    )
 
     moves = []
-    if dates is not None and not dates.empty:
-        reported = dates[dates["Reported EPS"].notna()].sort_index(ascending=False)
-        closes = tk.history(period="3y", interval="1d")["Close"]
-        closes.index = closes.index.tz_localize(None)
+    if reported:
+        try:
+            closes = fetch_eod_history(ticker, db=db)["Close"]
+        except Exception as exc:
+            logger.info("price history unavailable for %s: %s", ticker, exc)
+            closes = pd.Series(dtype=float)
 
-        for report_ts, row in reported.head(num_quarters).iterrows():
-            move_pct = _reaction_move(closes, report_ts)
+        for entry in reported[:num_quarters]:
+            is_bmo = entry.get("time") == "bmo"
+            move_pct = _reaction_move(closes, entry["date"], is_bmo)
             if move_pct is None:
                 continue
-            estimate = row.get("EPS Estimate")
-            actual = row.get("Reported EPS")
-            surprise = row.get("Surprise(%)")
+            estimate = entry.get("epsEstimated")
+            actual = entry.get("epsActual")
+            surprise = None
+            if estimate not in (None, 0) and actual is not None:
+                surprise = round((actual - estimate) / abs(estimate) * 100, 2)
             moves.append({
-                "period": report_ts.date().isoformat(),
-                "eps_estimate": None if pd.isna(estimate) else float(estimate),
-                "eps_actual": None if pd.isna(actual) else float(actual),
-                "surprise_pct": None if pd.isna(surprise) else round(float(surprise), 2),
-                "beat": bool(not pd.isna(estimate) and not pd.isna(actual) and actual > estimate),
+                "period": entry["date"],
+                "eps_estimate": estimate,
+                "eps_actual": actual,
+                "surprise_pct": surprise,
+                "beat": bool(estimate is not None and actual is not None and actual > estimate),
                 "move_pct": move_pct,
                 "move_abs": abs(move_pct),
             })

@@ -6,6 +6,21 @@
 
 ## Open bugs
 
+- **Empty financials from a temporary FMP condition are cached as settled for
+  90 days.** A fetch where every statement type 402s ("not covered on this
+  plan") writes an all-empty `financials_cache` doc that then short-circuits
+  every later analysis run — confirmed live with BSX (402 on all 7 endpoints
+  2026-08-09; FMP had the data again by 2026-08-15 but the app kept serving
+  the empty cache). Fix is specced and planned as
+  `specs/018-fix-financials-cache-gap/` (per-key `outcomes` marker +
+  retry-on-every-run for unavailable keys); awaiting implement.
+- **`analyst-estimates` FMP call is malformed — every earnings snapshot loses
+  forward estimates.** `get_earnings_data` requests
+  `analyst-estimates?symbol=X&limit=4`, which the stable API rejects with 400
+  Bad Request (observed for BSX in the 2026-08-15 agent-runner log; the stable
+  endpoint requires a `period` parameter). The section fail-softs to `[]`, so
+  every ticker silently gets no forward estimates. Separate from the
+  018 cache bug; fix belongs in `tools/financials.py`.
 - **LLM JSON parsing failures fall back to templated theses.** When Ollama returns
   malformed JSON, the system retries once (2 attempts total), then defaults to a
   templated thesis line instead of a generated one. Observed in production
@@ -111,6 +126,18 @@
   fund lists are short hardcoded substrings in
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
+- **App shell causes horizontal page scroll at phone widths (~390px).** The
+  fixed-width Watchlist sidebar never collapses, and `<main>` (a `flex-1`
+  child in `App.tsx`) has no `min-w-0`, so it can't shrink below its content's
+  intrinsic width — `FilterBar`'s ticker/search `<input>`s hit their default
+  browser min-content width before `flex-wrap` gets a chance to wrap them,
+  forcing the whole page wider than the viewport. Found 2026-08-15 while
+  verifying `specs/019-feed-checkerboard-grid/`'s responsive reflow — the new
+  tile grid itself reflows correctly (its own content never exceeds its
+  container); the overflow originates in `App.tsx`/`FilterBar.tsx`, both
+  pre-existing and out of scope for that feature. Fix belongs in a mobile
+  nav/sidebar pattern plus `min-w-0` on `<main>` and width constraints on
+  `FilterBar`'s inputs.
 ## Unbuilt / unfinished features
 
 - **Admin page was never scaffolded into a route.** Spec exists

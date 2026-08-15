@@ -3,14 +3,16 @@ Spec: specs/component-specs/agent-runner/tools/breadth.md
 
 $NYMO/$NAMO are StockCharts-proprietary and not API-fetchable anywhere, so the
 oscillator is computed locally over proxy universes (S&P 500 for NYSE,
-NASDAQ-100 for NASDAQ) — one batched yf.download per universe per day.
+NASDAQ-100 for NASDAQ). Closes are sourced from FMP per-symbol EOD history
+through the shared throttle (specs/017-fmp-migration-admin, research D4) —
+a batch-quote endpoint could cut this to one call per universe if entitled,
+left as a future optimization since per-symbol works regardless of plan tier.
 """
 import io
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import requests
-import yfinance as yf
 from pymongo.database import Database
 
 from logging_config import get_logger
@@ -43,7 +45,7 @@ EXCHANGES = {"nyse": "sp500", "nasdaq": "nasdaq100"}
 # --- Universe sourcing -------------------------------------------------------
 
 def _fmp_constituents(name: str) -> list[str]:
-    from tools.financials import fmp_get
+    from tools.fmp_client import fmp_get
 
     # 402s on the free tier (constituents are paid) — the scrape fallback below
     # is the de facto source; this stays for keys that do have access
@@ -110,7 +112,21 @@ def get_universe(name: str, db: Database | None = None) -> list[str]:
 # --- Oscillator math ---------------------------------------------------------
 
 def _download_closes(universe: list[str], period: str) -> pd.DataFrame:
-    return yf.download(universe, period=period, interval="1d", auto_adjust=True, progress=False)["Close"]
+    """Wide Close-price frame (index: date, columns: tickers), one FMP EOD
+    fetch per symbol. A ticker that fails is simply excluded — the oscillator
+    tolerates a few missing names in a 500+ universe."""
+    from tools.fmp_client import fetch_eod_history
+
+    closes = {}
+    for ticker in universe:
+        try:
+            closes[ticker] = fetch_eod_history(ticker)["Close"]
+        except Exception as exc:
+            logger.info("breadth: %s unavailable (%s), excluding from sweep", ticker, exc)
+    wide = pd.DataFrame(closes)
+    if period.endswith("d"):
+        wide = wide.tail(int(period[:-1]))
+    return wide
 
 
 def compute_mcclellan(closes: pd.DataFrame) -> pd.DataFrame:
@@ -160,8 +176,12 @@ def _breadth_records(exchange: str, universe: list[str], lookback_days: int, db:
 
 
 def _download_spy(period: str) -> pd.Series:
-    df = yf.download(SPY_TICKER, period=period, interval="1d", auto_adjust=True, progress=False)
-    return df["Close"].squeeze()
+    from tools.fmp_client import fetch_eod_history
+
+    series = fetch_eod_history(SPY_TICKER)["Close"]
+    if period.endswith("d"):
+        series = series.tail(int(period[:-1]))
+    return series
 
 
 def _spy_records(dates: list[str], db: Database) -> list[dict]:

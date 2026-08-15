@@ -15,7 +15,7 @@ export function useFeed(filters: FeedFilters = {}) {
     queryKey: ["feed", filters],
     queryFn: async ({ pageParam }) => {
       const { data } = await api.get<FeedResponse>("/analysis/feed", {
-        params: { page: pageParam, page_size: 20, ...filters },
+        params: { page: pageParam, page_size: 60, ...filters },
       });
       return data;
     },
@@ -29,7 +29,7 @@ export function useTickerAnalysis(ticker: string) {
   return useQuery({
     queryKey: ["analysis", ticker.toUpperCase()],
     queryFn: async () => {
-      const { data } = await api.get<Analysis[]>(`/analysis/${ticker}`);
+      const { data } = await api.get<Analysis | null>(`/analysis/${ticker}`);
       return data;
     },
     enabled: !!ticker,

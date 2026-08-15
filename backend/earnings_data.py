@@ -2,20 +2,20 @@
 
 Mirror of agent-runner/tools/earnings_calendar.py — the two containers only
 share MongoDB, so the fetch layer is intentionally duplicated (same precedent
-as db.py's collection constants and routers/price.py's yfinance fetch). Both
+as db.py's collection constants and routers/price.py's FMP fetch). Both
 sides read and write the SAME `earnings_cache` docs, so in practice whichever
 container touches a window first fetches and the other serves from cache.
 Keep shapes and constants in sync by hand.
 
 Sourcing rationale (probed live 2026-08-02): Finnhub `calendar/earnings` for
 the sweep (FMP truncates on this key), Nasdaq screener API for the $500M
-cap/name/sector pre-screen, yfinance for real post-earnings reaction moves.
+cap/name/sector pre-screen. Post-earnings reaction moves are computed from
+FMP as of specs/017-fmp-migration-admin — previously yfinance.
 """
 from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 import requests
-import yfinance as yf
 from pymongo.database import Database
 
 from db import EARNINGS_CACHE
@@ -30,6 +30,7 @@ UNIVERSE_CACHE_HOURS = 24
 HISTORY_CACHE_HOURS = 24
 
 FINNHUB_BASE = "https://finnhub.io/api/v1/"
+FMP_BASE = "https://financialmodelingprep.com/stable/"
 NASDAQ_SCREENER_URL = "https://api.nasdaq.com/api/screener/stocks"
 BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
@@ -52,6 +53,25 @@ def _finnhub_get(path: str, **params) -> dict | list:
     r = requests.get(f"{FINNHUB_BASE}{path}", params=params, timeout=20)
     r.raise_for_status()
     return r.json()
+
+
+def _fmp_get(path: str) -> dict | list:
+    sep = "&" if "?" in path else "?"
+    url = f"{FMP_BASE}{path}{sep}apikey={settings.fmp_api_key}"
+    r = requests.get(url, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+
+def _fetch_eod_closes(ticker: str) -> pd.Series:
+    raw = _fmp_get(f"historical-price-eod/full?symbol={ticker}")
+    rows = raw.get("historical", raw) if isinstance(raw, dict) else raw
+    if not rows:
+        return pd.Series(dtype=float)
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.set_index("date").sort_index()
+    return df["close"]
 
 
 # --- universe (market cap / name / sector for the pre-screen) -----------------
@@ -133,12 +153,11 @@ def get_earnings_calendar(days_ahead: int, db: Database) -> list[dict]:
 
 # --- per-ticker history --------------------------------------------------------
 
-def _reaction_move(daily_closes: pd.Series, report_ts: pd.Timestamp) -> float | None:
+def _reaction_move(daily_closes: pd.Series, report_date: str, is_bmo: bool) -> float | None:
     """% move on the session that first prices the report: the report day itself
     for a before-open print, the next session for an after-close one."""
     idx = daily_closes.index
-    report_day = report_ts.normalize().tz_localize(None)
-    is_bmo = report_ts.hour < 12
+    report_day = pd.Timestamp(report_date).normalize()
 
     pos = idx.searchsorted(report_day)
     if not is_bmo:
@@ -151,38 +170,48 @@ def _reaction_move(daily_closes: pd.Series, report_ts: pd.Timestamp) -> float | 
 
 
 def get_earnings_history(ticker: str, db: Database, num_quarters: int = 8) -> dict:
-    """Historical EPS surprises + the realized post-earnings move per quarter."""
+    """Historical EPS surprises + the realized post-earnings move per quarter.
+    Sourced from FMP: `earnings` for dates/EPS, EOD closes for the reaction move."""
     ticker = ticker.upper()
     cached = _cache_get(db, {"type": "history", "ticker": ticker}, HISTORY_CACHE_HOURS)
     if cached:
         return cached["data"]
 
-    tk = yf.Ticker(ticker)
     try:
-        dates = tk.get_earnings_dates(limit=num_quarters + 6)
+        raw = _fmp_get(f"earnings?symbol={ticker}&limit={num_quarters + 6}")
     except Exception as exc:
         logger.info("earnings dates unavailable for %s: %s", ticker, exc)
-        dates = None
+        raw = []
+
+    reported = sorted(
+        (e for e in (raw or []) if e.get("epsActual") is not None and e.get("date")),
+        key=lambda e: e["date"], reverse=True,
+    )
 
     moves = []
-    if dates is not None and not dates.empty:
-        reported = dates[dates["Reported EPS"].notna()].sort_index(ascending=False)
-        closes = tk.history(period="3y", interval="1d")["Close"]
-        closes.index = closes.index.tz_localize(None)
+    if reported:
+        try:
+            closes = _fetch_eod_closes(ticker)
+        except Exception as exc:
+            logger.info("price history unavailable for %s: %s", ticker, exc)
+            closes = pd.Series(dtype=float)
 
-        for report_ts, row in reported.head(num_quarters).iterrows():
-            move_pct = _reaction_move(closes, report_ts)
+        for entry in reported[:num_quarters]:
+            is_bmo = entry.get("time") == "bmo"
+            move_pct = _reaction_move(closes, entry["date"], is_bmo)
             if move_pct is None:
                 continue
-            estimate = row.get("EPS Estimate")
-            actual = row.get("Reported EPS")
-            surprise = row.get("Surprise(%)")
+            estimate = entry.get("epsEstimated")
+            actual = entry.get("epsActual")
+            surprise = None
+            if estimate not in (None, 0) and actual is not None:
+                surprise = round((actual - estimate) / abs(estimate) * 100, 2)
             moves.append({
-                "period": report_ts.date().isoformat(),
-                "eps_estimate": None if pd.isna(estimate) else float(estimate),
-                "eps_actual": None if pd.isna(actual) else float(actual),
-                "surprise_pct": None if pd.isna(surprise) else round(float(surprise), 2),
-                "beat": bool(not pd.isna(estimate) and not pd.isna(actual) and actual > estimate),
+                "period": entry["date"],
+                "eps_estimate": estimate,
+                "eps_actual": actual,
+                "surprise_pct": surprise,
+                "beat": bool(estimate is not None and actual is not None and actual > estimate),
                 "move_pct": move_pct,
                 "move_abs": abs(move_pct),
             })

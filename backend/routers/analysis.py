@@ -65,9 +65,5 @@ def get_sector_analyses(sector: str, db=Depends(db_dependency)):
 
 
 @router.get("/{ticker}")
-def get_ticker_analysis(ticker: str, limit: int = 10, db=Depends(db_dependency)):
-    return list(
-        db[ANALYSES].find({"ticker": ticker.upper()}, {"_id": 0})
-        .sort("timestamp", -1)
-        .limit(limit)
-    )
+def get_ticker_analysis(ticker: str, db=Depends(db_dependency)):
+    return db[ANALYSES].find_one({"ticker": ticker.upper()}, {"_id": 0})
