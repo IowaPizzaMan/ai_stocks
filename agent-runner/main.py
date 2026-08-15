@@ -1,11 +1,13 @@
 """Agent-runner entry point. Spec: specs/component-specs/agent-runner/main.md
 
-Three loops in one process:
+Four loops in one process:
 - work_queue poll every `queue_poll_seconds` (per-ticker crew runs)
 - earnings_scans poll (user-triggered calendar scans — checked first, a user
   is watching the progress spinner)
 - institutional flow scan once daily (market-wide, independent of the queue)
 - market breadth refresh once daily (NYMO/NAMO + SPY divergence tracking)
+- macro refresh, throttled to at most once an hour (per-sector economic
+  reads, independent of any ticker's analysis — specs/020-surface-macro-ui)
 """
 import time
 from datetime import datetime, timezone
@@ -14,6 +16,7 @@ from breadth_worker import run_daily_breadth_if_due
 from earnings_scan_worker import claim_and_run_next_scan
 from institutional_flow_worker import run_daily_scan_if_due
 from logging_config import get_logger
+from macro_worker import run_macro_refresh_if_due
 from queue_worker import claim_and_run_next
 from settings import settings
 
@@ -30,6 +33,7 @@ def main() -> None:
             now = datetime.now(timezone.utc)
             run_daily_scan_if_due(now=now)
             run_daily_breadth_if_due(now=now)
+            run_macro_refresh_if_due(now=now)
             scanned = claim_and_run_next_scan()
             worked = claim_and_run_next()
             if not (scanned or worked):

@@ -14,8 +14,9 @@ flowchart TB
         FE_Sidebar["Sidebar\n(watchlist)"]
 
         subgraph FE_Pages["Pages"]
-            P_Feed["Feed.tsx\n/"]
+            P_Feed["Stocks.tsx\n/ (was Feed.tsx)"]
             P_Stock["StockDetail.tsx\n/stock/:ticker"]
+            P_MacroPage["Macro.tsx\n/macro\n(breadth cards + per-sector reads)"]
             P_Sectors["Sectors.tsx\n/sectors"]
             P_Watch["Watchlist.tsx\n/watchlist"]
             P_Earn["EarningsScan.tsx\n/earnings"]
@@ -55,7 +56,8 @@ flowchart TB
         R_Stocks["/stocks/search\n/stocks/{ticker}/financials\n/stocks/{ticker}/signals"]
         R_Queue["/queue · /queue/all\n/queue/{ticker}"]
         R_Watch["/watchlist"]
-        R_Macro["/macro"]
+        R_Macro["/macro\n(legacy FRED passthrough, 501 stub)"]
+        R_MarketMacro["/market/macro\n(per-sector reads, decoupled\nfrom ticker analysis)"]
         R_Sectors["/sectors"]
         R_Earnings["/earnings/calendar\n/earnings/scan\n/earnings/scan/chat ← streaming\n/earnings/analyze"]
         R_InstFlow["/institutional/flow\n/institutional/flow/{ticker}\n/institutional/scan"]
@@ -71,6 +73,7 @@ flowchart TB
         C_Fin[("financials_cache\n(90-day TTL)")]
         C_Trans[("transcripts_cache\n(permanent)")]
         C_Macro[("macro_cache\n(24hr TTL)")]
+        C_MacroAnalysis[("macro_analysis_cache\n(per-sector LLM reads, 7-day)")]
         C_Inst[("institutional_cache")]
         C_Earn[("earnings_scans\nearnings_cache")]
         C_InstFlow[("institutional_flow\ninstitutional_flow_meta")]
@@ -88,10 +91,9 @@ flowchart TB
             direction LR
             Prefetch["Data Prefetch\n(parallel if earnings_scanner)"]
 
-            subgraph AR_Agents["Agents (sequential)"]
+            subgraph AR_Agents["Agents (sequential) — no MacroAnalyst here:\nmacro is decoupled from per-ticker runs"]
                 A_Tech["TechnicalAnalyst"]
                 A_Fund["FundamentalAnalyst"]
-                A_Macro["MacroAnalyst"]
                 A_Ins["InsiderAnalyst"]
                 A_Inst["InstitutionalAnalyst"]
                 A_Sent["SentimentAnalyst"]
@@ -116,6 +118,11 @@ flowchart TB
         subgraph AR_InstFlow["Institutional Flow Worker\n(own daily timer, not per-ticker)"]
             IF_Worker["institutional_flow_worker.py"]
             IF_Agent["InstitutionalFlowScannerAgent\n(market-wide)"]
+        end
+
+        subgraph AR_MacroWorker["Macro Worker\n(hourly throttle, per-sector, not per-ticker)"]
+            MW_Worker["macro_worker.py"]
+            A_Macro["MacroAnalyst"]
         end
 
         subgraph AR_Tools["Tools"]
@@ -167,6 +174,7 @@ flowchart TB
     FE_API --> R_Queue
     FE_API --> R_Watch
     FE_API --> R_Macro
+    FE_API --> R_MarketMacro
     FE_API --> R_Sectors
     FE_API --> R_Earnings
     FE_API --> R_InstFlow
@@ -179,6 +187,7 @@ flowchart TB
     R_Queue <--> C_Queue
     R_Watch <--> C_Watch
     R_Macro <--> C_Macro
+    R_MarketMacro <--> C_MacroAnalysis
     R_Sectors <--> C_Analyses
     R_Earnings <--> C_Earn
     R_Earnings --> C_Queue
@@ -192,6 +201,7 @@ flowchart TB
     %% Agent Runner internal flow
     AR_Main --> AR_Worker
     AR_Main --> IF_Worker
+    AR_Main --> MW_Worker
     AR_Worker --> AR_Crew
     AR_Worker --> AR_Earnings_Crew
     AR_Worker <--> C_Queue
@@ -201,6 +211,12 @@ flowchart TB
     IF_Worker --> C_Queue
     IF_Worker -- "manual trigger" --> R_InstFlow
     AR_Worker -- "mark removed_from_market\non TickerDelistedError" --> C_TickerIdx
+
+    MW_Worker -- "distinct sectors" --> C_TickerIdx
+    MW_Worker --> A_Macro
+    A_Macro --> TL_Macro
+    A_Macro --> LLM
+    A_Macro --> C_MacroAnalysis
 
     Prefetch --> AR_Agents
     AR_Agents --> AR_Skills
@@ -236,7 +252,6 @@ flowchart TB
     Prefetch --> TL_Inst
     Prefetch --> TL_Sent
     Prefetch --> TL_Breadth
-    Prefetch --> TL_Macro
     Prefetch --> TL_Super
     ES_Agent --> TL_EarnCal
     ES_Agent --> TL_Ins
@@ -258,14 +273,14 @@ flowchart TB
     classDef user    fill:#1e293b,stroke:#94a3b8,color:#e2e8f0
 
     class FE,FE_Nav,FE_Sidebar,FE_Pages,FE_Stock_Tabs,FE_Earn_UI,FE_InstFlow_UI,FE_Hooks,FE_API frontend
-    class P_Feed,P_Stock,P_Sectors,P_Watch,P_Earn,P_InstFlow frontend
+    class P_Feed,P_Stock,P_MacroPage,P_Sectors,P_Watch,P_Earn,P_InstFlow frontend
     class T_AI,T_Tech,T_Fund,T_Ins,T_Inst,T_Sent frontend
     class E_Controls,E_Table,E_Card,E_Chat frontend
     class IF_Filter,IF_Card,IF_Badge frontend
-    class API,R_Analysis,R_Stocks,R_Queue,R_Watch,R_Macro,R_Sectors,R_Earnings,R_InstFlow,R_Tickers api
-    class DB,C_Analyses,C_Queue,C_Watch,C_Fin,C_Trans,C_Macro,C_Inst,C_Earn,C_InstFlow,C_TickerIdx,C_Breadth db
-    class AR,AR_Main,AR_Worker,AR_Crew,AR_Agents,AR_Skills,AR_Tools,AR_Chunker,AR_Earnings_Crew,AR_InstFlow agent
-    class A_Tech,A_Fund,A_Macro,A_Ins,A_Inst,A_Sent,A_Rec,A_Port,ES_Agent,EC_Agent,Prefetch,IF_Worker,IF_Agent agent
+    class API,R_Analysis,R_Stocks,R_Queue,R_Watch,R_Macro,R_MarketMacro,R_Sectors,R_Earnings,R_InstFlow,R_Tickers api
+    class DB,C_Analyses,C_Queue,C_Watch,C_Fin,C_Trans,C_Macro,C_MacroAnalysis,C_Inst,C_Earn,C_InstFlow,C_TickerIdx,C_Breadth db
+    class AR,AR_Main,AR_Worker,AR_Crew,AR_Agents,AR_Skills,AR_Tools,AR_Chunker,AR_Earnings_Crew,AR_InstFlow,AR_MacroWorker agent
+    class A_Tech,A_Fund,A_Macro,A_Ins,A_Inst,A_Sent,A_Rec,A_Port,ES_Agent,EC_Agent,Prefetch,IF_Worker,IF_Agent,MW_Worker agent
     class SK_Strat,SK_Accum,SK_Gap,SK_Flow,SK_Pos agent
     class TL_Price,TL_Fin,TL_Macro,TL_Ins,TL_Inst,TL_Super,TL_Sent,TL_Breadth,TL_EarnCal,TL_DB agent
     class CH_Chunk,CH_Sum agent

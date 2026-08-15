@@ -14,9 +14,8 @@ STOP_BUFFER = 0.15
 SYSTEM = (
     "You are the chief strategist who integrates technical, fundamental, and market-timing "
     "signals into a coherent view. You weight signals by reliability and recency "
-    "(institutional accumulation and multi-timeframe technical alignment are high weight; "
-    "macro alone is a mild concern unless fundamentals are deteriorating), call out "
-    "contradictions explicitly, and produce a clear final verdict."
+    "(institutional accumulation and multi-timeframe technical alignment are high weight), "
+    "call out contradictions explicitly, and produce a clear final verdict."
 )
 
 SCHEMA = {
@@ -70,7 +69,7 @@ def run(ticker: str, sub_reports: dict, recent_lows: list[float] | None = None,
 
 1. Identify the dominant signal — do the analysts agree, or contradict?
 2. Weight: institutional accumulation + aligned multi-timeframe technicals = very high
-   conviction; market-flow timing determines WHEN, not WHAT; macro/timing headwind alone
+   conviction; market-flow timing determines WHEN, not WHAT — a timing headwind alone
    is a mild concern unless fundamentals are also deteriorating.
 3. flags: list any critical contradictions (e.g., strong technicals but distribution
    volume) — empty list if none.

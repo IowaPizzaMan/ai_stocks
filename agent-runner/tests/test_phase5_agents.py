@@ -48,12 +48,11 @@ def macro_context():
             "FEDFUNDS": [{"date": "2026-07-01", "value": 4.25}],
         },
         "yield_curve": {"10y_2y_spread": 0.4, "inverted": False, "inversion_severity": "none"},
-        "sector": "Technology",
     }
 
 
 def test_macro_agent_attaches_hard_numbers(client):
-    out = macro_analyst.run("AAPL", macro_context(), client=client)
+    out = macro_analyst.run("Technology", macro_context(), client=client)
     assert out["rate_impact"]["fed_funds_rate"] == 4.25
     assert out["inflation_impact"]["cpi_latest"] == 330.1
     assert out["growth_backdrop"]["yield_curve_spread"] == 0.4

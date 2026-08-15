@@ -66,6 +66,18 @@ export interface MacroReport {
   sector_rotation_signal: string;
 }
 
+// One sector's macro read, produced independently of ticker analysis by the
+// agent-runner's macro worker (specs/020-surface-macro-ui).
+export interface SectorMacroRead extends MacroReport {
+  sector: string;
+  computed_at: string;
+}
+
+export interface MacroReads {
+  sectors: SectorMacroRead[];
+  as_of: string | null;
+}
+
 export interface InsiderTransaction {
   name: string;
   transaction_type: string;

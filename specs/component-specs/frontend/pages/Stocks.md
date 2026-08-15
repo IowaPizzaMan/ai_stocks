@@ -1,17 +1,16 @@
-# frontend/src/pages/Feed.tsx
+# frontend/src/pages/Stocks.tsx
 
 ## Purpose
-Default home view. A dense, checkerboard-style grid of compact stock tiles — grouped by
+Default home view (renamed from "Feed" — specs/020-surface-macro-ui, to distinguish it from the new economy-wide Macro page). A dense, checkerboard-style grid of compact stock tiles — grouped by
 signal (bullish → neutral → bearish) — so a large analyzed universe fits on one screen.
 Includes the filter bar, a skeleton-tile loading board, and infinite scroll. Redesigned in
 feature 019 (`specs/019-feed-checkerboard-grid/`) from a single-column large-card list; see
-that feature's spec for the full rationale.
+that feature's spec for the full rationale. As of feature 020, this page is **stock-specific
+only** — market-breadth (NYMO/NAMO) cards and macro context live on the Macro page instead.
 
 ## Layout
 ```
 [FilterBar — sticky]
-──────────────────────────────────────────────────
-[MarketFlowCard]  (only when unfiltered, ≤14 days old)
 ──────────────────────────────────────────────────
 BULLISH
 [Tile][Tile][Tile][Tile][Tile][Tile][Tile][Tile]...
@@ -39,7 +38,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 import { groupBySignal } from '@/lib/groupFeed'
 
-export function Feed() {
+export function Stocks() {
   const [searchParams] = useSearchParams()
   const filters = {
     ticker: searchParams.get('ticker') || undefined,
@@ -96,11 +95,13 @@ export function Feed() {
   correct signal group rather than appending to the bottom of the board.
 - Skeleton tiles (a ~30-tile board) are shown only on initial load, not on "load more".
 - Filter changes reset to page 1 automatically (React Query key includes filters).
-- Market-flow events remain pinned above the grid, unfiltered + ≤14 days old only — unchanged
-  from the pre-019 behavior, just visually adjacent to a denser board now.
-- Page title: `document.title = 'StockAI — Feed'`.
+- Market-flow (breadth divergence) cards no longer render here — they moved to the Macro page
+  (`specs/component-specs/frontend/pages/Macro.md`) as of feature 020, alongside the per-sector
+  macro reads. This page no longer calls `useMarketFlowEvents`/`useMarketBreadth` at all.
+- Page title: `document.title = 'StockAI — Stocks'`.
+- Nav label: "Stocks" (was "Feed"); route unchanged at `/`.
 - Page container widened from `max-w-3xl` to `max-w-7xl` to make room for the grid.
 
 ## Dependencies
-- `useFeed`, `FilterBar`, `AnalysisTile`, `SkeletonTile`, `MarketFlowCard`, `groupBySignal`
+- `useFeed`, `FilterBar`, `AnalysisTile`, `SkeletonTile`, `groupBySignal`
 - `react-router-dom` (useSearchParams)

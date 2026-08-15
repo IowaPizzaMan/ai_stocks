@@ -2,10 +2,11 @@ import { Route, Routes } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
 import Sidebar from "./components/layout/Sidebar";
 import EarningsScan from "./pages/EarningsScan";
-import Feed from "./pages/Feed";
 import InstitutionalFlow from "./pages/InstitutionalFlow";
+import Macro from "./pages/Macro";
 import Sectors from "./pages/Sectors";
 import StockDetail from "./pages/StockDetail";
+import Stocks from "./pages/Stocks";
 import Watchlist from "./pages/Watchlist";
 
 export default function App() {
@@ -16,7 +17,8 @@ export default function App() {
         <Sidebar />
         <main className="flex-1 p-6">
           <Routes>
-            <Route path="/" element={<Feed />} />
+            <Route path="/" element={<Stocks />} />
+            <Route path="/macro" element={<Macro />} />
             <Route path="/stock/:ticker" element={<StockDetail />} />
             <Route path="/sectors/:sector?" element={<Sectors />} />
             <Route path="/watchlist" element={<Watchlist />} />

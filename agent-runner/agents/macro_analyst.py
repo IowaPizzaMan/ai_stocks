@@ -1,8 +1,9 @@
-"""MacroAnalyst: contextualizes a ticker in the current macro regime.
+"""MacroAnalyst: contextualizes a sector in the current macro regime.
 Spec: specs/component-specs/agent-runner/agents/macro_analyst.md
 
-Output is driven by shared macro data + sector, not by the ticker itself, so
-it's cached per sector for CACHE_DAYS — see `run()`'s `db` param.
+Output is driven by shared macro data + sector, not by any individual ticker —
+decoupled from per-ticker analysis (specs/020-surface-macro-ui) and called only
+by macro_worker.py, once per sector, cached per sector for CACHE_DAYS.
 """
 import json
 from datetime import datetime, timedelta, timezone
@@ -62,17 +63,17 @@ def _compact(macro: dict, keep: int = 6) -> dict:
     return out
 
 
-def run(ticker: str, context: dict, client=None, db=None) -> dict:
+def run(sector: str | None, context: dict, client=None, db=None) -> dict:
     """context: {'macro': get_macro_data() output, 'yield_curve':
-    get_yield_curve_status() output, 'sector': str | None}
+    get_yield_curve_status() output}
 
     `db`, when passed, caches the result per sector for CACHE_DAYS — the read
-    depends on shared macro data + sector, not the ticker, so a NVDA and an
-    AMD run the same week can share one macro read instead of paying for two.
-    Left as None (the default), the call is always fresh — used by tests that
-    call this directly with no database.
+    depends on shared macro data + sector alone, so every ticker in a sector
+    shares one read instead of paying for its own. Left as None (the
+    default), the call is always fresh — used by tests that call this
+    directly with no database.
     """
-    sector = context.get("sector") or "unknown"
+    sector = sector or "unknown"
 
     if db is not None:
         cutoff = datetime.now(timezone.utc) - timedelta(days=CACHE_DAYS)
@@ -83,7 +84,7 @@ def run(ticker: str, context: dict, client=None, db=None) -> dict:
     macro = _compact(context.get("macro") or {})
     yield_curve = context.get("yield_curve") or {}
 
-    prompt = f"""Assess the macro environment for {ticker} (sector: {sector}).
+    prompt = f"""Assess the macro environment for the {sector} sector.
 
 ## FRED series (newest first; CPIAUCSL/PCEPI are index levels, FEDFUNDS/UNRATE/DGS* are %)
 {json.dumps(macro, default=str)}
@@ -95,9 +96,9 @@ def run(ticker: str, context: dict, client=None, db=None) -> dict:
 2. rate_impact: Fed direction of travel and the valuation impact for this kind of business.
 3. growth_backdrop: GDP trend + recession probability from the yield curve spreads.
 4. consumer_backdrop: unemployment/sentiment read — mark "not directly relevant" if the
-   business isn't consumer-facing.
+   sector isn't consumer-facing.
 5. sector_rotation_signal: is this macro regime favoring or rotating away from {sector}?
-6. overall_macro_signal and confidence for {ticker} specifically."""
+6. overall_macro_signal and confidence for this sector specifically."""
 
     report = generate_json(prompt, SCHEMA, system=SYSTEM, client=client)
     # attach the hard numbers the LLM reasoned from

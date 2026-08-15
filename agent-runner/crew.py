@@ -1,10 +1,12 @@
 """Per-ticker analysis pipeline: prefetch → deterministic skills → LLM agents.
 Spec: specs/component-specs/agent-runner/crew.md
 
-Full Phase 5 roster: Technical, Fundamental, Macro, Insider, Institutional,
-Sentiment, Recommender, then PortfolioStrategist synthesizing everything.
-Agents call Ollama directly with structured output (see llm.py) — no CrewAI
-tool-calling.
+Roster: Technical, Fundamental, Insider, Institutional, Sentiment, Recommender,
+then PortfolioStrategist synthesizing everything. Macro/economic analysis is
+decoupled from per-ticker runs — it's computed independently by macro_worker.py
+per sector and surfaced on its own UI page, not woven into a ticker's
+sub-reports or verdict (specs/020-surface-macro-ui). Agents call Ollama
+directly with structured output (see llm.py) — no CrewAI tool-calling.
 """
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -15,7 +17,6 @@ from agents import (
     fundamental_analyst,
     insider_analyst,
     institutional_analyst,
-    macro_analyst,
     portfolio_strategist,
     recommender_agent,
     sentiment_analyst,
@@ -27,11 +28,10 @@ from tools import breadth as breadth_tool
 from tools import financials as financials_tool
 from tools import insider as insider_tool
 from tools import institutional as institutional_tool
-from tools import macro as macro_tool
 from tools import price as price_tool
 from tools import sentiment as sentiment_tool
 from tools import superinvestor as superinvestor_tool
-from tools.db import TICKER_INDEX, get_db
+from tools.db import get_db
 
 logger = get_logger(__name__)
 
@@ -107,8 +107,6 @@ class Crew:
         self.get_financials = financials_tool.get_financials
         self.get_earnings_data = financials_tool.get_earnings_data
         self.get_market_breadth = breadth_tool.get_market_breadth
-        self.get_macro_data = macro_tool.get_macro_data
-        self.get_yield_curve_status = macro_tool.get_yield_curve_status
         self.get_insider_activity = insider_tool.get_insider_activity
         self.get_institutional_holdings = institutional_tool.get_institutional_holdings
         self.get_superinvestor_activity = superinvestor_tool.get_superinvestor_activity
@@ -121,8 +119,6 @@ class Crew:
             "financials": lambda: self.get_financials(ticker, db=self.db),
             "earnings": lambda: self.get_earnings_data(ticker),
             "breadth": lambda: self.get_market_breadth(db=self.db),
-            "macro": lambda: self.get_macro_data(db=self.db),
-            "yield_curve": lambda: self.get_yield_curve_status(db=self.db),
             "insider": lambda: self.get_insider_activity(ticker),
             "institutional": lambda: self.get_institutional_holdings(ticker, db=self.db),
             "sentiment": lambda: self.get_earnings_sentiment(ticker),
@@ -166,8 +162,6 @@ class Crew:
             logger.info("superinvestor unavailable for %s: %s", ticker, exc)
             superinvestor = {"moves": [], "available": False, "note": str(exc)}
 
-        record = self.db[TICKER_INDEX].find_one({"ticker": ticker}) or {}
-
         # 3. LLM agents (sequential; each one structured-output call)
         technical = technical_analyst.run(ticker, {
             "strat": strat_out,
@@ -183,12 +177,6 @@ class Crew:
             "earnings": data["earnings"],
         }, client=self.client)
         fundamental["as_of"] = _latest_statement_date(data["financials"] or {})
-
-        macro = macro_analyst.run(ticker, {
-            "macro": data["macro"],
-            "yield_curve": data["yield_curve"],
-            "sector": record.get("sector"),
-        }, client=self.client, db=self.db)
 
         insider = insider_analyst.run(ticker, {"insider": data["insider"]}, client=self.client)
         insider["as_of"] = _latest_dated((data["insider"] or {}).get("transactions", []))
@@ -212,7 +200,6 @@ class Crew:
         sub_reports = {
             "technical": technical,
             "fundamental": fundamental,
-            "macro": macro,
             "insider": insider,
             "institutional": institutional,
             "sentiment": sentiment,

@@ -7,7 +7,13 @@ the cached series so the frontend can draw them.
 """
 from fastapi import APIRouter, Depends, Query
 
-from db import BREADTH_CACHE, BREADTH_DIVERGENCES, BREADTH_META, MARKET_FLOW_EVENTS
+from db import (
+    BREADTH_CACHE,
+    BREADTH_DIVERGENCES,
+    BREADTH_META,
+    MACRO_ANALYSIS_CACHE,
+    MARKET_FLOW_EVENTS,
+)
 from deps import db_dependency
 
 router = APIRouter(prefix="/market", tags=["market"])
@@ -61,3 +67,13 @@ def get_flow_events(limit: int = Query(default=5, ge=1, le=50),
     return list(
         db[MARKET_FLOW_EVENTS].find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
     )
+
+
+@router.get("/macro")
+def get_macro(db=Depends(db_dependency)):
+    """Every sector's macro read, produced independently by the agent-runner's
+    macro worker (not per-ticker) — newest first."""
+    docs = list(db[MACRO_ANALYSIS_CACHE].find({}, {"_id": 0}).sort("computed_at", -1))
+    sectors = [{"sector": doc["sector"], "computed_at": doc["computed_at"], **doc["result"]}
+               for doc in docs]
+    return {"sectors": sectors, "as_of": sectors[0]["computed_at"] if sectors else None}

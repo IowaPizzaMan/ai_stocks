@@ -7,7 +7,8 @@ Assembles and runs the full CrewAI multi-agent pipeline for a single ticker. Thi
 
 ### `__init__(db)`
 - Receives the live MongoDB database handle
-- Instantiates all tool modules (price, financials, macro, insider, institutional, superinvestor, sentiment, breadth, db_tools)
+- Instantiates all tool modules (price, financials, insider, institutional, superinvestor, sentiment, breadth, db_tools)
+- Macro/economic data is intentionally **not** among them — macro analysis is decoupled from per-ticker runs and computed independently by `macro_worker.py` per sector (see `specs/020-surface-macro-ui`)
 - Binds tools to agents
 
 ### `run(ticker: str, parallel_prefetch: bool = False) -> dict`
@@ -47,7 +48,6 @@ The `parallel_prefetch` flag is set to `True` when the job originates from the e
    - superinvestor_tool.get_superinvestor_activity(ticker)
    - sentiment_tool.get_earnings_sentiment(ticker)
    - breadth_tool.get_market_breadth()
-   - macro_tool.get_macro_data() [shared across all tickers, cache for session]
    
    Parallel implementation:
    ```python
@@ -73,7 +73,6 @@ The `parallel_prefetch` flag is set to `True` when the job originates from the e
 3. Agent execution (sequential, each reads summarized context):
    TechnicalAnalyst  → sub_report["technical"]
    FundamentalAnalyst → sub_report["fundamental"]
-   MacroAnalyst       → sub_report["macro"]
    InsiderAnalyst     → sub_report["insider"]
    InstitutionalAnalyst → sub_report["institutional"]
    SentimentAnalyst   → sub_report["sentiment"]
@@ -125,7 +124,6 @@ interpret a pre-computed context and return JSON. Mechanics:
   "sub_reports": {
     "technical": { ... },
     "fundamental": { ... },
-    "macro": { ... },
     "insider": { ... },
     "institutional": { ... },
     "sentiment": { ... },

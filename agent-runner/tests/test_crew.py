@@ -70,9 +70,6 @@ def make_crew(valid=True, financials=None):
         "divergence": {"type": "none", "description": ""},
         "method": "computed_ratio_adjusted",
     }
-    crew.get_macro_data = lambda db=None: {"FEDFUNDS": [{"date": "2026-07-01", "value": 4.25}]}
-    crew.get_yield_curve_status = lambda db=None: {"10y_2y_spread": 0.4, "inverted": False,
-                                                   "inversion_severity": "none"}
     crew.get_insider_activity = lambda t: {
         "transactions": [], "mspr_monthly": [],
         "cluster_signal": {"detected": False, "insiders": [], "window_days": None},
@@ -98,14 +95,13 @@ def test_run_produces_full_analyses_document():
     assert doc["signal"] in ("bullish", "bearish", "neutral")
     assert doc["conviction"] in ("high", "medium", "low")
     assert "timestamp" in doc and "summary" in doc
-    assert set(doc["sub_reports"]) == {"technical", "fundamental", "macro", "insider",
+    assert set(doc["sub_reports"]) == {"technical", "fundamental", "insider",
                                        "institutional", "sentiment", "recommendation"}
     # deterministic pieces flow through
     assert doc["sub_reports"]["technical"]["strat_result"]["tfc"]["status"] in (
         "full_bullish", "full_bearish", "conflict")
     assert doc["sub_reports"]["recommendation"]["recommendation"] in (
         "BUY_MORE", "HOLD", "TRIM", "START_SELLING", "AVOID_ADD", "WATCH")
-    assert doc["sub_reports"]["macro"]["rate_impact"]["fed_funds_rate"] == 4.25
     assert doc["sub_reports"]["institutional"]["institutional_summary"]["ownership_pct"] == 60.0
     assert doc["sub_reports"]["insider"]["net_direction"] == "balanced"
     assert doc["sub_reports"]["sentiment"]["news_count"] == 0
@@ -114,9 +110,9 @@ def test_run_produces_full_analyses_document():
     # the insider stub has no recent_summary → None)
     assert doc["recent_institutional_activity"] == "mixed"
     assert doc["recent_insider_summary"] is None
-    # eight LLM calls: tech, fund, macro, insider, institutional, sentiment,
-    # recommender, strategist
-    assert len(crew.client.calls) == 8
+    # seven LLM calls: tech, fund, insider, institutional, sentiment,
+    # recommender, strategist — macro no longer runs per ticker
+    assert len(crew.client.calls) == 7
 
 
 def test_invalid_ticker_with_no_financials_raises_delisted():
@@ -133,26 +129,8 @@ def test_invalid_ticker_with_financials_proceeds():
 
 def test_parallel_prefetch_produces_same_shape():
     doc = make_crew().run("AAPL", parallel_prefetch=True)
-    assert set(doc["sub_reports"]) == {"technical", "fundamental", "macro", "insider",
+    assert set(doc["sub_reports"]) == {"technical", "fundamental", "insider",
                                        "institutional", "sentiment", "recommendation"}
-
-
-def test_macro_analyst_cached_across_tickers_in_same_sector():
-    db = mongomock.MongoClient()["crew_test"]
-    db["ticker_index"].insert_many([
-        {"ticker": "AAPL", "sector": "Technology"},
-        {"ticker": "MSFT", "sector": "Technology"},
-    ])
-    crew = make_crew()
-    crew.db = db
-
-    crew.run("AAPL")
-    first_call_count = len(crew.client.calls)
-    crew.run("MSFT")
-    second_run_calls = len(crew.client.calls) - first_call_count
-
-    # same 8 agent/strategist calls minus the cached macro_analyst call
-    assert second_run_calls == first_call_count - 1
 
 
 def test_earnings_dates_extraction():

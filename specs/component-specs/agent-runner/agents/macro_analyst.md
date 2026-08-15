@@ -1,24 +1,11 @@
 # agent-runner/agents/macro_analyst.py
 
 ## Purpose
-Contextualizes a ticker within the current macroeconomic environment. Assesses whether the macro regime (rates, inflation, growth, yield curve) is a tailwind or headwind for this specific sector and company.
-
-## CrewAI Agent Definition
-
-```python
-Agent(
-    role="Macro Analyst",
-    goal="Determine whether current macroeconomic conditions support or threaten {ticker} in its sector",
-    backstory="You track Federal Reserve policy, inflation readings, GDP trends, and yield curve signals. You translate macro data into sector-specific impact — e.g., how rising rates hurt growth stocks but help banks.",
-    tools=[get_macro_data],
-    llm=llm,
-    allow_delegation=False
-)
-```
+Contextualizes a **sector** within the current macroeconomic environment. Assesses whether the macro regime (rates, inflation, growth, yield curve) is a tailwind or headwind for that sector. Decoupled from per-ticker analysis (specs/020-surface-macro-ui): `run(sector, context, client=None, db=None)` takes no ticker at all. The only caller is `macro_worker.py`, once per active sector; `crew.py` never calls this agent.
 
 ## Task Prompt
 ```
-Assess the macro environment for {ticker} (sector: {sector}):
+Assess the macro environment for the {sector} sector:
 1. Inflation regime: CPI/PCE trend — rising, falling, stable. Impact on this sector.
 2. Rate environment: Fed funds rate, direction of travel, expected cuts/hikes. Impact on valuation and business model.
 3. Growth: GDP trend, recession probability signals from yield curve (T10Y2Y, T10Y3M).
@@ -30,7 +17,10 @@ Return structured JSON: inflation_impact, rate_impact, growth_backdrop, consumer
 
 ## Data Source
 - FRED API for all indicators (see DATA_SOURCES.md)
-- Macro data is fetched once per crew run and shared across all tickers in that run (cached in memory)
+- Macro data is fetched once per worker sweep and shared across all sectors refreshed in that sweep
+
+## Caching
+Result is cached per sector in `macro_analysis_cache` for `CACHE_DAYS = 7`; `run()` returns the cached `result` unchanged when the sector's read is still fresh. `sector=None` falls back to the shared `"unknown"` bucket.
 
 ## Output Shape
 ```json
