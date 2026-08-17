@@ -33,6 +33,18 @@
   likely in wherever weekly/monthly % change stats are computed/labeled for
   display than in the candle data itself — needs a repro in the running app
   to pin down which component reads the wrong field.
+- **Two backend FMP call sites bypass the daily budget counter, so `fmp_usage`
+  under-reports real spend.** `backend/routers/price.py` and
+  `backend/earnings_data.py::_fmp_get` both call FMP with a bare
+  `requests.get` and never increment `fmp_usage` — only the agent-runner
+  (`tools/fmp_client.py`) and, as of `specs/022-market-news-feed`, the new
+  `backend/fmp.py` do. The agent-runner's soft cap therefore throttles against
+  a number lower than the true daily total, and could keep spending after the
+  real 250/day ceiling is reached. Found 2026-08-16 while planning 022, which
+  added the backend's first guard but deliberately did not retrofit two working
+  call paths outside its scope. Fix is mechanical: route both through
+  `backend.fmp.fmp_get` (note `price.py` currently constructs its own URL with
+  a `from=` parameter, which `fmp_get` passes through unchanged).
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is

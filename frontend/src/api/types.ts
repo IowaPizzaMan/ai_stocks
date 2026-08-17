@@ -97,6 +97,28 @@ export interface BeneficialFiling {
   url: string;
 }
 
+// --- 022-market-news-feed ---------------------------------------------------
+// Market-wide headlines shown on the Stocks page. Deliberately NOT related to
+// NewsArticle above: that one carries per-ticker sentiment counts and an AI
+// summary, none of which apply to this plain headline list.
+// Contract: specs/022-market-news-feed/contracts/market-news-endpoint.md
+
+export interface MarketNewsArticle {
+  ticker: string | null; // null for untagged market commentary
+  datetime: string;
+  date: string;
+  source: string;
+  headline: string;
+  url: string;
+  text_excerpt: string;
+}
+
+export interface MarketNewsResponse {
+  articles: MarketNewsArticle[]; // <= 20, newest first
+  as_of: string | null;
+  stale: boolean; // true when the cached copy could not be refreshed
+}
+
 export interface ChangesSinceLast {
   previous_timestamp: string;
   signal: { from: string; to: string; changed: boolean };

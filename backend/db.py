@@ -45,6 +45,10 @@ STOCK_NEWS = "stock_news"
 MARKET_NEWS = "market_news"
 COMPANY_INFO = "company_info"
 
+# 022-market-news-feed — keep in sync with agent-runner/tools/db.py
+MARKET_NEWS_CACHE = "market_news_cache"
+FMP_USAGE = "fmp_usage"
+
 
 @lru_cache(maxsize=1)
 def get_db() -> Database:
@@ -73,3 +77,7 @@ def ensure_indexes(db: Database) -> None:
     db[MARKET_FLOW_EVENTS].create_index([("created_at", DESCENDING)])
     # TTL caches (seconds): macro 24h; financials use quarterly re-fetch logic instead of TTL
     db[MACRO_CACHE].create_index("fetched_at", expireAfterSeconds=24 * 3600)
+    # Market news is a single row keyed by source. Deliberately NO TTL index: the
+    # 60-minute window is compared in code so the stale copy survives expiry and
+    # can still be served when a refresh fails (specs/022 data-model.md §2).
+    db[MARKET_NEWS_CACHE].create_index([("key", ASCENDING)], unique=True)

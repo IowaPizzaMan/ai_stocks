@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import AnalysisTile from "../components/feed/AnalysisTile";
 import FilterBar from "../components/feed/FilterBar";
+import MarketNewsPanel from "../components/feed/MarketNewsPanel";
 import SkeletonTile from "../components/feed/SkeletonTile";
 import { groupBySignal } from "../lib/groupFeed";
 import { useFeed } from "../hooks/useAnalysis";
@@ -92,6 +93,10 @@ export default function Stocks() {
       <div ref={loadMoreRef} className="h-8 text-center text-xs text-zinc-600">
         {isFetchingNextPage && "loading…"}
       </div>
+
+      {/* Market-wide headlines (specs/022). Independent of the filter bar above
+          and of the feed query's state, so a news outage can't affect the grid. */}
+      <MarketNewsPanel />
     </div>
   );
 }
