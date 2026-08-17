@@ -56,11 +56,24 @@ def count_keywords(news: list[dict]) -> dict:
 
 
 def run(ticker: str, context: dict, client=None) -> dict:
-    """context: {'sentiment': tools/sentiment.get_earnings_sentiment() output}"""
+    """context: {'sentiment': tools/sentiment.get_earnings_sentiment() output,
+    optionally 'news_timeline'/'news_trend' from tools/news.py so this read and
+    the timeline chart on the Sentiment tab agree (spec 021 US6)}"""
     data = context["sentiment"]
     news = data.get("news", [])
     surprises = data.get("earnings_surprises", [])
     keywords = count_keywords(news)
+    news_timeline = context.get("news_timeline") or []
+    news_trend = context.get("news_trend")
+
+    timeline_section = ""
+    if news_timeline:
+        timeline_section = f"""
+## Dated news-language trend (deterministic, same data the UI charts)
+trend: {news_trend}
+per-date bullish/bearish term counts: {json.dumps(news_timeline, default=str)}
+Your tone read should be consistent with this trend, or explain why it differs.
+"""
 
     prompt = f"""Analyze sentiment for {ticker} from the last 30 days of news and the EPS
 surprise history. (Earnings call transcripts aren't available on this data plan — work
@@ -74,7 +87,7 @@ from headlines and hard results; don't fabricate management quotes.)
 
 ## Deterministic keyword tally
 {json.dumps(keywords)}
-
+{timeline_section}
 1. current_tone with 2-4 tone_evidence bullets citing specific headlines.
 2. earnings_surprise_read: beats vs misses pattern and its direction.
 3. narrative: 2-3 sentences; note when news volume is thin.

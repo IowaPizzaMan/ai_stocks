@@ -24,6 +24,8 @@ export interface AnalysisFeedItem {
 
 export interface Analysis extends AnalysisFeedItem {
   sub_reports: SubReports;
+  // 021 — absent on analyses written before this feature / on first-ever pulls
+  changes_since_last?: ChangesSinceLast | null;
 }
 
 export interface SubReports {
@@ -34,6 +36,95 @@ export interface SubReports {
   institutional?: InstitutionalReport;
   sentiment?: SentimentReport;
   recommendation?: RecommendationReport;
+  news?: NewsReport;
+}
+
+// --- 021-stock-page-redesign ------------------------------------------------
+// Every field below is optional on read: analyses stored before 021 lack them
+// entirely, so consumers must render an empty state rather than assume presence.
+// Contract: specs/021-stock-page-redesign/contracts/analysis-subreports.md
+
+export interface NewsArticle {
+  date: string;
+  datetime: string;
+  source: string;
+  headline: string;
+  url: string;
+  text_excerpt: string;
+  bullish_count: number;
+  bearish_count: number;
+  ai_summary: string | null; // only the newest articles get one
+}
+
+export interface TimelinePoint {
+  date: string;
+  bullish: number;
+  bearish: number;
+  article_count: number;
+}
+
+export type NewsTrend = "bullish" | "bearish" | "mixed";
+
+export interface NewsReport {
+  articles: NewsArticle[]; // newest first, full 30-day window
+  timeline: TimelinePoint[]; // ascending by date
+  trend: NewsTrend;
+  stance: { direction: "bullish" | "neutral" | "bearish"; reasoning: string } | null;
+  news_count: number;
+  days_covered?: number; // days in the window that actually had coverage
+  window_days?: number; // the window that was requested (30)
+  as_of?: string | null;
+}
+
+export interface InsiderQuarterStats {
+  year: number;
+  quarter: number;
+  acquired_transactions: number;
+  disposed_transactions: number;
+  acquired_disposed_ratio: number;
+  total_acquired: number;
+  total_disposed: number;
+  total_purchases: number;
+  total_sales: number;
+}
+
+export interface BeneficialFiling {
+  filer: string;
+  filing_date: string;
+  shares: number;
+  pct_of_class: number;
+  filer_type: string;
+  url: string;
+}
+
+// --- 022-market-news-feed ---------------------------------------------------
+// Market-wide headlines shown on the Stocks page. Deliberately NOT related to
+// NewsArticle above: that one carries per-ticker sentiment counts and an AI
+// summary, none of which apply to this plain headline list.
+// Contract: specs/022-market-news-feed/contracts/market-news-endpoint.md
+
+export interface MarketNewsArticle {
+  ticker: string | null; // null for untagged market commentary
+  datetime: string;
+  date: string;
+  source: string;
+  headline: string;
+  url: string;
+  text_excerpt: string;
+}
+
+export interface MarketNewsResponse {
+  articles: MarketNewsArticle[]; // <= 20, newest first
+  as_of: string | null;
+  stale: boolean; // true when the cached copy could not be refreshed
+}
+
+export interface ChangesSinceLast {
+  previous_timestamp: string;
+  signal: { from: string; to: string; changed: boolean };
+  conviction: { from: string; to: string; changed: boolean };
+  flags_added: string[];
+  flags_removed: string[];
 }
 
 export interface OHLCVBar {
@@ -66,6 +157,18 @@ export interface MacroReport {
   sector_rotation_signal: string;
 }
 
+// One sector's macro read, produced independently of ticker analysis by the
+// agent-runner's macro worker (specs/020-surface-macro-ui).
+export interface SectorMacroRead extends MacroReport {
+  sector: string;
+  computed_at: string;
+}
+
+export interface MacroReads {
+  sectors: SectorMacroRead[];
+  as_of: string | null;
+}
+
 export interface InsiderTransaction {
   name: string;
   transaction_type: string;
@@ -89,6 +192,7 @@ export interface InsiderReport {
   unusual_size: string;
   signal_strength: string;
   as_of?: string | null; // most recent Form 4 transaction date in the lookback window
+  quarterly_stats?: InsiderQuarterStats[]; // 021 — newest first, ≤8 quarters
 }
 
 export interface InstitutionalReport {
@@ -110,6 +214,9 @@ export interface InstitutionalReport {
   superinvestor_read: string;
   concentration_assessment: string;
   as_of?: string | null; // same date as institutional_summary.as_of, at top level for consistency
+  // 021 — 13D/G filings are the entitled institutional signal (13F is not)
+  beneficial_filings?: BeneficialFiling[]; // newest first, ≤20
+  beneficial_direction?: "accumulating" | "distributing" | "mixed" | null;
 }
 
 export interface SentimentReport {

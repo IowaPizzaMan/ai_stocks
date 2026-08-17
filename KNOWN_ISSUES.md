@@ -6,14 +6,6 @@
 
 ## Open bugs
 
-- **Empty financials from a temporary FMP condition are cached as settled for
-  90 days.** A fetch where every statement type 402s ("not covered on this
-  plan") writes an all-empty `financials_cache` doc that then short-circuits
-  every later analysis run — confirmed live with BSX (402 on all 7 endpoints
-  2026-08-09; FMP had the data again by 2026-08-15 but the app kept serving
-  the empty cache). Fix is specced and planned as
-  `specs/018-fix-financials-cache-gap/` (per-key `outcomes` marker +
-  retry-on-every-run for unavailable keys); awaiting implement.
 - **`analyst-estimates` FMP call is malformed — every earnings snapshot loses
   forward estimates.** `get_earnings_data` requests
   `analyst-estimates?symbol=X&limit=4`, which the stable API rejects with 400
@@ -41,6 +33,18 @@
   likely in wherever weekly/monthly % change stats are computed/labeled for
   display than in the candle data itself — needs a repro in the running app
   to pin down which component reads the wrong field.
+- **Two backend FMP call sites bypass the daily budget counter, so `fmp_usage`
+  under-reports real spend.** `backend/routers/price.py` and
+  `backend/earnings_data.py::_fmp_get` both call FMP with a bare
+  `requests.get` and never increment `fmp_usage` — only the agent-runner
+  (`tools/fmp_client.py`) and, as of `specs/022-market-news-feed`, the new
+  `backend/fmp.py` do. The agent-runner's soft cap therefore throttles against
+  a number lower than the true daily total, and could keep spending after the
+  real 250/day ceiling is reached. Found 2026-08-16 while planning 022, which
+  added the backend's first guard but deliberately did not retrofit two working
+  call paths outside its scope. Fix is mechanical: route both through
+  `backend.fmp.fmp_get` (note `price.py` currently constructs its own URL with
+  a `from=` parameter, which `fmp_get` passes through unchanged).
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
@@ -170,6 +174,18 @@
 
 ## Fixed
 
+- ~~Empty financials from a temporary FMP condition are cached as settled for
+  90 days~~ — fixed 2026-08-15. A fetch where every statement type 402s ("not
+  covered on this plan") wrote an all-empty `financials_cache` doc that then
+  short-circuited every later analysis run — confirmed live with BSX (402 on
+  all 7 endpoints 2026-08-09; FMP had the data again by 2026-08-15 but the app
+  kept serving the empty cache) and reproduced identically for ticker J (all
+  7 endpoints empty since 2026-08-04). Fixed via
+  `specs/018-fix-financials-cache-gap/`: each statement key now carries a
+  per-key `outcomes` marker (`confirmed` vs `unavailable`); only `unavailable`
+  keys are re-fetched on a warm cache hit, promoting to `confirmed` once FMP
+  returns 200, while confirmed keys (even genuinely empty ones) stay settled
+  for the full 90-day window.
 - ~~`GET /stocks/{ticker}/price` 500s whenever a bar has a NaN OHLC value~~ —
   fixed 2026-08-09. Found via `logs/backend/backend.log.2026-08-09`: repeated
   crashes on `GET /stocks/INTC/price`

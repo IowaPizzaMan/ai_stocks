@@ -1,0 +1,7 @@
+2026-08-15 14:32:14,473 backend.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-15 11:00:00,237 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-15 11:06:16,754 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-15 15:22:11,512 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-15 15:56:58,280 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-15 16:03:59,185 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-15 16:12:08,445 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup

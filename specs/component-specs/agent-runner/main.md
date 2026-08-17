@@ -9,6 +9,8 @@ Entry point for the agent-runner Docker service. Starts the persistent queue pol
 - Verify Ollama is reachable (GET `/api/tags` — log warning if not, keep running)
 - Import and instantiate `QueueWorker`
 - Import and instantiate `InstitutionalFlowWorker` (see `institutional_flow_worker.md`) — runs on its own daily timer, independent of ticker jobs
+- Call `run_daily_breadth_if_due` each tick — daily NYMO/NAMO + SPY divergence refresh, independent of ticker jobs
+- Call `macro_worker.run_macro_refresh_if_due` each tick (see `macro_worker.md`) — per-sector economic reads, throttled to at most once an hour, independent of ticker jobs (specs/020-surface-macro-ui: macro analysis is decoupled from crew.py entirely)
 - Run the blocking poll loop
 
 ## Implementation

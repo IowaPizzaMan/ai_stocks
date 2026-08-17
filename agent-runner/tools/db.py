@@ -50,6 +50,10 @@ STOCK_NEWS = "stock_news"
 MARKET_NEWS = "market_news"
 COMPANY_INFO = "company_info"
 
+# 021-stock-page-redesign — per-ticker pull-time caches
+STOCK_NEWS_CACHE = "stock_news_cache"
+BENEFICIAL_OWNERSHIP_CACHE = "beneficial_ownership_cache"
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -84,6 +88,11 @@ def ensure_indexes(db: Database | None = None) -> None:
     # sector (macro) or the whole run (superinvestor) — see crew.py callers.
     db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
     db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
+    # 021 — news refreshes per pull (24h), 13D/G filings move on filing cadence (7d)
+    db[STOCK_NEWS_CACHE].create_index("fetched_at", expireAfterSeconds=24 * 3600)
+    db[STOCK_NEWS_CACHE].create_index([("ticker", ASCENDING)], unique=True)
+    db[BENEFICIAL_OWNERSHIP_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
+    db[BENEFICIAL_OWNERSHIP_CACHE].create_index([("ticker", ASCENDING)], unique=True)
     db[BREADTH_DIVERGENCES].create_index([("resolved", DESCENDING)])
     db[MARKET_FLOW_EVENTS].create_index([("event_id", ASCENDING)], unique=True)
     db[MARKET_FLOW_EVENTS].create_index([("created_at", DESCENDING)])

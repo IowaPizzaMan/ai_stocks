@@ -29,11 +29,13 @@ ENDPOINTS = {
 }
 
 
-def _fetch_statement(ticker: str, key: str, db: Database | None) -> list | dict:
-    """One FMP statement fetch, degraded to [] on the two temporary
-    conditions (plan restriction, budget cap) so the crew run proceeds."""
+def _fetch_statement(ticker: str, key: str, db: Database | None) -> tuple[list | dict, str]:
+    """One FMP statement fetch. Returns (payload, outcome) where outcome is
+    `confirmed` (FMP answered 200, payload may be empty) or `unavailable`
+    (degraded on a temporary condition — plan restriction or budget cap —
+    so the crew run proceeds)."""
     try:
-        return fmp_get(ENDPOINTS[key].format(t=ticker), db=db)
+        return fmp_get(ENDPOINTS[key].format(t=ticker), db=db), "confirmed"
     except requests.HTTPError as exc:
         status = exc.response.status_code if exc.response is not None else None
         if status not in (402, 403):
@@ -42,22 +44,25 @@ def _fetch_statement(ticker: str, key: str, db: Database | None) -> list | dict:
         # (verified 2026-08-02: AAPL 200, APP 402 on the same day/key) —
         # degrade to empty so the crew run proceeds
         logger.info("FMP %s for %s/%s — not covered on this plan, skipping", status, ticker, key)
-        return []
+        return [], "unavailable"
     except FmpBudgetExceededError:
         logger.warning("FMP daily soft cap exceeded — skipping %s for %s", key, ticker)
-        return []
+        return [], "unavailable"
 
 
 def get_financials(ticker: str, db: Database | None = None) -> dict:
     """Income/balance/cashflow/ratios for a ticker, served from the 90-day
     Mongo cache when possible (~7 FMP calls on a cold fetch, 0 after).
 
-    A cached statement type that is empty because an earlier fetch hit a
-    temporary condition (402/403 plan restriction or budget cap) is NOT
-    settled: it's re-fetched on every call until FMP answers 200
+    Each statement type carries an `outcomes` marker: `confirmed` (FMP
+    answered 200, settled for the 90-day window even if the payload is
+    empty) or `unavailable` (degraded on a temporary condition — 402/403
+    plan restriction or budget cap). Only `unavailable` keys are re-fetched
+    on a warm cache hit, promoting to `confirmed` once FMP returns 200
     (specs/018-fix-financials-cache-gap — the BSX bug, where an all-402
     fetch was served as "no data" for the rest of the 90-day window).
-    Confirmed keys are never re-fetched inside the window, and a partial
+    Legacy docs (written before this fix, no `outcomes` field) derive it
+    lazily: empty value -> unavailable, non-empty -> confirmed. A partial
     retry deliberately leaves fetched_at alone so the window doesn't slide."""
     db = db if db is not None else get_db()
     ticker = ticker.upper()
@@ -66,18 +71,22 @@ def get_financials(ticker: str, db: Database | None = None) -> dict:
     cached = db[FINANCIALS_CACHE].find_one({"ticker": ticker, "fetched_at": {"$gt": cutoff}})
     if cached:
         data = cached["data"]
-        retry_keys = [k for k in ENDPOINTS if not data.get(k)]
+        outcomes = cached.get("outcomes") or {k: ("confirmed" if data.get(k) else "unavailable") for k in ENDPOINTS}
+        retry_keys = [k for k in ENDPOINTS if outcomes.get(k) != "confirmed"]
         if not retry_keys:
             return data
         for key in retry_keys:
-            data[key] = _fetch_statement(ticker, key, db)
-        db[FINANCIALS_CACHE].update_one({"ticker": ticker}, {"$set": {"data": data}})
+            data[key], outcomes[key] = _fetch_statement(ticker, key, db)
+        db[FINANCIALS_CACHE].update_one({"ticker": ticker}, {"$set": {"data": data, "outcomes": outcomes}})
         return data
 
-    data = {key: _fetch_statement(ticker, key, db) for key in ENDPOINTS}
+    data = {}
+    outcomes = {}
+    for key in ENDPOINTS:
+        data[key], outcomes[key] = _fetch_statement(ticker, key, db)
     db[FINANCIALS_CACHE].replace_one(
         {"ticker": ticker},
-        {"ticker": ticker, "data": data, "fetched_at": datetime.now(timezone.utc)},
+        {"ticker": ticker, "data": data, "outcomes": outcomes, "fetched_at": datetime.now(timezone.utc)},
         upsert=True,
     )
     return data

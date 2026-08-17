@@ -10,10 +10,25 @@ Fetches and caches company financial statements and earnings data from FMP, with
 ### `get_financials(ticker: str) -> dict`
 Returns income statement, balance sheet, cash flow, and key ratios.
 
-**Caching logic:**
-1. Check MongoDB `financials_cache` collection for `{ ticker, fetched_at }` within the last 90 days
-2. If cache hit → return cached document
-3. If cache miss → call FMP, store result with `fetched_at: now`, return
+**Caching logic** (specs/018-fix-financials-cache-gap): each of the seven statement
+keys carries an `outcomes[key]` marker alongside `data[key]` in the `financials_cache`
+document — `confirmed` (FMP answered 200 for that key; the payload may legitimately be
+empty) or `unavailable` (the fetch degraded to `[]` on a temporary 402/403 plan
+restriction or the daily budget cap). Only `unavailable` keys are eligible for retry.
+
+1. Check MongoDB `financials_cache` for `{ ticker, fetched_at }` within the last 90 days.
+2. **Cache miss** (no doc, or older than 90 days) → full fetch of all seven keys, each
+   recording its own outcome; write `{ ticker, data, outcomes, fetched_at: now }`.
+3. **Cache hit** → derive `outcomes` (legacy docs with no `outcomes` field get it lazily:
+   empty value → `unavailable`, non-empty → `confirmed`). Re-fetch only the keys whose
+   outcome is not `confirmed`, merge the results into `data`/`outcomes`, and persist with
+   `$set` on `data` and `outcomes` only — **`fetched_at` is left untouched** so a partial
+   retry doesn't slide the 90-day window. If every key is already `confirmed`, return the
+   cached `data` with zero FMP calls.
+
+This is what makes an all-402 fetch (e.g. a symbol not covered by the current plan on the
+day it was first fetched) self-correct on a later run once FMP starts covering it, instead
+of being served as "no data" for the rest of the 90-day window.
 
 ```python
 def get_financials(ticker: str) -> dict:
@@ -21,19 +36,20 @@ def get_financials(ticker: str) -> dict:
         { "ticker": ticker, "fetched_at": { "$gt": ninety_days_ago() } }
     )
     if cached:
-        return cached["data"]
-    
-    data = {
-        "income_annual": fmp_get(f"v3/income-statement/{ticker}?period=annual&limit=4"),
-        "income_quarterly": fmp_get(f"v3/income-statement/{ticker}?period=quarter&limit=8"),
-        "balance_annual": fmp_get(f"v3/balance-sheet-statement/{ticker}?period=annual&limit=4"),
-        "cashflow_annual": fmp_get(f"v3/cash-flow-statement/{ticker}?period=annual&limit=4"),
-        "ratios": fmp_get(f"v3/ratios/{ticker}?period=annual&limit=4"),
-        "key_metrics": fmp_get(f"v3/key-metrics/{ticker}?period=annual&limit=4"),
-        "growth": fmp_get(f"v3/income-statement-growth/{ticker}")
-    }
+        data, outcomes = cached["data"], cached.get("outcomes") or derive_legacy_outcomes(cached["data"])
+        retry_keys = [k for k in ENDPOINTS if outcomes.get(k) != "confirmed"]
+        if not retry_keys:
+            return data
+        for key in retry_keys:
+            data[key], outcomes[key] = fetch_statement(ticker, key)  # ("[]", "unavailable") on 402/403/budget cap
+        db.financials_cache.update_one({ "ticker": ticker }, { "$set": { "data": data, "outcomes": outcomes } })
+        return data
+
+    data, outcomes = {}, {}
+    for key in ENDPOINTS:
+        data[key], outcomes[key] = fetch_statement(ticker, key)
     db.financials_cache.replace_one(
-        { "ticker": ticker }, { "ticker": ticker, "data": data, "fetched_at": now() }, upsert=True
+        { "ticker": ticker }, { "ticker": ticker, "data": data, "outcomes": outcomes, "fetched_at": now() }, upsert=True
     )
     return data
 ```

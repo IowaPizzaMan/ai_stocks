@@ -1,7 +1,13 @@
 """GET /market/* — read-only views over what the agent-runner cached."""
 from datetime import datetime, timedelta, timezone
 
-from db import BREADTH_CACHE, BREADTH_DIVERGENCES, BREADTH_META, MARKET_FLOW_EVENTS
+from db import (
+    BREADTH_CACHE,
+    BREADTH_DIVERGENCES,
+    BREADTH_META,
+    MACRO_ANALYSIS_CACHE,
+    MARKET_FLOW_EVENTS,
+)
 
 NOW = datetime.now(timezone.utc)
 
@@ -105,3 +111,42 @@ def test_flow_events_respects_limit(client, db):
     ])
 
     assert len(client.get("/market/flow-events", params={"limit": 2}).json()) == 2
+
+
+def macro_result(**overrides):
+    result = {
+        "inflation_impact": {"trend": "stable", "impact_on_sector": "neutral", "cpi_latest": 330.1},
+        "rate_impact": {"direction": "holding", "impact_on_valuation": "neutral", "fed_funds_rate": 4.25},
+        "growth_backdrop": {"recession_signal": "mild", "commentary": "cooling",
+                            "yield_curve_spread": 0.4, "curve_inverted": False},
+        "consumer_backdrop": "resilient",
+        "sector_rotation_signal": "neutral",
+        "overall_macro_signal": "neutral",
+        "confidence": "medium",
+    }
+    result.update(overrides)
+    return result
+
+
+def test_macro_empty_collection_is_not_an_error(client, db):
+    r = client.get("/market/macro").json()
+    assert r == {"sectors": [], "as_of": None}
+
+
+def test_macro_returns_sectors_newest_first(client, db):
+    db[MACRO_ANALYSIS_CACHE].insert_many([
+        {"sector": "Technology", "result": macro_result(overall_macro_signal="bullish"),
+         "computed_at": NOW - timedelta(days=1)},
+        {"sector": "Financials", "result": macro_result(overall_macro_signal="bearish"),
+         "computed_at": NOW},
+    ])
+
+    r = client.get("/market/macro").json()
+    assert [s["sector"] for s in r["sectors"]] == ["Financials", "Technology"]
+    assert "_id" not in r["sectors"][0]
+    financials = r["sectors"][0]
+    assert financials["overall_macro_signal"] == "bearish"
+    assert financials["inflation_impact"]["cpi_latest"] == 330.1
+    assert financials["rate_impact"]["fed_funds_rate"] == 4.25
+    assert financials["confidence"] == "medium"
+    assert r["as_of"] == financials["computed_at"]

@@ -1,19 +1,17 @@
-// Spec: specs/component-specs/frontend/pages/Feed.md
+// Spec: specs/component-specs/frontend/pages/Stocks.md
+//
+// Stock-specific only (renamed from "Feed" — specs/020-surface-macro-ui):
+// filter bar and the analysis tile board. Market-breadth cards and macro
+// context moved to the Macro page.
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import AnalysisTile from "../components/feed/AnalysisTile";
 import FilterBar from "../components/feed/FilterBar";
-import MarketFlowCard from "../components/feed/MarketFlowCard";
+import MarketNewsPanel from "../components/feed/MarketNewsPanel";
 import SkeletonTile from "../components/feed/SkeletonTile";
 import { groupBySignal } from "../lib/groupFeed";
 import { useFeed } from "../hooks/useAnalysis";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
-import { useMarketBreadth, useMarketFlowEvents } from "../hooks/useMarketBreadth";
-
-// Market-flow events are pinned above the board rather than interleaved —
-// they're market-wide and have no ticker, so a signal group would have
-// nowhere sensible to put them. They age out after two weeks.
-const MARKET_EVENT_MAX_AGE_DAYS = 14;
 
 const GROUP_LABEL: Record<string, string> = {
   bullish: "Bullish",
@@ -24,7 +22,7 @@ const GROUP_LABEL: Record<string, string> = {
 
 const SKELETON_BOARD_SIZE = 30;
 
-export default function Feed() {
+export default function Stocks() {
   const [searchParams] = useSearchParams();
   const filters = {
     ticker: searchParams.get("ticker") ?? undefined,
@@ -35,19 +33,10 @@ export default function Feed() {
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeed(filters);
-  const { data: marketEvents } = useMarketFlowEvents();
-  const { data: breadth } = useMarketBreadth();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // A market-wide card is noise once the user has narrowed to a ticker/sector.
-  const filtered = Object.values(filters).some(Boolean);
-  const cutoff = Date.now() - MARKET_EVENT_MAX_AGE_DAYS * 86_400_000;
-  const pinnedEvents = filtered
-    ? []
-    : (marketEvents ?? []).filter((e) => new Date(e.created_at).getTime() >= cutoff);
-
   useEffect(() => {
-    document.title = "StockAI — Feed";
+    document.title = "StockAI — Stocks";
   }, []);
 
   useIntersectionObserver(loadMoreRef, () => {
@@ -61,14 +50,6 @@ export default function Feed() {
     <div className="mx-auto max-w-7xl space-y-4">
       <h1 className="sr-only">Analysis Feed</h1>
       <FilterBar />
-
-      {pinnedEvents.length > 0 && (
-        <div className="space-y-3">
-          {pinnedEvents.map((event) => (
-            <MarketFlowCard key={event.event_id} event={event} breadth={breadth} />
-          ))}
-        </div>
-      )}
 
       {isLoading && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
@@ -112,6 +93,10 @@ export default function Feed() {
       <div ref={loadMoreRef} className="h-8 text-center text-xs text-zinc-600">
         {isFetchingNextPage && "loading…"}
       </div>
+
+      {/* Market-wide headlines (specs/022). Independent of the filter bar above
+          and of the feed query's state, so a news outage can't affect the grid. */}
+      <MarketNewsPanel />
     </div>
   );
 }

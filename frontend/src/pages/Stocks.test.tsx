@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "../api/client";
 import type { AnalysisFeedItem, FeedResponse, MarketFlowEvent } from "../api/types";
-import Feed from "./Feed";
+import Stocks from "./Stocks";
 
 vi.mock("../api/client", () => ({
   api: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
@@ -57,7 +57,7 @@ function mockApi({
   flowEvents?: MarketFlowEvent[];
 } = {}) {
   // Mirrors the backend's server-side filtering (ticker: substring, others: exact match)
-  // so tests can verify the Feed page forwards URL filters into the request and renders
+  // so tests can verify the Stocks page forwards URL filters into the request and renders
   // whatever the (simulated) filtered response contains.
   vi.mocked(api.get).mockImplementation(async (url: string, config?: unknown) => {
     if (url === "/analysis/feed") {
@@ -82,6 +82,8 @@ function mockApi({
       };
       return { data: body };
     }
+    // The Stocks page no longer reads breadth/flow-events (moved to the Macro
+    // page) — these branches only exist so an accidental call doesn't throw.
     if (url === "/market/flow-events") return { data: flowEvents };
     if (url === "/market/breadth") return { data: null };
     if (url === "/queue") return { data: { pending_count: 0, running_count: 0 } };
@@ -89,26 +91,26 @@ function mockApi({
   });
 }
 
-function renderFeed(initialEntries: string[] = ["/"]) {
+function renderStocks(initialEntries: string[] = ["/"]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={initialEntries}>
-        <Feed />
+        <Stocks />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 // Navigation assertions need a real destination route to land on, rather than
-// just Feed in isolation.
-function renderFeedWithRouting() {
+// just Stocks in isolation.
+function renderStocksWithRouting() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={["/"]}>
         <Routes>
-          <Route path="/" element={<Feed />} />
+          <Route path="/" element={<Stocks />} />
           <Route path="/stock/:ticker" element={<div>STOCK DETAIL PAGE</div>} />
         </Routes>
       </MemoryRouter>
@@ -125,7 +127,7 @@ test("renders tiles grouped under labeled dividers in bullish, neutral, bearish 
     ],
   });
 
-  renderFeed();
+  renderStocks();
 
   await waitFor(() => expect(screen.getByText("BULL1")).toBeDefined());
 
@@ -140,7 +142,7 @@ test("renders tiles grouped under labeled dividers in bullish, neutral, bearish 
 test("shows a board of skeleton tiles during initial load, then swaps to real tiles", async () => {
   mockApi({ items: [feedItem({ ticker: "AAA" })] });
 
-  const { container } = renderFeed();
+  const { container } = renderStocks();
 
   expect(container.querySelectorAll('[data-skeleton-tile="true"]').length).toBeGreaterThanOrEqual(20);
 
@@ -152,7 +154,7 @@ test("shows a board of skeleton tiles during initial load, then swaps to real ti
 test("shows the existing error message when the feed fetch fails", async () => {
   mockApi({ feedError: true });
 
-  renderFeed();
+  renderStocks();
 
   await waitFor(() => expect(screen.getByText(/couldn't reach the api/i)).toBeDefined());
 });
@@ -160,7 +162,7 @@ test("shows the existing error message when the feed fetch fails", async () => {
 test("shows the existing empty state when there are no analyses", async () => {
   mockApi({ items: [] });
 
-  renderFeed();
+  renderStocks();
 
   await waitFor(() => expect(screen.getByText("No analyses yet")).toBeDefined());
 });
@@ -168,7 +170,7 @@ test("shows the existing empty state when there are no analyses", async () => {
 test("clicking a tile navigates to that stock's detail page", async () => {
   mockApi({ items: [feedItem({ ticker: "BULL1", signal: "bullish" })] });
 
-  renderFeedWithRouting();
+  renderStocksWithRouting();
 
   const tile = await screen.findByRole("button", { name: /BULL1/i });
   fireEvent.click(tile);
@@ -179,7 +181,7 @@ test("clicking a tile navigates to that stock's detail page", async () => {
 test("focusing a tile surfaces its hover/focus preview", async () => {
   mockApi({ items: [feedItem({ ticker: "BULL1", signal: "bullish", summary: "A bullish thesis." })] });
 
-  renderFeed();
+  renderStocks();
 
   const tile = await screen.findByRole("button", { name: /BULL1/i });
   expect(screen.queryByRole("tooltip")).toBeNull();
@@ -198,7 +200,7 @@ test("narrows the board to matching tiles when a signal filter is applied via th
     ],
   });
 
-  renderFeed(["/?signal=bearish"]);
+  renderStocks(["/?signal=bearish"]);
 
   await waitFor(() => expect(screen.getByText("BEAR1")).toBeDefined());
   expect(screen.queryByText("BULL1")).toBeNull();
@@ -212,31 +214,21 @@ test("restores the full board when filters are cleared", async () => {
     ],
   });
 
-  renderFeed(["/"]);
+  renderStocks(["/"]);
 
   await waitFor(() => expect(screen.getByText("BULL1")).toBeDefined());
   expect(screen.getByText("BEAR1")).toBeDefined();
 });
 
-test("pins market-flow events above the board only when unfiltered", async () => {
+test("never renders pinned market-flow cards, even when flow events exist", async () => {
   mockApi({
     items: [feedItem({ ticker: "AAA" })],
     flowEvents: [flowEvent({ headline: "Breadth divergence detected" })],
   });
 
-  renderFeed(["/"]);
-
-  await waitFor(() => expect(screen.getByText("Breadth divergence detected")).toBeDefined());
-});
-
-test("hides pinned market-flow events once any filter is applied", async () => {
-  mockApi({
-    items: [feedItem({ ticker: "AAA", signal: "bullish" })],
-    flowEvents: [flowEvent({ headline: "Breadth divergence detected" })],
-  });
-
-  renderFeed(["/?signal=bullish"]);
+  renderStocks(["/"]);
 
   await waitFor(() => expect(screen.getByText("AAA")).toBeDefined());
   expect(screen.queryByText("Breadth divergence detected")).toBeNull();
+  expect(screen.queryByText("market flow")).toBeNull();
 });

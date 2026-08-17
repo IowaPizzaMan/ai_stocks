@@ -1,16 +1,23 @@
 // Stock Detail tab content: Technicals / Fundamentals / Insider / Institutional / Sentiment.
-// Specs: specs/component-specs/frontend/components/stock/*.md (Phase 5 scope)
+// Specs: specs/component-specs/frontend/components/stock/*.md (Phase 5 scope),
+// extended by specs/021-stock-page-redesign (flow visuals, readable prose,
+// sentiment reorganized around an at-a-glance gauge + news timeline).
 import type {
   FundamentalReport,
   InsiderReport,
   InstitutionalReport,
+  NewsReport,
   SentimentReport,
   TechnicalReport,
 } from "../../api/types";
 import { useStockFinancials } from "../../hooks/usePriceHistory";
 import { formatDate } from "../../lib/time";
 import DataAsOf from "../shared/DataAsOf";
+import FormattedProse from "./FormattedProse";
 import FundamentalsCharts from "./FundamentalsCharts";
+import InsiderFlowCharts from "./InsiderFlowCharts";
+import InstitutionalFlowVisuals from "./InstitutionalFlowVisuals";
+import SentimentTimeline from "./SentimentTimeline";
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -78,11 +85,18 @@ export function TechnicalsTab({ technical }: { technical?: TechnicalReport }) {
 
       <Section title="Narratives">
         <DataAsOf date={technical.as_of} className="mb-3 text-xs text-zinc-600" />
-        <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
-          <p><span className="text-zinc-500">Momentum — </span>{technical.momentum_summary}</p>
-          <p><span className="text-zinc-500">TFC — </span>{technical.tfc_narrative}</p>
-          <p><span className="text-zinc-500">Range — </span>{technical.bf_position_narrative}</p>
-          <p><span className="text-zinc-500">Volume — </span>{technical.volume_narrative}</p>
+        <div className="space-y-4">
+          {[
+            ["Momentum", technical.momentum_summary],
+            ["TFC", technical.tfc_narrative],
+            ["Range", technical.bf_position_narrative],
+            ["Volume", technical.volume_narrative],
+          ].map(([label, body]) => (
+            <div key={label}>
+              <p className="mb-1 text-xs uppercase tracking-wide text-zinc-500">{label}</p>
+              <FormattedProse text={body} />
+            </div>
+          ))}
         </div>
       </Section>
 
@@ -132,7 +146,7 @@ export function FundamentalsTab({ fundamental, ticker }: { fundamental?: Fundame
       {fundamental && (
         <Section title="Assessment">
           <DataAsOf date={fundamental.as_of} label="latest statement" className="mb-3 text-xs text-zinc-600" />
-          <p className="mb-3 text-sm leading-relaxed text-zinc-300">{fundamental.narrative}</p>
+          <FormattedProse text={fundamental.narrative} className="mb-3" />
           <div className="flex flex-wrap gap-2">
             <Pill>revenue: {fundamental.revenue_trend?.direction}</Pill>
             <Pill>margins: {fundamental.margin_trend?.direction}</Pill>
@@ -160,7 +174,7 @@ export function InsiderTab({ insider }: { insider?: InsiderReport }) {
     <div className="space-y-4">
       <Section title={`Read — ${insider.overall_insider_signal} (${insider.signal_strength})`}>
         <DataAsOf date={insider.as_of} label="most recent transaction" className="mb-3 text-xs text-zinc-600" />
-        <p className="mb-3 text-sm leading-relaxed text-zinc-300">{insider.narrative}</p>
+        <FormattedProse text={insider.narrative} className="mb-3" />
         <div className="flex flex-wrap gap-2">
           <Pill>net: {insider.net_direction.replaceAll("_", " ")}</Pill>
           <Pill>MSPR: {insider.mspr_trend.direction.replaceAll("_", " ")}</Pill>
@@ -175,6 +189,10 @@ export function InsiderTab({ insider }: { insider?: InsiderReport }) {
             {insider.key_buyers.map((b) => <li key={b}>▸ {b}</li>)}
           </ul>
         )}
+      </Section>
+
+      <Section title="Quarterly flow">
+        <InsiderFlowCharts stats={insider.quarterly_stats} />
       </Section>
 
       <Section title="Transactions (90 days)">
@@ -226,7 +244,7 @@ export function InstitutionalTab({ institutional }: { institutional?: Institutio
     <div className="space-y-4">
       <Section title={`Read — ${institutional.overall_institutional_signal}`}>
         <DataAsOf date={institutional.as_of} label="13F data as of" className="mb-3 text-xs text-zinc-600" />
-        <p className="mb-3 text-sm leading-relaxed text-zinc-300">{institutional.narrative}</p>
+        <FormattedProse text={institutional.narrative} className="mb-3" />
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><p className="text-xs text-zinc-500">Ownership</p><p className="font-mono text-zinc-200">{s.ownership_pct ?? "–"}%</p></div>
           <div><p className="text-xs text-zinc-500">Institutions</p><p className="font-mono text-zinc-200">{s.institutions_count?.toLocaleString() ?? "–"}</p></div>
@@ -234,6 +252,10 @@ export function InstitutionalTab({ institutional }: { institutional?: Institutio
           <div><p className="text-xs text-zinc-500">As of</p><p className="font-mono text-zinc-200">{s.as_of ?? "–"}</p></div>
         </div>
         <p className="mt-3 text-xs text-zinc-500">concentration: {institutional.concentration_assessment.replaceAll("_", " ")}</p>
+      </Section>
+
+      <Section title="Ownership flow">
+        <InstitutionalFlowVisuals institutional={institutional} />
       </Section>
 
       {(institutional.notable_increases.length > 0 || institutional.notable_reductions.length > 0) && (
@@ -274,12 +296,46 @@ export function InstitutionalTab({ institutional }: { institutional?: Institutio
 
 // --- Sentiment ---------------------------------------------------------------
 
-export function SentimentTab({ sentiment }: { sentiment?: SentimentReport }) {
+const SIGNAL_TONE: Record<string, string> = {
+  bullish: "text-emerald-400",
+  mildly_bullish: "text-emerald-400/80",
+  neutral: "text-zinc-300",
+  mildly_bearish: "text-red-400/80",
+  bearish: "text-red-400",
+};
+
+export function SentimentTab({
+  sentiment,
+  news,
+}: {
+  sentiment?: SentimentReport;
+  news?: NewsReport;
+}) {
   if (!sentiment) return <Empty what="sentiment sub-report" />;
+  const signal = sentiment.overall_sentiment_signal;
   return (
     <div className="space-y-4">
-      <Section title={`Tone — ${sentiment.current_tone.replaceAll("_", " ")} (${sentiment.overall_sentiment_signal.replaceAll("_", " ")})`}>
-        <p className="mb-3 text-sm leading-relaxed text-zinc-300">{sentiment.narrative}</p>
+      {/* Gauge + timeline first: the whole picture before any body text (FR-020) */}
+      <Section title="Where sentiment stands">
+        <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className={`text-2xl font-semibold ${SIGNAL_TONE[signal] ?? "text-zinc-200"}`}>
+            {signal.replaceAll("_", " ")}
+          </span>
+          <span className="text-sm text-zinc-500">
+            tone: {sentiment.current_tone.replaceAll("_", " ")} · confidence: {sentiment.confidence}
+          </span>
+        </div>
+        {news?.timeline?.length ? (
+          <SentimentTimeline timeline={news.timeline} trend={news.trend} height={160} />
+        ) : (
+          <p className="py-4 text-center text-xs text-zinc-600">
+            News language timeline appears here after the next analysis pull — see the News tab.
+          </p>
+        )}
+      </Section>
+
+      <Section title="Read">
+        <FormattedProse text={sentiment.narrative} className="mb-3" />
         {sentiment.tone_evidence.length > 0 && (
           <ul className="space-y-1 text-sm text-zinc-400">
             {sentiment.tone_evidence.map((e) => <li key={e}>▸ {e}</li>)}

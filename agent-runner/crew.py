@@ -1,10 +1,12 @@
 """Per-ticker analysis pipeline: prefetch → deterministic skills → LLM agents.
 Spec: specs/component-specs/agent-runner/crew.md
 
-Full Phase 5 roster: Technical, Fundamental, Macro, Insider, Institutional,
-Sentiment, Recommender, then PortfolioStrategist synthesizing everything.
-Agents call Ollama directly with structured output (see llm.py) — no CrewAI
-tool-calling.
+Roster: Technical, Fundamental, Insider, Institutional, Sentiment, Recommender,
+then PortfolioStrategist synthesizing everything. Macro/economic analysis is
+decoupled from per-ticker runs — it's computed independently by macro_worker.py
+per sector and surfaced on its own UI page, not woven into a ticker's
+sub-reports or verdict (specs/020-surface-macro-ui). Agents call Ollama
+directly with structured output (see llm.py) — no CrewAI tool-calling.
 """
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -15,7 +17,7 @@ from agents import (
     fundamental_analyst,
     insider_analyst,
     institutional_analyst,
-    macro_analyst,
+    news_analyst,
     portfolio_strategist,
     recommender_agent,
     sentiment_analyst,
@@ -27,11 +29,11 @@ from tools import breadth as breadth_tool
 from tools import financials as financials_tool
 from tools import insider as insider_tool
 from tools import institutional as institutional_tool
-from tools import macro as macro_tool
+from tools import news as news_tool
 from tools import price as price_tool
 from tools import sentiment as sentiment_tool
 from tools import superinvestor as superinvestor_tool
-from tools.db import TICKER_INDEX, get_db
+from tools.db import get_db, get_latest_analysis
 
 logger = get_logger(__name__)
 
@@ -81,6 +83,27 @@ def _latest_dated(items: list[dict], key: str = "date") -> str | None:
     return max(dates) if dates else None
 
 
+def diff_since_last(previous: dict | None, signal: str, conviction: str,
+                    flags: list[str]) -> dict | None:
+    """What moved between the prior analysis and this one (spec 021 FR-025).
+    Deterministic so the AI Summary's "what changed" note can't drift from the
+    documents it describes. None on a first-ever pull — nothing to compare."""
+    if not previous:
+        return None
+    prev_flags = set(previous.get("flags") or [])
+    current_flags = set(flags or [])
+    prev_signal = previous.get("signal") or ""
+    prev_conviction = previous.get("conviction") or ""
+    return {
+        "previous_timestamp": str(previous.get("timestamp") or ""),
+        "signal": {"from": prev_signal, "to": signal, "changed": prev_signal != signal},
+        "conviction": {"from": prev_conviction, "to": conviction,
+                       "changed": prev_conviction != conviction},
+        "flags_added": sorted(current_flags - prev_flags),
+        "flags_removed": sorted(prev_flags - current_flags),
+    }
+
+
 def _price_summary(daily: list[dict]) -> dict:
     df = pd.DataFrame(daily)
     if df.empty or "Close" not in df:
@@ -107,12 +130,13 @@ class Crew:
         self.get_financials = financials_tool.get_financials
         self.get_earnings_data = financials_tool.get_earnings_data
         self.get_market_breadth = breadth_tool.get_market_breadth
-        self.get_macro_data = macro_tool.get_macro_data
-        self.get_yield_curve_status = macro_tool.get_yield_curve_status
         self.get_insider_activity = insider_tool.get_insider_activity
+        self.get_insider_quarterly_stats = insider_tool.get_insider_quarterly_stats
         self.get_institutional_holdings = institutional_tool.get_institutional_holdings
+        self.get_beneficial_ownership = institutional_tool.get_beneficial_ownership
         self.get_superinvestor_activity = superinvestor_tool.get_superinvestor_activity
         self.get_earnings_sentiment = sentiment_tool.get_earnings_sentiment
+        self.get_stock_news = news_tool.get_stock_news
 
     def _prefetch(self, ticker: str, parallel: bool) -> dict:
         jobs = {
@@ -121,11 +145,12 @@ class Crew:
             "financials": lambda: self.get_financials(ticker, db=self.db),
             "earnings": lambda: self.get_earnings_data(ticker),
             "breadth": lambda: self.get_market_breadth(db=self.db),
-            "macro": lambda: self.get_macro_data(db=self.db),
-            "yield_curve": lambda: self.get_yield_curve_status(db=self.db),
             "insider": lambda: self.get_insider_activity(ticker),
+            "insider_stats": lambda: self.get_insider_quarterly_stats(ticker, db=self.db),
             "institutional": lambda: self.get_institutional_holdings(ticker, db=self.db),
+            "beneficial": lambda: self.get_beneficial_ownership(ticker, db=self.db),
             "sentiment": lambda: self.get_earnings_sentiment(ticker),
+            "news": lambda: self.get_stock_news(ticker, db=self.db),
         }
         if parallel:
             with ThreadPoolExecutor(max_workers=6) as pool:
@@ -166,8 +191,6 @@ class Crew:
             logger.info("superinvestor unavailable for %s: %s", ticker, exc)
             superinvestor = {"moves": [], "available": False, "note": str(exc)}
 
-        record = self.db[TICKER_INDEX].find_one({"ticker": ticker}) or {}
-
         # 3. LLM agents (sequential; each one structured-output call)
         technical = technical_analyst.run(ticker, {
             "strat": strat_out,
@@ -184,23 +207,28 @@ class Crew:
         }, client=self.client)
         fundamental["as_of"] = _latest_statement_date(data["financials"] or {})
 
-        macro = macro_analyst.run(ticker, {
-            "macro": data["macro"],
-            "yield_curve": data["yield_curve"],
-            "sector": record.get("sector"),
-        }, client=self.client, db=self.db)
-
         insider = insider_analyst.run(ticker, {"insider": data["insider"]}, client=self.client)
         insider["as_of"] = _latest_dated((data["insider"] or {}).get("transactions", []))
+        insider["quarterly_stats"] = data["insider_stats"] or []
 
         institutional = institutional_analyst.run(ticker, {
             "institutional": data["institutional"],
             "superinvestor": superinvestor,
         }, client=self.client)
         institutional["as_of"] = (data["institutional"] or {}).get("as_of")
+        beneficial = data["beneficial"] or {}
+        institutional["beneficial_filings"] = beneficial.get("filings", [])
+        institutional["beneficial_direction"] = beneficial.get("direction")
 
-        sentiment = sentiment_analyst.run(ticker, {"sentiment": data["sentiment"]},
-                                          client=self.client)
+        news = news_analyst.run(ticker, {"news": data["news"]}, client=self.client)
+
+        # The sentiment agent sees the news timeline so its tone read and the
+        # chart on the Sentiment tab can't tell different stories (spec 021 US6).
+        sentiment = sentiment_analyst.run(ticker, {
+            "sentiment": data["sentiment"],
+            "news_timeline": news.get("timeline", []),
+            "news_trend": news.get("trend"),
+        }, client=self.client)
         sentiment["as_of"] = _latest_dated((data["sentiment"] or {}).get("news", []))
 
         recommendation = recommender_agent.run(ticker, {
@@ -212,16 +240,20 @@ class Crew:
         sub_reports = {
             "technical": technical,
             "fundamental": fundamental,
-            "macro": macro,
             "insider": insider,
             "institutional": institutional,
             "sentiment": sentiment,
             "recommendation": recommendation,
+            "news": news,
         }
 
         recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if pd.notna(r.get("Low"))]
         synthesis = portfolio_strategist.run(ticker, sub_reports, recent_lows=recent_lows,
                                              client=self.client)
+
+        # Read the prior analysis before this run's document replaces it, so the
+        # "what changed" note compares against what the user last saw (FR-025).
+        previous = get_latest_analysis(ticker, db=self.db)
 
         # 4. final analyses document — the two recent_* flags ride top-level
         # (like sector/signal) so the feed projection serves them to the cards
@@ -232,6 +264,12 @@ class Crew:
             "recent_institutional_activity":
                 institutional_tool.recent_activity_direction(data["institutional"] or {}),
             "recent_insider_summary": (data["insider"] or {}).get("recent_summary"),
+            "changes_since_last": diff_since_last(
+                previous,
+                synthesis.get("signal", ""),
+                synthesis.get("conviction", ""),
+                synthesis.get("flags", []),
+            ),
             "sub_reports": sub_reports,
         }
 
