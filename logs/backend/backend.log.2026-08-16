@@ -1,0 +1,20 @@
+2026-08-16 19:04:47,896 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 19:14:37,490 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 19:15:17,163 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 19:24:56,374 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 20:06:02,644 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-16 20:06:02,644 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-16 20:07:09,087 backend.routers.market WARNING market news fetch failed (502) — serving cached articles
+2026-08-16 20:07:09,091 backend.routers.market WARNING market news fetch failed (dns) — serving cached articles
+2026-08-16 20:07:09,095 backend.routers.market WARNING market news: daily FMP budget spent — serving cached articles
+2026-08-16 20:07:30,654 backend.routers.market WARNING market news fetch failed (502) — serving cached articles
+2026-08-16 20:07:30,654 backend.routers.market WARNING market news fetch failed (dns) — serving cached articles
+2026-08-16 20:07:30,662 backend.routers.market WARNING market news: daily FMP budget spent — serving cached articles
+2026-08-16 20:07:30,664 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-16 20:07:30,664 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-16 20:10:10,840 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 20:10:10,840 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-16 20:10:10,850 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-16 20:11:35,121 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-16 20:11:35,121 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-16 20:11:35,121 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache

@@ -9,6 +9,8 @@ import SignalBadge from "../components/shared/SignalBadge";
 import ChartsTab from "../components/stock/ChartsTab";
 import FormattedProse from "../components/stock/FormattedProse";
 import NewsTab from "../components/stock/NewsTab";
+import FullRefreshButton from "../components/stock/FullRefreshButton";
+import PullCostPanel from "../components/stock/PullCostPanel";
 import {
   FundamentalsTab,
   InsiderTab,
@@ -17,6 +19,7 @@ import {
   TechnicalsTab,
 } from "../components/stock/tabs";
 import { useTickerAnalysis, useTickerRecord } from "../hooks/useAnalysis";
+import { usePullMetrics } from "../hooks/usePullMetrics";
 import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
@@ -50,6 +53,7 @@ export default function StockDetail() {
   const { data: record } = useTickerRecord(symbol);
   const { data: queue } = useQueueStatus();
   const { data: priceData } = useStockPriceHistory(symbol, PANEL_TIMEFRAMES);
+  const { data: pullMetrics } = usePullMetrics(symbol);
   const enqueue = useEnqueueTicker();
   const addToWatchlist = useAddToWatchlist();
 
@@ -88,6 +92,7 @@ export default function StockDetail() {
           {queuedJob ? (
             <span className="flex items-center gap-2 rounded-lg bg-sky-500/10 px-3 py-1.5 text-sm text-sky-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400" />
+              {queuedJob.mode === "full" ? "full refresh — " : ""}
               {queuedJob.status === "running" ? "analyzing…" : "queued"}
             </span>
           ) : (
@@ -104,6 +109,13 @@ export default function StockDetail() {
               Pull ▶
             </button>
           )}
+          <FullRefreshButton
+            ticker={symbol}
+            onRefresh={() => enqueue.mutate({ ticker: symbol, mode: "full" })}
+            busy={queuedJob?.status === "running"}
+            pending={enqueue.isPending}
+            hasData={!!latest}
+          />
           <button
             onClick={() => addToWatchlist.mutate(symbol)}
             className="rounded-lg border border-zinc-700 px-4 py-1.5 text-sm text-zinc-300 transition-colors hover:border-zinc-500"
@@ -112,6 +124,15 @@ export default function StockDetail() {
           </button>
         </div>
       </div>
+
+      {/* Diagnostic, collapsed to a single line — sits next to the button that
+          produced it so pull cost is answerable where pulls are triggered (024
+          US1, research D10). */}
+      {pullMetrics?.pulls?.[0] && (
+        <div className="mb-4">
+          <PullCostPanel pull={pullMetrics.pulls[0]} />
+        </div>
+      )}
 
       {isLoading && <p className="py-12 text-center text-zinc-500">loading…</p>}
 

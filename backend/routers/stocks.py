@@ -12,9 +12,15 @@ from pymongo import ReturnDocument
 
 from db import (
     ANALYSES,
+    BENEFICIAL_OWNERSHIP_CACHE,
+    EARNINGS_CACHE,
     FINANCIALS_CACHE,
+    INSTITUTIONAL_CACHE,
     INSTITUTIONAL_FLOW,
+    PULL_METRICS,
+    STOCK_NEWS_CACHE,
     TICKER_INDEX,
+    TRANSCRIPTS_CACHE,
     WATCHLIST,
     WORK_QUEUE,
 )
@@ -92,6 +98,13 @@ def delete_ticker(ticker: str, db=Depends(db_dependency)):
     db[WATCHLIST].delete_one({"ticker": ticker})
     db[WORK_QUEUE].delete_many({"ticker": ticker, "status": {"$in": ["pending", "running"]}})
     db[INSTITUTIONAL_FLOW].delete_many({"ticker": ticker})
+    db[TRANSCRIPTS_CACHE].delete_many({"ticker": ticker})
+    db[STOCK_NEWS_CACHE].delete_many({"ticker": ticker})
+    db[INSTITUTIONAL_CACHE].delete_many({"ticker": ticker})
+    db[BENEFICIAL_OWNERSHIP_CACHE].delete_many({"ticker": ticker})
+    # earnings_cache also holds market-wide "calendar"/"universe" docs with no
+    # ticker field — only the per-ticker "history" docs belong to this ticker.
+    db[EARNINGS_CACHE].delete_many({"type": "history", "ticker": ticker})
     return {"deleted": ticker}
 
 
@@ -147,3 +160,44 @@ def get_signals(ticker: str, db=Depends(db_dependency)):
     if not doc:
         raise HTTPException(status_code=404, detail="No analysis found for this ticker.")
     return {"ticker": doc["ticker"], "timestamp": doc["timestamp"], **doc.get("sub_reports", {})}
+
+
+MAX_PULL_METRICS = 20
+
+
+@router.get("/stocks/{ticker}/pull-metrics")
+def get_pull_metrics(ticker: str, limit: int = 1, db=Depends(db_dependency)):
+    """Recent pull-cost breakdowns for a ticker (024 US1).
+
+    Stages come back most-expensive-first and unaccounted time is computed here
+    rather than in the client: SC-006 asks the operator to spot the top three
+    stages without extra work, and FR-004 wants the time the breakdown cannot
+    explain to be visible rather than silently dropped.
+    """
+    ticker = ticker.upper()
+    limit = max(1, min(limit, MAX_PULL_METRICS))
+
+    docs = list(
+        db[PULL_METRICS]
+        .find({"ticker": ticker}, {"_id": 0})
+        .sort("started_at", -1)
+        .limit(limit)
+    )
+    if not docs:
+        raise HTTPException(status_code=404, detail="No pull recorded for this ticker.")
+
+    pulls = []
+    for doc in docs:
+        stages = sorted(doc.get("stages", []),
+                        key=lambda s: s.get("elapsed_ms", 0), reverse=True)
+        accounted = sum(s.get("elapsed_ms", 0) for s in stages)
+        total = doc.get("total_ms", 0)
+        pulls.append({
+            **doc,
+            "stages": stages,
+            "accounted_ms": accounted,
+            # Clamped: a stage clock overrunning the pull clock is a bug, but it
+            # should not surface to the operator as negative time.
+            "unaccounted_ms": max(0, total - accounted),
+        })
+    return {"ticker": ticker, "pulls": pulls}

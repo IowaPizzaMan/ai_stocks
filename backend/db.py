@@ -45,9 +45,21 @@ STOCK_NEWS = "stock_news"
 MARKET_NEWS = "market_news"
 COMPANY_INFO = "company_info"
 
+# 021-stock-page-redesign — per-ticker pull-time caches, keep in sync with agent-runner/tools/db.py
+STOCK_NEWS_CACHE = "stock_news_cache"
+BENEFICIAL_OWNERSHIP_CACHE = "beneficial_ownership_cache"
+
 # 022-market-news-feed — keep in sync with agent-runner/tools/db.py
 MARKET_NEWS_CACHE = "market_news_cache"
 FMP_USAGE = "fmp_usage"
+
+# 024-delta-data-pulls — keep in sync with agent-runner/tools/db.py.
+# price_history is a maintained store, not a cache: one doc per ticker holding the
+# full daily series, extended incrementally. It deliberately has NO TTL — expiry
+# would destroy the baseline every delta pull depends on. Retired price_cache.
+PRICE_HISTORY = "price_history"
+INSIDER_CACHE = "insider_cache"
+PULL_METRICS = "pull_metrics"
 
 
 @lru_cache(maxsize=1)

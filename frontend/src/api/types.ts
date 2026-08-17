@@ -357,11 +357,16 @@ export interface MarketFlowEvent {
   created_at: string;
 }
 
+// 024-delta-data-pulls: delta is the default; "full" is the operator's
+// rebuild-from-scratch escape hatch. Absent on jobs queued before the feature.
+export type PullMode = "delta" | "full";
+
 export interface QueueJob {
   ticker: string;
   status: string;
   source?: string;
   created_at: string;
+  mode?: PullMode;
 }
 
 export interface QueueStatus {
@@ -374,7 +379,40 @@ export interface QueueStatus {
 export interface EnqueueResponse {
   ticker: string;
   job_id: string;
-  status: "enqueued" | "already_queued";
+  status: "enqueued" | "already_queued" | "upgraded_to_full";
+  mode?: PullMode;
+}
+
+// 024-delta-data-pulls (US1) — per-stage pull cost
+export type StageRetrieval = "incremental" | "full" | "stored";
+export type StageOutcome = "fetched" | "stored" | "degraded" | "skipped" | "failed";
+
+export interface PullStage {
+  name: string;
+  elapsed_ms: number;
+  requests: number;
+  bytes: number;
+  retrieval: StageRetrieval | null;
+  outcome: StageOutcome | null;
+}
+
+export interface Pull {
+  job_id: string;
+  mode: PullMode;
+  started_at: string;
+  completed_at: string;
+  total_ms: number;
+  outcome: "done" | "failed" | "degraded";
+  /** Server-sorted most-expensive-first, so the client never re-ranks. */
+  stages: PullStage[];
+  accounted_ms: number;
+  /** Wall time the stage breakdown does not explain — surfaced, not hidden. */
+  unaccounted_ms: number;
+}
+
+export interface PullMetrics {
+  ticker: string;
+  pulls: Pull[];
 }
 
 export interface EarningsCalendarEntry {

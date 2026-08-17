@@ -48,13 +48,16 @@ def test_compute_mcclellan_all_advancing():
 # --- FMP-sourced downloads ----------------------------------------------------
 
 def test_download_closes_fetches_per_symbol_and_excludes_failures(monkeypatch):
-    def fake_fetch(ticker, db=None):
+    # 024 — the sweep now reads through the price store, so a re-sweep only
+    # transfers newly added days rather than every symbol's full history.
+    def fake_series(ticker, refresh="none", db=None):
         if ticker == "BAD":
             raise RuntimeError("not covered")
         idx = pd.date_range("2026-01-01", periods=5, freq="B")
-        return pd.DataFrame({"Close": [100.0, 101, 102, 103, 104]}, index=idx)
+        frame = pd.DataFrame({"Close": [100.0, 101, 102, 103, 104]}, index=idx)
+        return frame, {"requests": 1, "retrieval": refresh, "outcome": "fetched"}
 
-    monkeypatch.setattr("tools.fmp_client.fetch_eod_history", fake_fetch)
+    monkeypatch.setattr("tools.price_store.get_series", fake_series)
     wide = breadth._download_closes(["AAA", "BAD", "BBB"], "3d")
 
     assert set(wide.columns) == {"AAA", "BBB"}  # BAD excluded, not raised
@@ -64,7 +67,10 @@ def test_download_closes_fetches_per_symbol_and_excludes_failures(monkeypatch):
 def test_download_spy_fetches_and_slices_tail(monkeypatch):
     idx = pd.date_range("2026-01-01", periods=10, freq="B")
     frame = pd.DataFrame({"Close": range(10)}, index=idx)
-    monkeypatch.setattr("tools.fmp_client.fetch_eod_history", lambda ticker, db=None: frame)
+    monkeypatch.setattr(
+        "tools.price_store.get_series",
+        lambda ticker, refresh="none", db=None: (frame, {"requests": 1}),
+    )
 
     series = breadth._download_spy("4d")
     assert len(series) == 4
@@ -145,7 +151,7 @@ def test_spy_records_backfills_cache_then_serves_from_it(db, monkeypatch):
         db[BREADTH_CACHE].insert_one({"exchange": "nyse", "date": d, "mcclellan": 0.0})
 
     closes = pd.Series([500.0, 505.0, 510.0], index=pd.to_datetime(dates))
-    monkeypatch.setattr(breadth, "_download_spy", lambda period: closes)
+    monkeypatch.setattr(breadth, "_download_spy", lambda period, db=None: closes)
     assert breadth._spy_records(dates, db) == [
         {"date": dates[0], "close": 500.0},
         {"date": dates[1], "close": 505.0},
@@ -153,7 +159,7 @@ def test_spy_records_backfills_cache_then_serves_from_it(db, monkeypatch):
     ]
     assert db[BREADTH_CACHE].find_one({"date": dates[1]})["spy_close"] == 505.0
 
-    monkeypatch.setattr(breadth, "_download_spy", lambda period: pytest.fail("should be cached"))
+    monkeypatch.setattr(breadth, "_download_spy", lambda period, db=None: pytest.fail("should be cached"))
     assert len(breadth._spy_records(dates, db)) == 3
 
 
@@ -257,8 +263,8 @@ def test_get_universe_rejects_unknown_name(db):
 def test_get_market_breadth_shape_and_cache_write(db, monkeypatch):
     closes = make_closes()
     monkeypatch.setattr(breadth, "get_universe", lambda name, db=None: [f"T{i}" for i in range(50)])
-    monkeypatch.setattr(breadth, "_download_closes", lambda u, p: closes)
-    monkeypatch.setattr(breadth, "_download_spy", lambda period: closes["T0"])
+    monkeypatch.setattr(breadth, "_download_closes", lambda u, p, db=None: closes)
+    monkeypatch.setattr(breadth, "_download_spy", lambda period, db=None: closes["T0"])
 
     result = breadth.get_market_breadth(lookback_days=30, db=db)
     assert len(result["spy"]) == 30
@@ -275,19 +281,19 @@ def test_get_market_breadth_shape_and_cache_write(db, monkeypatch):
     assert db[BREADTH_CACHE].count_documents({"exchange": "nyse"}) == 30
 
     # second call same day: served from cache, no download of either series
-    monkeypatch.setattr(breadth, "_download_closes", lambda u, p: pytest.fail("should be cached"))
-    monkeypatch.setattr(breadth, "_download_spy", lambda period: pytest.fail("should be cached"))
+    monkeypatch.setattr(breadth, "_download_closes", lambda u, p, db=None: pytest.fail("should be cached"))
+    monkeypatch.setattr(breadth, "_download_spy", lambda period, db=None: pytest.fail("should be cached"))
     again = breadth.get_market_breadth(lookback_days=30, db=db)
     assert again["nymo"]["history"] == result["nymo"]["history"]
     assert again["spy"] == result["spy"]
 
 
 def test_get_market_breadth_degrades_when_spy_unavailable(db, monkeypatch):
-    def boom(period):
+    def boom(period, db=None):
         raise RuntimeError("yahoo down")
 
     monkeypatch.setattr(breadth, "get_universe", lambda name, db=None: [f"T{i}" for i in range(50)])
-    monkeypatch.setattr(breadth, "_download_closes", lambda u, p: make_closes())
+    monkeypatch.setattr(breadth, "_download_closes", lambda u, p, db=None: make_closes())
     monkeypatch.setattr(breadth, "_download_spy", boom)
 
     result = breadth.get_market_breadth(lookback_days=30, db=db)

@@ -27,9 +27,10 @@ class FakeCrew:
         self.error = error
         self.ran = []
 
-    def run(self, ticker, parallel_prefetch=False):
+    def run(self, ticker, parallel_prefetch=False, mode="delta"):
         self.ran.append(ticker)
         self.parallel_flags = getattr(self, "parallel_flags", []) + [parallel_prefetch]
+        self.modes = getattr(self, "modes", []) + [mode]
         if self.error:
             raise self.error
         return dict(self.result)
@@ -56,6 +57,25 @@ def test_parallel_prefetch_flag_passes_through_to_crew(db):
     crew = FakeCrew()
     queue_worker.claim_and_run_next(db=db, crew=crew)
     assert crew.parallel_flags == [True]
+
+
+def test_full_mode_passes_through_to_crew(db):
+    """024 US5 — the operator's full refresh has to survive the queue hop."""
+    db[WORK_QUEUE].insert_one({
+        "ticker": "NVDA", "status": "pending", "mode": "full",
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
+    })
+    crew = FakeCrew()
+    queue_worker.claim_and_run_next(db=db, crew=crew)
+    assert crew.modes == ["full"]
+
+
+def test_job_without_a_mode_field_runs_as_delta(db):
+    """FR-021 — jobs queued before 024 shipped must stay valid, no migration."""
+    enqueue(db, "AAPL")
+    crew = FakeCrew()
+    queue_worker.claim_and_run_next(db=db, crew=crew)
+    assert crew.modes == ["delta"]
 
 
 def test_successful_job_writes_analysis_and_marks_done(db):

@@ -53,8 +53,18 @@ def make_crew(valid=True, financials=None):
     crew = Crew(db=db, client=SchemaFakeLLM())
     history = make_history()
     crew.is_ticker_valid = lambda t: valid
-    crew.get_price_history = lambda t: history
-    crew.get_technical_indicators = lambda t: [{"Date": "2026-08-01", "Close": 190.0, "RSI_14": 55.0}]
+    # 024 — the pull refreshes the stored series exactly once; the readers below
+    # then take it from storage. `refreshes` lets tests assert that.
+    crew.refreshes = []
+
+    def _refresh(ticker, refresh="delta", db=None):
+        crew.refreshes.append(refresh)
+        return None, {"requests": 1, "retrieval": "incremental", "outcome": "fetched"}
+
+    crew.refresh_price_series = _refresh
+    crew.get_price_history = lambda t, db=None: history
+    crew.get_technical_indicators = lambda t, db=None: [
+        {"Date": "2026-08-01", "Close": 190.0, "RSI_14": 55.0}]
     crew.get_financials = lambda t, db=None: financials if financials is not None else {
         "income_annual": [{"date": "2025-09-30", "fiscalYear": "2025", "period": "FY",
                            "revenue": 1e9, "netIncome": 2e8, "grossProfit": 5e8,
@@ -70,7 +80,7 @@ def make_crew(valid=True, financials=None):
         "divergence": {"type": "none", "description": ""},
         "method": "computed_ratio_adjusted",
     }
-    crew.get_insider_activity = lambda t: {
+    crew.get_insider_activity = lambda t, db=None, rebuild=False: {
         "transactions": [], "mspr_monthly": [],
         "cluster_signal": {"detected": False, "insiders": [], "window_days": None},
         "net_direction": "balanced", "open_market_buy_value": 0, "open_market_sell_value": 0,
@@ -88,7 +98,7 @@ def make_crew(valid=True, financials=None):
     crew.get_insider_quarterly_stats = lambda t, db=None: []
     crew.get_beneficial_ownership = lambda t, db=None: {
         "filings": [], "direction": None, "stale": False}
-    crew.get_stock_news = lambda t, db=None: {
+    crew.get_stock_news = lambda t, db=None, rebuild=False: {
         "articles": [], "timeline": [], "trend": "mixed", "news_count": 0,
         "as_of": None, "stale": False}
     return crew
@@ -215,7 +225,7 @@ def test_run_diffs_against_the_stored_previous_analysis():
 
 def test_run_attaches_news_subreport_and_flow_fields():
     crew = make_crew()
-    crew.get_stock_news = lambda t, db=None: {
+    crew.get_stock_news = lambda t, db=None, rebuild=False: {
         "articles": [{"date": "2026-08-15", "datetime": "2026-08-15 09:00:00",
                       "source": "Wire", "headline": "Record beat", "url": "u",
                       "text_excerpt": "strong demand", "bullish_count": 3,

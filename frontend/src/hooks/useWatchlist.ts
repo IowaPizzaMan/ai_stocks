@@ -1,5 +1,6 @@
 // React Query hooks for /watchlist endpoints
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { api } from "../api/client";
 import type { WatchlistItem } from "../api/types";
 
@@ -28,8 +29,17 @@ export function useRemoveFromWatchlist() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (ticker: string) => {
-      const { data } = await api.delete(`/watchlist/${ticker.toUpperCase()}`);
-      return data as { removed: string };
+      try {
+        const { data } = await api.delete(`/watchlist/${ticker.toUpperCase()}`);
+        return data as { removed: string };
+      } catch (err) {
+        // Already gone is not a failure from the caller's perspective — another
+        // view may have removed it first (FR-019).
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          return { removed: ticker.toUpperCase() };
+        }
+        throw err;
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
   });

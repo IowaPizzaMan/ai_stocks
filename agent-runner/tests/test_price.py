@@ -27,18 +27,24 @@ def make_ohlcv(rows: int = 300, seed: int = 7) -> pd.DataFrame:
 
 @pytest.fixture
 def fake_eod(monkeypatch):
-    """Monkeypatches fetch_eod_history to return a fixed frame, recording
-    every (ticker) call — mirrors the old fake_ticker fixture's role."""
+    """Serves a fixed frame from the price store, recording every read.
+
+    As of 024 these readers no longer fetch — they read the maintained series
+    with refresh="none" (the pull refreshes it once, in Crew._prefetch), so the
+    seam to fake is price_store.get_series rather than fetch_eod_history.
+    """
     calls: list = []
 
     def factory(df=None):
         frame = df if df is not None else make_ohlcv()
 
-        def _fetch(ticker, db=None):
+        def _get_series(ticker, refresh="none", db=None):
             calls.append(ticker)
-            return frame
+            # These call sites must never trigger a download of their own.
+            assert refresh == "none", f"reader requested refresh={refresh!r}"
+            return frame, {"requests": 0, "retrieval": "stored", "outcome": "stored"}
 
-        monkeypatch.setattr(price, "fetch_eod_history", _fetch)
+        monkeypatch.setattr(price.price_store, "get_series", _get_series)
         return calls
 
     return factory

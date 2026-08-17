@@ -33,24 +33,45 @@
   likely in wherever weekly/monthly % change stats are computed/labeled for
   display than in the candle data itself — needs a repro in the running app
   to pin down which component reads the wrong field.
-- **Two backend FMP call sites bypass the daily budget counter, so `fmp_usage`
-  under-reports real spend.** `backend/routers/price.py` and
-  `backend/earnings_data.py::_fmp_get` both call FMP with a bare
-  `requests.get` and never increment `fmp_usage` — only the agent-runner
-  (`tools/fmp_client.py`) and, as of `specs/022-market-news-feed`, the new
-  `backend/fmp.py` do. The agent-runner's soft cap therefore throttles against
-  a number lower than the true daily total, and could keep spending after the
-  real 250/day ceiling is reached. Found 2026-08-16 while planning 022, which
-  added the backend's first guard but deliberately did not retrofit two working
-  call paths outside its scope. Fix is mechanical: route both through
-  `backend.fmp.fmp_get` (note `price.py` currently constructs its own URL with
-  a `from=` parameter, which `fmp_get` passes through unchanged).
+- **One backend FMP call site still bypasses the daily budget counter, so
+  `fmp_usage` under-reports real spend.** `backend/earnings_data.py::_fmp_get`
+  calls FMP with a bare `requests.get` and never increments `fmp_usage` — only
+  the agent-runner (`tools/fmp_client.py`), `backend/fmp.py` (from
+  `specs/022-market-news-feed`), and `backend/price_store.py` (from
+  `specs/024-delta-data-pulls`) do. The agent-runner's soft cap therefore
+  throttles against a number slightly lower than the true daily total. Found
+  2026-08-16 while planning 022. **Partly fixed 2026-08-17**: 024 rewrote
+  `backend/routers/price.py` onto the price store, which routes through
+  `backend.fmp.fmp_get`, so that call site now counts. Remaining fix is
+  mechanical: route `earnings_data.py::_fmp_get` through `backend.fmp.fmp_get`
+  too.
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
   measured one session early for what was actually an after-close print.
 
 ## Design limitations (accepted for now)
+
+- **A stock split silently invalidates stored price history until someone
+  presses Full Refresh.** As of `specs/024-delta-data-pulls`, delta retrieval is
+  the default: a pull appends only the trading days it is missing. But a split
+  or dividend re-adjustment rewrites the values of bars *already stored*, and
+  nothing detects it — there is no drift detection and no scheduled
+  re-baselining anywhere in the system (FR-010). The stored series stays quietly
+  wrong, charts included, until the operator triggers a full refresh on that
+  stock. Nothing warns them, so there is no signal to act on other than noticing
+  a chart looks off. This was a deliberate choice made during
+  `/speckit-clarify` on 2026-08-17 (Q4/Q5) to keep the default path as fast and
+  as simple as possible, taken with the failure mode understood. The remedy is
+  `Full Refresh ⟳` on the stock page. Revisit if it bites in practice — the
+  design is written so detect-and-flag can be added additively.
+- **Insider transactions changed order as a side effect of 024.**
+  `get_insider_activity` now returns transactions newest-first. Merging a stored
+  set with a fetched one destroys provider order, so an explicit sort became
+  necessary; descending was chosen because `agents/insider_analyst.py` truncates
+  to `transactions[:15]` and publishes them as `recent_transactions`, which
+  arbitrary provider order never actually guaranteed. Behavior change, not a
+  bug, but noted here since it alters what the LLM sees.
 
 - **Scan enrichment caps at the top 40 by market cap** (`MAX_CANDIDATES`).
   Peak weeks screen 900+ companies, so mid-caps below the cut — often the

@@ -172,7 +172,10 @@ test("clicking a tile navigates to that stock's detail page", async () => {
 
   renderStocksWithRouting();
 
-  const tile = await screen.findByRole("button", { name: /BULL1/i });
+  // Anchored to the tile's own aria-label prefix — the per-tile delete
+  // control (specs/023-remove-stocks) also has "BULL1" in its accessible
+  // name ("Delete BULL1 and its data"), so an unanchored match is ambiguous.
+  const tile = await screen.findByRole("button", { name: /^BULL1/i });
   fireEvent.click(tile);
 
   expect(await screen.findByText("STOCK DETAIL PAGE")).toBeDefined();
@@ -183,7 +186,10 @@ test("focusing a tile surfaces its hover/focus preview", async () => {
 
   renderStocks();
 
-  const tile = await screen.findByRole("button", { name: /BULL1/i });
+  // Anchored to the tile's own aria-label prefix — the per-tile delete
+  // control (specs/023-remove-stocks) also has "BULL1" in its accessible
+  // name ("Delete BULL1 and its data"), so an unanchored match is ambiguous.
+  const tile = await screen.findByRole("button", { name: /^BULL1/i });
   expect(screen.queryByRole("tooltip")).toBeNull();
 
   fireEvent.focus(tile);

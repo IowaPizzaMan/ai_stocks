@@ -1,9 +1,25 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+import { api } from "../../api/client";
 import type { AnalysisFeedItem } from "../../api/types";
 import AnalysisTile from "./AnalysisTile";
+
+vi.mock("../../api/client", () => ({
+  api: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
+}));
+
+const mockNavigate = vi.hoisted(() => vi.fn());
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 function analysis(overrides: Partial<AnalysisFeedItem>): AnalysisFeedItem {
   return {
@@ -113,4 +129,94 @@ test("the accessible label degrades gracefully when conviction is missing", () =
   const tile = container.firstElementChild as HTMLElement;
   const label = tile.getAttribute("aria-label") ?? "";
   expect(label).toContain("no conviction data");
+});
+
+// specs/023-remove-stocks US2/US3 — hover/focus-revealed delete control + confirm popover.
+
+test("the remove control is hidden until the tile is hovered or focused", () => {
+  const { container } = renderTile(analysis({ ticker: "NVDA" }));
+  const tile = container.firstElementChild as HTMLElement;
+  const removeButton = screen.getByRole("button", { name: /delete nvda and its data/i });
+  expect(removeButton.className).toContain("opacity-0");
+
+  fireEvent.mouseEnter(tile);
+  expect(removeButton.className).toContain("opacity-100");
+});
+
+test("clicking the remove control opens a confirm popover without deleting or navigating yet", () => {
+  renderTile(analysis({ ticker: "NVDA" }));
+  fireEvent.click(screen.getByRole("button", { name: /delete nvda and its data/i }));
+
+  expect(screen.getByRole("dialog")).toBeDefined();
+  expect(api.delete).not.toHaveBeenCalled();
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test("cancelling the popover deletes nothing, navigates nowhere, and leaves the tile as-is", () => {
+  renderTile(analysis({ ticker: "NVDA" }));
+  fireEvent.click(screen.getByRole("button", { name: /delete nvda and its data/i }));
+  fireEvent.click(screen.getByRole("button", { name: /cancel delete nvda/i }));
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(api.delete).not.toHaveBeenCalled();
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test("confirming the popover calls DELETE /tickers/{ticker}, closes on success, and never navigates", async () => {
+  vi.mocked(api.delete).mockResolvedValue({ data: { deleted: "NVDA" } });
+  renderTile(analysis({ ticker: "NVDA" }));
+
+  fireEvent.click(screen.getByRole("button", { name: /delete nvda and its data/i }));
+  fireEvent.click(screen.getByRole("button", { name: /confirm delete nvda/i }));
+
+  await waitFor(() => expect(api.delete).toHaveBeenCalledWith("/tickers/NVDA"));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test("a failed deletion keeps the popover open with an inline error, tile untouched", async () => {
+  vi.mocked(api.delete).mockRejectedValue(new Error("network error"));
+  const { container } = renderTile(analysis({ ticker: "NVDA" }));
+
+  fireEvent.click(screen.getByRole("button", { name: /delete nvda and its data/i }));
+  fireEvent.click(screen.getByRole("button", { name: /confirm delete nvda/i }));
+
+  await waitFor(() => expect(screen.getByRole("alert")).toBeDefined());
+  expect(screen.getByRole("dialog")).toBeDefined();
+  expect(container.firstElementChild).not.toBeNull(); // the tile itself is still rendered
+});
+
+test("keyboard focus on the tile reveals its remove control identically to hover", () => {
+  const { container } = renderTile(analysis({ ticker: "NVDA" }));
+  const tile = container.firstElementChild as HTMLElement;
+  const removeButton = screen.getByRole("button", { name: /delete nvda and its data/i });
+  expect(removeButton.className).toContain("opacity-0");
+
+  fireEvent.focus(tile);
+
+  expect(removeButton.className).toContain("opacity-100");
+});
+
+test("activating the remove control via keyboard opens the popover with focus already on Confirm", () => {
+  renderTile(analysis({ ticker: "NVDA" }));
+  const removeButton = screen.getByRole("button", { name: /delete nvda and its data/i });
+  removeButton.focus();
+  fireEvent.click(removeButton); // keyboard activation of a focused button
+
+  const confirmButton = screen.getByRole("button", { name: /confirm delete nvda/i });
+  expect(document.activeElement).toBe(confirmButton);
+});
+
+test("Enter on the focused remove control does not by itself open the popover or navigate — only a real activation (click) does", () => {
+  renderTile(analysis({ ticker: "NVDA" }));
+  const removeButton = screen.getByRole("button", { name: /delete nvda and its data/i });
+  removeButton.focus();
+  fireEvent.keyDown(removeButton, { key: "Enter" });
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(mockNavigate).not.toHaveBeenCalled();
+
+  fireEvent.click(removeButton); // jsdom doesn't synthesize native Enter->click activation
+  expect(screen.getByRole("dialog")).toBeDefined();
+  expect(mockNavigate).not.toHaveBeenCalled();
 });

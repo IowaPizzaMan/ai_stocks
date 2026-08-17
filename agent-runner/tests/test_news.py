@@ -343,3 +343,184 @@ def test_news_analyst_tolerates_malformed_summary_entries(monkeypatch):
     out = news_analyst.run("AAPL", {"news": payload})
     assert out["articles"][0]["ai_summary"] is None
     assert out["stance"]["direction"] == "neutral"
+
+
+# --- delta window (024 US3) ---------------------------------------------------
+
+
+def test_delta_request_starts_from_the_newest_stored_article(db, monkeypatch):
+    """A repeat pull asks only for what it is missing — for news this genuinely
+    saves API calls, since the endpoint pages at 250 articles."""
+    stored = [article(days_ago=2, title="Old news")]
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": stored})
+
+    paths = []
+    monkeypatch.setattr(news_tool, "fmp_get",
+                        lambda path, db=None: paths.append(path) or [])
+
+    news_tool.get_stock_news("AAPL", db=db)
+
+    today = date.today()
+    expected = (today - timedelta(days=3)).isoformat()   # newest(-2d) minus 1d overlap
+    assert f"from={expected}" in paths[0]
+    assert f"from={(today - timedelta(days=news_tool.NEWS_DAYS - 1)).isoformat()}" not in paths[0]
+
+
+def test_no_stored_articles_fetches_the_full_window(db, monkeypatch):
+    paths = []
+    monkeypatch.setattr(news_tool, "fmp_get",
+                        lambda path, db=None: paths.append(path) or [])
+
+    news_tool.get_stock_news("COLD", db=db)
+
+    cutoff = (date.today() - timedelta(days=news_tool.NEWS_DAYS - 1)).isoformat()
+    assert f"from={cutoff}" in paths[0]
+
+
+def test_rebuild_ignores_the_stored_baseline(db, monkeypatch):
+    """FR-024 — a full refresh re-fetches the whole window rather than topping
+    up from a baseline the operator has just declared suspect."""
+    stored = [news_tool.tally_article(article(days_ago=2, title="Old news"))]
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": stored})
+
+    paths = []
+    monkeypatch.setattr(news_tool, "fmp_get",
+                        lambda path, db=None: paths.append(path) or [])
+
+    news_tool.get_stock_news("AAPL", db=db, rebuild=True)
+
+    cutoff = (date.today() - timedelta(days=news_tool.NEWS_DAYS - 1)).isoformat()
+    assert f"from={cutoff}" in paths[0]
+
+
+def test_merged_articles_are_unique_by_url(db, monkeypatch):
+    """FR-008 — the deliberate one-day overlap must not duplicate coverage."""
+    shared = article(days_ago=1, title="Same story", url="https://example.com/same")
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": [shared]})
+
+    monkeypatch.setattr(news_tool, "fmp_get", lambda path, db=None: [shared])
+    out = news_tool.get_stock_news("AAPL", db=db)
+
+    assert out["news_count"] == 1
+    urls = [a["url"] for a in out["articles"]]
+    assert len(urls) == len(set(urls))
+
+
+def test_a_refetched_article_replaces_its_stored_copy(db, monkeypatch):
+    old = article(days_ago=1, title="Draft headline", url="https://example.com/x")
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": [old]})
+
+    corrected = article(days_ago=1, title="Corrected headline", url="https://example.com/x")
+    monkeypatch.setattr(news_tool, "fmp_get", lambda path, db=None: [corrected])
+
+    out = news_tool.get_stock_news("AAPL", db=db)
+    assert [a["headline"] for a in out["articles"]] == ["Corrected headline"]
+
+
+def test_articles_aged_out_of_the_window_are_dropped_from_storage(db, monkeypatch):
+    """FR-017 — with the TTL gone, the merge is what keeps storage bounded."""
+    ancient = article(days_ago=90, title="Ancient")
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": [ancient]})
+
+    monkeypatch.setattr(news_tool, "fmp_get",
+                        lambda path, db=None: [article(days_ago=1, title="Fresh")])
+    news_tool.get_stock_news("AAPL", db=db)
+
+    doc = db[STOCK_NEWS_CACHE].find_one({"ticker": "AAPL"})
+    assert [a["title"] for a in doc["articles"]] == ["Fresh"]
+
+
+def test_trend_is_computed_over_the_full_retained_window(db, monkeypatch):
+    """FR-018 — derived outputs read the whole window, not just what arrived in
+    this delta. Two old bearish stories must still outweigh one new bullish."""
+    stored = [
+        article(days_ago=3, title="Guidance cut", text="decline weak loss"),
+        article(days_ago=4, title="Downgrade", text="miss plunge risk"),
+    ]
+    db[STOCK_NEWS_CACHE].insert_one({"ticker": "AAPL", "articles": stored})
+
+    monkeypatch.setattr(
+        news_tool, "fmp_get",
+        lambda path, db=None: [article(days_ago=1, title="Beat", text="record strong")])
+
+    out = news_tool.get_stock_news("AAPL", db=db)
+    assert out["news_count"] == 3
+    assert len(out["timeline"]) == 3
+
+
+def test_coverage_envelope_is_written(db, monkeypatch):
+    monkeypatch.setattr(news_tool, "fmp_get",
+                        lambda path, db=None: [article(days_ago=1, title="Fresh")])
+    news_tool.get_stock_news("AAPL", db=db)
+
+    cov = db[STOCK_NEWS_CACHE].find_one({"ticker": "AAPL"})["coverage"]
+    assert cov["newest_published"] is not None
+    assert cov["window_days"] == news_tool.NEWS_DAYS
+    assert cov["established_at"] is not None
+
+
+def test_legacy_document_without_coverage_still_works(db, monkeypatch):
+    """FR-021 — pre-024 documents are a valid baseline; no wipe-and-refetch."""
+    db[STOCK_NEWS_CACHE].insert_one({
+        "ticker": "AAPL",
+        "articles": [article(days_ago=1, title="Legacy")],
+        "fetched_at": datetime.now(timezone.utc),
+    })
+    monkeypatch.setattr(news_tool, "fmp_get", lambda path, db=None: [])
+
+    out = news_tool.get_stock_news("AAPL", db=db)
+    assert out["news_count"] == 1
+    assert db[STOCK_NEWS_CACHE].find_one({"ticker": "AAPL"})["coverage"] is not None
+
+
+def test_stock_news_cache_has_no_ttl_index(db):
+    """The trap: a TTL deletes the document the delta baseline lives in, which
+    would silently restore full-window fetching with no error."""
+    from tools import db as dbmod
+    dbmod.ensure_indexes(db=db)
+    info = db[STOCK_NEWS_CACHE].index_information()
+    assert not any("expireAfterSeconds" in spec for spec in info.values())
+
+
+def test_stage_is_marked_incremental_when_a_baseline_exists(db, monkeypatch):
+    """FR-002 — without this the stage infers 'full' from having spent requests
+    and keeps saying 'full' long after the fetch went incremental."""
+    from tools import metrics
+    db[STOCK_NEWS_CACHE].insert_one(
+        {"ticker": "AAPL", "articles": [article(days_ago=2, title="Old")]})
+    monkeypatch.setattr(news_tool, "fmp_get", lambda path, db=None: [])
+
+    recorder = metrics.PullRecorder()
+    with metrics.stage_recorder("news", recorder):
+        news_tool.get_stock_news("AAPL", db=db)
+
+    assert recorder.stages()[0]["retrieval"] == metrics.INCREMENTAL
+
+
+def test_stage_is_marked_full_on_a_cold_baseline(db, monkeypatch):
+    from tools import metrics
+    monkeypatch.setattr(news_tool, "fmp_get", lambda path, db=None: [])
+
+    recorder = metrics.PullRecorder()
+    with metrics.stage_recorder("news", recorder):
+        news_tool.get_stock_news("COLD", db=db)
+
+    assert recorder.stages()[0]["retrieval"] == metrics.FULL
+
+
+def test_stage_is_marked_degraded_when_serving_stale_news(db, monkeypatch):
+    from tools import metrics
+    db[STOCK_NEWS_CACHE].insert_one(
+        {"ticker": "AAPL", "articles": [article(days_ago=1, title="Cached")]})
+
+    def boom(path, db=None):
+        raise FmpBudgetExceededError("cap hit")
+
+    monkeypatch.setattr(news_tool, "fmp_get", boom)
+
+    recorder = metrics.PullRecorder()
+    with metrics.stage_recorder("news", recorder):
+        out = news_tool.get_stock_news("AAPL", db=db)
+
+    assert out["stale"] is True
+    assert recorder.stages()[0]["outcome"] == metrics.DEGRADED

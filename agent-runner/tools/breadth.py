@@ -111,16 +111,20 @@ def get_universe(name: str, db: Database | None = None) -> list[str]:
 
 # --- Oscillator math ---------------------------------------------------------
 
-def _download_closes(universe: list[str], period: str) -> pd.DataFrame:
+def _download_closes(universe: list[str], period: str, db: Database | None = None) -> pd.DataFrame:
     """Wide Close-price frame (index: date, columns: tickers), one FMP EOD
     fetch per symbol. A ticker that fails is simply excluded — the oscillator
-    tolerates a few missing names in a 500+ universe."""
-    from tools.fmp_client import fetch_eod_history
+    tolerates a few missing names in a 500+ universe.
+
+    Goes through the price store (024), so a re-sweep only transfers the days
+    added since last time — across a 500-name universe that is where delta
+    saves the most bytes, even though the call count is unchanged."""
+    from tools import price_store
 
     closes = {}
     for ticker in universe:
         try:
-            closes[ticker] = fetch_eod_history(ticker)["Close"]
+            closes[ticker] = price_store.get_series(ticker, refresh="delta", db=db)[0]["Close"]
         except Exception as exc:
             logger.info("breadth: %s unavailable (%s), excluding from sweep", ticker, exc)
     wide = pd.DataFrame(closes)
@@ -155,7 +159,7 @@ def _breadth_records(exchange: str, universe: list[str], lookback_days: int, db:
         return [{"date": r["date"], "value": r["mcclellan"]} for r in reversed(rows)]
 
     # EMA39 needs runway: fetch ~3x the lookback window
-    closes = _download_closes(universe, f"{lookback_days * 3}d")
+    closes = _download_closes(universe, f"{lookback_days * 3}d", db=db)
     df = compute_mcclellan(closes)
     for date, row in df.tail(lookback_days).iterrows():
         doc = {
@@ -175,10 +179,10 @@ def _breadth_records(exchange: str, universe: list[str], lookback_days: int, db:
     ]
 
 
-def _download_spy(period: str) -> pd.Series:
-    from tools.fmp_client import fetch_eod_history
+def _download_spy(period: str, db: Database | None = None) -> pd.Series:
+    from tools import price_store
 
-    series = fetch_eod_history(SPY_TICKER)["Close"]
+    series = price_store.get_series(SPY_TICKER, refresh="delta", db=db)[0]["Close"]
     if period.endswith("d"):
         series = series.tail(int(period[:-1]))
     return series
@@ -200,7 +204,7 @@ def _spy_records(dates: list[str], db: Database) -> list[dict]:
     if all(cached.get(d) is not None for d in dates):
         return [{"date": d, "close": cached[d]} for d in dates]
 
-    closes = _download_spy(f"{len(dates) * 2}d")
+    closes = _download_spy(f"{len(dates) * 2}d", db=db)
     by_date = {d.date().isoformat(): round(float(v), 2) for d, v in closes.items() if pd.notna(v)}
     for date in dates:
         if date in by_date:

@@ -1,5 +1,6 @@
 // React Query hooks for /analysis + /stocks endpoints
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { api } from "../api/client";
 import type { Analysis, FeedResponse } from "../api/types";
 
@@ -45,5 +46,28 @@ export function useTickerRecord(ticker: string) {
     },
     enabled: !!ticker,
     retry: false, // 404 = unknown ticker, don't hammer
+  });
+}
+
+// Destructive: purges the ticker and all its stored data (specs/023-remove-stocks).
+export function useDeleteTicker() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ticker: string) => {
+      try {
+        const { data } = await api.delete(`/tickers/${ticker.toUpperCase()}`);
+        return data as { deleted: string };
+      } catch (err) {
+        // Already gone is not a failure — see useRemoveFromWatchlist (FR-019).
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          return { deleted: ticker.toUpperCase() };
+        }
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
   });
 }

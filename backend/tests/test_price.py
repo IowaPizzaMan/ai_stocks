@@ -1,69 +1,27 @@
-"""Price endpoint tests — yfinance faked."""
+"""Price endpoint tests.
+
+Rewritten for specs/024-delta-data-pulls: the endpoint no longer fetches per
+resolution into four TTL cache documents. It reads one maintained daily series
+and resamples locally, so the tests that used to assert "weekly refetches at a
+weekly interval" now assert the opposite — that switching resolution costs
+nothing (SC-004).
+"""
 import pandas as pd
+import pytest
 
-from routers import price as price_router
+import price_store
+from db import PRICE_HISTORY
 
 
-def fake_history(rows=5):
-    idx = pd.date_range("2026-07-01", periods=rows, freq="B")
+def daily_frame(rows=5, start="2026-07-01"):
+    idx = pd.date_range(start, periods=rows, freq="B")
     return pd.DataFrame(
         {"Open": 100.0, "High": 101.0, "Low": 99.0, "Close": 100.5, "Volume": 1_000_000},
         index=idx,
     )
 
 
-def test_price_returns_bars_and_caches(client, db, monkeypatch):
-    calls = []
-
-    def fetch(ticker, period, interval):
-        calls.append((ticker, period, interval))
-        return fake_history()
-
-    monkeypatch.setattr(price_router, "_fetch_history", fetch)
-
-    r = client.get("/stocks/aapl/price").json()
-    assert r["ticker"] == "AAPL"
-    assert r["resolution"] == "daily"
-    assert len(r["bars"]) == 5
-    assert r["bars"][0] == {"date": "2026-07-01", "open": 100.0, "high": 101.0,
-                            "low": 99.0, "close": 100.5, "volume": 1_000_000}
-    assert calls == [("AAPL", "2y", "1d")]
-
-    # second call served from cache
-    client.get("/stocks/AAPL/price")
-    assert len(calls) == 1
-
-    # different resolution fetches fresh at weekly interval
-    client.get("/stocks/AAPL/price?resolution=weekly")
-    assert calls[-1] == ("AAPL", "5y", "1wk")
-
-
-def test_price_unknown_resolution_422(client):
-    assert client.get("/stocks/AAPL/price?resolution=hourly").status_code == 422
-
-
-def test_price_empty_history_404(client, monkeypatch):
-    monkeypatch.setattr(price_router, "_fetch_history",
-                        lambda t, p, i: fake_history(0))
-    assert client.get("/stocks/GONE/price").status_code == 404
-
-
-def test_price_drops_nan_bars(client, monkeypatch):
-    df = fake_history(3)
-    df.iloc[1, df.columns.get_loc("Close")] = float("nan")
-    monkeypatch.setattr(price_router, "_fetch_history", lambda t, p, i: df)
-
-    r = client.get("/stocks/NAN/price")
-    assert r.status_code == 200
-    bars = r.json()["bars"]
-    assert len(bars) == 2
-    assert [b["date"] for b in bars] == ["2026-07-01", "2026-07-03"]
-
-
-# --- 021-stock-page-redesign: yearly resolution -----------------------------
-
-
-def daily_history(years: int, start="2006-01-02") -> pd.DataFrame:
+def climbing_frame(years: int, start="2006-01-02") -> pd.DataFrame:
     """Ascending daily bars whose close climbs by 1/day, so each resample bin's
     first/last/min/max are all predictable."""
     idx = pd.date_range(start, periods=years * 252, freq="B")
@@ -80,14 +38,100 @@ def daily_history(years: int, start="2006-01-02") -> pd.DataFrame:
     )
 
 
-def test_yearly_resolution_is_accepted_and_resamples_per_calendar_year(client, db, monkeypatch):
-    monkeypatch.setattr(price_router, "_fetch_eod", lambda t, years=None: daily_history(3))
+def seed_series(db, ticker, df):
+    """Puts a series in the store the way a pull would have."""
+    bars = price_store.frame_to_bars(df)
+    db[PRICE_HISTORY].replace_one(
+        {"ticker": ticker},
+        {"ticker": ticker, "bars": bars,
+         "coverage": price_store.build_coverage(bars, None, "full")},
+        upsert=True,
+    )
 
-    r = client.get("/stocks/YR/price?resolution=yearly")
+
+@pytest.fixture
+def no_fetch(monkeypatch):
+    """Any provider call is a test failure — these paths must be served from the
+    store alone."""
+    monkeypatch.setattr(price_store, "_fetch",
+                        lambda *a, **k: pytest.fail("endpoint hit the provider"))
+
+
+def test_price_returns_bars_from_the_stored_series(client, db, no_fetch):
+    seed_series(db, "AAPL", daily_frame())
+
+    r = client.get("/stocks/aapl/price").json()
+    assert r["ticker"] == "AAPL"
+    assert r["resolution"] == "daily"
+    assert len(r["bars"]) == 5
+    assert r["bars"][0] == {"date": "2026-07-01", "open": 100.0, "high": 101.0,
+                            "low": 99.0, "close": 100.5, "volume": 1_000_000}
+
+
+def test_switching_resolution_costs_zero_requests(client, db, monkeypatch):
+    """SC-004 — the headline win. This used to be four full downloads per
+    ticker, one per chart tab."""
+    seed_series(db, "AAPL", climbing_frame(4))
+    calls = []
+    monkeypatch.setattr(price_store, "_fetch",
+                        lambda *a, **k: calls.append(a) or daily_frame())
+
+    for resolution in ("daily", "weekly", "monthly", "yearly", "daily"):
+        assert client.get(f"/stocks/AAPL/price?resolution={resolution}").status_code == 200
+
+    assert calls == []
+
+
+def test_cold_ticker_populates_the_store_once(client, db, monkeypatch):
+    """A page view for a ticker nothing has pulled yet still has to get data —
+    but only once, and it must land in the store for later reads."""
+    calls = []
+
+    def fetch(ticker, start, db=None):
+        calls.append((ticker, start))
+        return daily_frame()
+
+    monkeypatch.setattr(price_store, "_fetch", fetch)
+
+    assert client.get("/stocks/NEW/price").status_code == 200
+    assert len(calls) == 1
+    assert calls[0][1] is None          # no baseline → full fetch (FR-007)
+
+    # now stored: a second read must not fetch again
+    assert client.get("/stocks/NEW/price?resolution=weekly").status_code == 200
+    assert len(calls) == 1
+    assert db[PRICE_HISTORY].find_one({"ticker": "NEW"}) is not None
+
+
+def test_price_unknown_resolution_422(client):
+    assert client.get("/stocks/AAPL/price?resolution=hourly").status_code == 422
+
+
+def test_price_no_data_anywhere_404(client, db, monkeypatch):
+    monkeypatch.setattr(price_store, "_fetch",
+                        lambda *a, **k: pd.DataFrame(columns=price_store.OHLCV_COLUMNS))
+    assert client.get("/stocks/GONE/price").status_code == 404
+
+
+def test_price_drops_nan_bars(client, db, no_fetch):
+    df = daily_frame(3)
+    df.iloc[1, df.columns.get_loc("Close")] = float("nan")
+    seed_series(db, "NAN", df)
+
+    r = client.get("/stocks/NAN/price")
     assert r.status_code == 200
     bars = r.json()["bars"]
+    assert len(bars) == 2
+    assert [b["date"] for b in bars] == ["2026-07-01", "2026-07-03"]
 
-    # one bar per calendar year the daily data spans
+
+# --- resampling (021 windows, now derived locally) ----------------------------
+
+def test_yearly_resamples_per_calendar_year(client, db, no_fetch):
+    seed_series(db, "YR", climbing_frame(3))
+
+    bars = client.get("/stocks/YR/price?resolution=yearly").json()["bars"]
+
     years = [b["date"][:4] for b in bars]
     assert years == sorted(set(years))
     assert len(bars) == len(set(years))
@@ -101,77 +145,40 @@ def test_yearly_resolution_is_accepted_and_resamples_per_calendar_year(client, d
     assert first_year["volume"] > 1_000
 
 
-def test_yearly_caps_at_fifteen_years(client, db, monkeypatch):
-    monkeypatch.setattr(price_router, "_fetch_eod", lambda t, years=None: daily_history(20))
+def test_yearly_caps_at_fifteen_years(client, db, no_fetch):
+    seed_series(db, "LONG", climbing_frame(20))
     bars = client.get("/stocks/LONG/price?resolution=yearly").json()["bars"]
     assert 10 <= len(bars) <= 16  # 15y window, boundary year may partially land
 
 
-def test_yearly_short_history_returns_all_available_without_error(client, db, monkeypatch):
-    monkeypatch.setattr(price_router, "_fetch_eod",
-                        lambda t, years=None: daily_history(2, start="2025-01-02"))
-    r = client.get("/stocks/NEW/price?resolution=yearly")
+def test_yearly_short_history_returns_all_available(client, db, no_fetch):
+    seed_series(db, "NEWCO", climbing_frame(2, start="2025-01-02"))
+    r = client.get("/stocks/NEWCO/price?resolution=yearly")
     assert r.status_code == 200
     assert 1 <= len(r.json()["bars"]) <= 3
 
 
-def test_monthly_window_is_three_years(client, db, monkeypatch):
-    calls = []
-
-    def fetch(ticker, period, interval):
-        calls.append((ticker, period, interval))
-        return fake_history()
-
-    monkeypatch.setattr(price_router, "_fetch_history", fetch)
-    client.get("/stocks/MO/price?resolution=monthly")
-    assert calls[-1] == ("MO", "3y", "1mo")
+def test_monthly_window_is_three_years(client, db, no_fetch):
+    seed_series(db, "MO", climbing_frame(10))
+    bars = client.get("/stocks/MO/price?resolution=monthly").json()["bars"]
+    # ~12 bars/year over a 3y window, with the boundary month partially landing
+    assert 34 <= len(bars) <= 38
 
 
-def test_yearly_requests_deep_history_but_shorter_windows_do_not():
-    """FMP's EOD endpoint returns only ~5 years unless `from` is supplied, which
-    is not enough for the yearly panel's 10-15 candles (verified against the
-    live API 2026-08-16). Shorter panels must not pay for the deeper fetch."""
-    seen = []
-
-    def fake_eod(ticker, years=None):
-        seen.append(years)
-        return daily_history(2)
-
-    import routers.price as p
-    original = p._fetch_eod
-    p._fetch_eod = fake_eod
-    try:
-        p._fetch_history("AAPL", "15y", "1y")
-        p._fetch_history("AAPL", "3y", "1mo")
-        p._fetch_history("AAPL", "2y", "1d")
-        p._fetch_history("AAPL", "5y", "1wk")
-    finally:
-        p._fetch_eod = original
-
-    assert seen[0] == 15   # yearly asks for deep history
-    assert seen[1] is None  # monthly/daily/weekly use the default window
-    assert seen[2] is None
-    assert seen[3] is None
+def test_weekly_window_is_five_years(client, db, no_fetch):
+    seed_series(db, "WK", climbing_frame(10))
+    bars = client.get("/stocks/WK/price?resolution=weekly").json()["bars"]
+    assert 250 <= len(bars) <= 265
 
 
-def test_fetch_eod_adds_a_from_date_only_when_years_requested(monkeypatch):
-    urls = []
+def test_all_resolutions_derive_from_the_same_stored_series(client, db, no_fetch):
+    """FR-015/FR-016 — one series, four views of it. The daily close on the last
+    bar must agree across resolutions."""
+    seed_series(db, "SAME", climbing_frame(4))
 
-    class FakeResp:
-        def raise_for_status(self):
-            pass
+    closes = {}
+    for resolution in ("daily", "weekly", "monthly", "yearly"):
+        bars = client.get(f"/stocks/SAME/price?resolution={resolution}").json()["bars"]
+        closes[resolution] = bars[-1]["close"]
 
-        def json(self):
-            return []
-
-    def fake_get(url, timeout=15):
-        urls.append(url)
-        return FakeResp()
-
-    monkeypatch.setattr(price_router.requests, "get", fake_get)
-
-    price_router._fetch_eod("AAPL")
-    price_router._fetch_eod("AAPL", years=15)
-
-    assert "&from=" not in urls[0]
-    assert "&from=" in urls[1]
+    assert len(set(closes.values())) == 1
