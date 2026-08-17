@@ -172,3 +172,109 @@ def test_recent_moves_returns_all(monkeypatch):
     })
     moves = superinvestor.get_recent_superinvestor_moves(datetime(2026, 7, 1))
     assert len(moves) == 2
+
+
+# --- 021-stock-page-redesign: FMP-backed flow data ---------------------------
+
+def test_insider_quarterly_stats_normalization(monkeypatch):
+    raw = [
+        {"symbol": "AAPL", "year": 2026, "quarter": 2, "acquiredTransactions": 7,
+         "disposedTransactions": 40, "acquiredDisposedRatio": 0.175,
+         "totalAcquired": 303199, "totalDisposed": 927380,
+         "totalPurchases": 1, "totalSales": 12},
+        {"symbol": "AAPL", "year": 2026, "quarter": 3, "acquiredTransactions": 0,
+         "disposedTransactions": 1, "acquiredDisposedRatio": 0,
+         "totalAcquired": 0, "totalDisposed": 1439,
+         "totalPurchases": 0, "totalSales": 1},
+    ]
+    monkeypatch.setattr(insider, "fmp_get", lambda path, db=None: raw)
+
+    stats = insider.get_insider_quarterly_stats("aapl")
+
+    # newest quarter first regardless of the order FMP returned
+    assert [(s["year"], s["quarter"]) for s in stats] == [(2026, 3), (2026, 2)]
+    assert stats[1]["acquired_transactions"] == 7
+    assert stats[1]["total_disposed"] == 927380
+    assert stats[1]["acquired_disposed_ratio"] == pytest.approx(0.175)
+
+
+def test_insider_quarterly_stats_caps_at_eight_quarters(monkeypatch):
+    raw = [{"year": 2020 + (i // 4), "quarter": (i % 4) + 1} for i in range(20)]
+    monkeypatch.setattr(insider, "fmp_get", lambda path, db=None: raw)
+    assert len(insider.get_insider_quarterly_stats("AAPL")) == 8
+
+
+def test_insider_quarterly_stats_fails_soft_on_budget(monkeypatch):
+    from tools.fmp_client import FmpBudgetExceededError
+
+    def boom(path, db=None):
+        raise FmpBudgetExceededError("cap")
+
+    monkeypatch.setattr(insider, "fmp_get", boom)
+    assert insider.get_insider_quarterly_stats("AAPL") == []
+
+
+def bo_filing(filer, filing_date, pct, shares="1000", type_="IA"):
+    return {"nameOfReportingPerson": filer, "filingDate": filing_date,
+            "percentOfClass": pct, "amountBeneficiallyOwned": shares,
+            "typeOfReportingPerson": type_, "url": "https://sec.gov/x"}
+
+
+def test_beneficial_ownership_fetch_normalizes_and_caches(db, monkeypatch):
+    from tools.db import BENEFICIAL_OWNERSHIP_CACHE
+
+    raw = [bo_filing("Capital Research", "2026-06-04", "11.1", "75279354")]
+    monkeypatch.setattr(institutional, "fmp_get", lambda path, db=None: raw)
+
+    out = institutional.get_beneficial_ownership("owl", db=db)
+
+    assert out["stale"] is False
+    f = out["filings"][0]
+    assert f["filer"] == "Capital Research"
+    assert f["shares"] == 75279354           # string → int
+    assert f["pct_of_class"] == pytest.approx(11.1)   # string → float
+    assert f["filer_type"] == "IA"
+    assert db[BENEFICIAL_OWNERSHIP_CACHE].find_one({"ticker": "OWL"})["filings"] == raw
+
+
+def test_beneficial_direction_accumulating_and_distributing():
+    accumulating = [bo_filing("A", "2026-06-01", "12.0"), bo_filing("A", "2026-01-01", "9.0")]
+    assert institutional.derive_beneficial_direction(
+        institutional.normalize_beneficial_filings(accumulating)) == "accumulating"
+
+    distributing = [bo_filing("A", "2026-06-01", "4.0"), bo_filing("A", "2026-01-01", "9.0")]
+    assert institutional.derive_beneficial_direction(
+        institutional.normalize_beneficial_filings(distributing)) == "distributing"
+
+
+def test_beneficial_direction_is_none_without_a_repeat_filer():
+    single = institutional.normalize_beneficial_filings([bo_filing("A", "2026-06-01", "12.0")])
+    assert institutional.derive_beneficial_direction(single) is None
+
+
+def test_beneficial_direction_mixed_on_a_tie():
+    filings = institutional.normalize_beneficial_filings([
+        bo_filing("A", "2026-06-01", "12.0"), bo_filing("A", "2026-01-01", "9.0"),
+        bo_filing("B", "2026-06-01", "4.0"), bo_filing("B", "2026-01-01", "9.0"),
+    ])
+    assert institutional.derive_beneficial_direction(filings) == "mixed"
+
+
+def test_beneficial_ownership_serves_cache_when_fetch_fails(db, monkeypatch):
+    import requests as _requests
+    from tools.db import BENEFICIAL_OWNERSHIP_CACHE
+
+    db[BENEFICIAL_OWNERSHIP_CACHE].insert_one({
+        "ticker": "OWL",
+        "filings": [bo_filing("Cached Filer", "2026-05-01", "7.5")],
+        "fetched_at": datetime.now(timezone.utc),
+    })
+
+    def boom(path, db=None):
+        raise _requests.HTTPError("502")
+
+    monkeypatch.setattr(institutional, "fmp_get", boom)
+
+    out = institutional.get_beneficial_ownership("OWL", db=db)
+    assert out["stale"] is True
+    assert out["filings"][0]["filer"] == "Cached Filer"

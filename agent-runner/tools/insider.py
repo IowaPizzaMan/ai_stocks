@@ -1,17 +1,28 @@
-"""Form 4 insider transactions + MSPR via Finnhub.
-Spec: specs/component-specs/agent-runner/tools/insider.md
+"""Form 4 insider transactions + MSPR via Finnhub, quarterly aggregates via FMP.
+Spec: specs/component-specs/agent-runner/tools/insider.md,
+      specs/021-stock-page-redesign (US7 — FR-015, FR-016)
 
-Sourcing (verified 2026-08-02): FMP's insider endpoints are 402 paid-tier on
-this key — Finnhub (free) is the primary and only source. Congressional trades
-(Quiver) remain deferred per DATA_SOURCES.md.
+Sourcing: Finnhub supplies the 90-day transaction detail and MSPR (its insider
+endpoints are free on this key). FMP's `insider-trading/statistics` — verified
+entitled 2026-08-16 — supplies multi-year quarterly aggregates that Finnhub's
+90-day window can't show. Congressional trades (Quiver) remain deferred per
+DATA_SOURCES.md.
 """
 from datetime import date, datetime, timedelta
 
+import requests
+from pymongo.database import Database
+
+from logging_config import get_logger
 from tools.finnhub_client import finnhub_get
+from tools.fmp_client import FmpBudgetExceededError, fmp_get
+
+logger = get_logger(__name__)
 
 LOOKBACK_DAYS = 90
 CLUSTER_WINDOW_DAYS = 30
 CLUSTER_MIN_INSIDERS = 3
+MAX_QUARTERS = 8
 
 # Finnhub/SEC Form 4 transaction codes
 CODE_MAP = {
@@ -80,6 +91,57 @@ def summarize_counts(buy_count: int, sell_count: int) -> str | None:
     buys = f"{buy_count} buy{'s' if buy_count != 1 else ''}"
     sells = f"{sell_count} sell{'s' if sell_count != 1 else ''}"
     return f"{buys}, {sells}"
+
+
+def _int(value) -> int:
+    try:
+        return int(float(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _float(value) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def normalize_quarterly_stats(raw: list[dict]) -> list[dict]:
+    """FMP's camelCase quarterly aggregates → the snake_case shape the UI reads
+    (specs/021-stock-page-redesign/data-model.md §4), newest quarter first."""
+    rows = [
+        {
+            "year": _int(r.get("year")),
+            "quarter": _int(r.get("quarter")),
+            "acquired_transactions": _int(r.get("acquiredTransactions")),
+            "disposed_transactions": _int(r.get("disposedTransactions")),
+            "acquired_disposed_ratio": _float(r.get("acquiredDisposedRatio")),
+            "total_acquired": _int(r.get("totalAcquired")),
+            "total_disposed": _int(r.get("totalDisposed")),
+            "total_purchases": _int(r.get("totalPurchases")),
+            "total_sales": _int(r.get("totalSales")),
+        }
+        for r in raw or []
+    ]
+    rows.sort(key=lambda r: (r["year"], r["quarter"]), reverse=True)
+    return rows[:MAX_QUARTERS]
+
+
+def get_insider_quarterly_stats(ticker: str, db: Database | None = None) -> list[dict]:
+    """Quarterly acquired/disposed aggregates from FMP. Returns [] rather than
+    raising when FMP is unavailable or the daily budget is spent — the tab
+    renders its empty state and the rest of the analysis proceeds (FR-026)."""
+    ticker = ticker.upper()
+    try:
+        raw = fmp_get(f"insider-trading/statistics?symbol={ticker}", db=db)
+    except FmpBudgetExceededError:
+        logger.warning("%s: FMP budget spent — no quarterly insider stats this run", ticker)
+        return []
+    except (requests.HTTPError, requests.RequestException) as exc:
+        logger.warning("%s: insider statistics fetch failed: %s", ticker, exc)
+        return []
+    return normalize_quarterly_stats(raw if isinstance(raw, list) else [])
 
 
 def get_insider_activity(ticker: str) -> dict:

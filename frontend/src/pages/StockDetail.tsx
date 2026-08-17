@@ -1,12 +1,14 @@
 // Spec: specs/component-specs/frontend/pages/StockDetail.md
-import { useEffect, useState } from "react";
+// Reorganized by specs/021-stock-page-redesign: all chart content lives in the
+// Charts tab (the default), the always-on TFC grid and Deep Dive block are gone.
+import { useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import type { Analysis } from "../api/types";
+import type { Analysis, ChangesSinceLast } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
-import BreadthDivergenceChart from "../components/stock/BreadthDivergenceChart";
-import PriceChart from "../components/stock/PriceChart";
-import TFCChartGrid from "../components/stock/TFCChartGrid";
+import ChartsTab from "../components/stock/ChartsTab";
+import FormattedProse from "../components/stock/FormattedProse";
+import NewsTab from "../components/stock/NewsTab";
 import {
   FundamentalsTab,
   InsiderTab,
@@ -15,35 +17,39 @@ import {
   TechnicalsTab,
 } from "../components/stock/tabs";
 import { useTickerAnalysis, useTickerRecord } from "../hooks/useAnalysis";
-import { useMarketBreadth } from "../hooks/useMarketBreadth";
 import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
-import type { Timeframe } from "../lib/strat/displayWindow";
+import { PANEL_TIMEFRAMES } from "../lib/strat/displayWindow";
 import { formatDate, relativeTime } from "../lib/time";
 
 const TABS = [
+  { id: "charts", label: "Charts" },
   { id: "overview", label: "Overview" },
   { id: "technicals", label: "Technicals" },
   { id: "fundamentals", label: "Fundamentals" },
   { id: "insider", label: "Insider" },
   { id: "institutional", label: "Institutional" },
+  { id: "news", label: "News" },
   { id: "sentiment", label: "Sentiment" },
   { id: "ai-summary", label: "AI Summary" },
 ];
+
+const DEFAULT_TAB = "charts";
 
 export default function StockDetail() {
   const { ticker = "" } = useParams<{ ticker: string }>();
   const symbol = ticker.toUpperCase();
   const location = useLocation();
   const navigate = useNavigate();
-  const activeTab = location.hash.replace("#", "") || "overview";
+  // Unknown/removed anchors fall back to Charts so old deep links still resolve (FR-027)
+  const hash = location.hash.replace("#", "");
+  const activeTab = TABS.some((t) => t.id === hash) ? hash : DEFAULT_TAB;
 
-  const [deepDiveTf, setDeepDiveTf] = useState<Timeframe>("1Y");
   const { data: analysis, isLoading } = useTickerAnalysis(symbol);
   const { data: record } = useTickerRecord(symbol);
   const { data: queue } = useQueueStatus();
-  const { data: priceData } = useStockPriceHistory(symbol, ["1D", "1W", "1M", "1Y", "5Y", "MAX"]);
+  const { data: priceData } = useStockPriceHistory(symbol, PANEL_TIMEFRAMES);
   const enqueue = useEnqueueTicker();
   const addToWatchlist = useAddToWatchlist();
 
@@ -109,18 +115,20 @@ export default function StockDetail() {
 
       {isLoading && <p className="py-12 text-center text-zinc-500">loading…</p>}
 
+      {/* Compact rather than full-page: the Charts tab below still works
+          without an analysis, so this shouldn't push it off screen. */}
       {!isLoading && !latest && (
-        <div className="py-16 text-center text-zinc-500">
-          <p className="mb-2 text-lg text-zinc-400">No analysis yet for {symbol}</p>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+          <span>{`No analysis yet for ${symbol} — charts below still render.`}</span>
           {queuedJob ? (
-            <p className="text-sm">
-              Analysis {queuedJob.status === "running" ? "running now" : "queued"} — this
-              page updates when it lands.
-            </p>
+            <span className="text-sky-400">
+              Analysis {queuedJob.status === "running" ? "running now" : "queued"} — this page
+              updates when it lands.
+            </span>
           ) : (
             <button
               onClick={() => enqueue.mutate(symbol)}
-              className="mt-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
+              className="rounded-lg bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500"
             >
               Pull Analysis ▶
             </button>
@@ -128,57 +136,59 @@ export default function StockDetail() {
         </div>
       )}
 
-      {/* TFC grid + deep-dive chart render for any ticker with price data */}
-      <div className="mb-6">
-        <TFCChartGrid
-          priceData={priceData}
-          tfcStatus={latest?.sub_reports?.technical?.strat_result?.tfc?.status}
-        />
-      </div>
-      <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Deep dive — {deepDiveTf}
-        </p>
-        <PriceChart
-          priceData={priceData[deepDiveTf] ?? []}
-          defaultTimeframe="1Y"
-          onTimeframeChange={setDeepDiveTf}
-        />
-      </div>
+      {/* Tabs render whenever there's price data — charts don't need an
+          analysis (FR-009); analysis-backed tabs show their own empty states. */}
+      <nav className="flex flex-wrap gap-1 border-b border-zinc-800">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => navigate(`#${tab.id}`, { replace: true })}
+            className={`px-3 py-2 text-sm transition-colors ${
+              activeTab === tab.id
+                ? "border-b-2 border-sky-500 text-white"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+        {latest && (
+          <span className="ml-auto self-center text-xs text-zinc-600">
+            analyzed {relativeTime(latest.timestamp)}
+            {formatDate(latest.timestamp) && ` — data as of ${formatDate(latest.timestamp)}`}
+          </span>
+        )}
+      </nav>
 
-      {latest && (
-        <>
-          <nav className="flex flex-wrap gap-1 border-b border-zinc-800">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => navigate(`#${tab.id}`, { replace: true })}
-                className={`px-3 py-2 text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-b-2 border-sky-500 text-white"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-            <span className="ml-auto self-center text-xs text-zinc-600">
-              analyzed {relativeTime(latest.timestamp)}
-              {formatDate(latest.timestamp) && ` — data as of ${formatDate(latest.timestamp)}`}
-            </span>
-          </nav>
-
-          <div className="mt-6">
-            {activeTab === "overview" && <OverviewTab analysis={latest} />}
-            {activeTab === "technicals" && <TechnicalsTab technical={latest.sub_reports?.technical} />}
-            {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} ticker={ticker} />}
-            {activeTab === "insider" && <InsiderTab insider={latest.sub_reports?.insider} />}
-            {activeTab === "institutional" && <InstitutionalTab institutional={latest.sub_reports?.institutional} />}
-            {activeTab === "sentiment" && <SentimentTab sentiment={latest.sub_reports?.sentiment} />}
-            {activeTab === "ai-summary" && <AISummaryTab analysis={latest} />}
-          </div>
-        </>
-      )}
+      <div className="mt-6">
+        {activeTab === "charts" && (
+          <ChartsTab
+            priceData={priceData}
+            tfcStatus={latest?.sub_reports?.technical?.strat_result?.tfc?.status}
+          />
+        )}
+        {activeTab !== "charts" &&
+          (latest ? (
+            <>
+              {activeTab === "overview" && <OverviewTab analysis={latest} />}
+              {activeTab === "technicals" && <TechnicalsTab technical={latest.sub_reports?.technical} />}
+              {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} ticker={ticker} />}
+              {activeTab === "insider" && <InsiderTab insider={latest.sub_reports?.insider} />}
+              {activeTab === "institutional" && <InstitutionalTab institutional={latest.sub_reports?.institutional} />}
+              {activeTab === "news" && <NewsTab news={latest.sub_reports?.news} />}
+              {activeTab === "sentiment" && (
+                <SentimentTab sentiment={latest.sub_reports?.sentiment} news={latest.sub_reports?.news} />
+              )}
+              {activeTab === "ai-summary" && <AISummaryTab analysis={latest} />}
+            </>
+          ) : (
+            !isLoading && (
+              <p className="py-12 text-center text-sm text-zinc-600">
+                No analysis yet — pull one to populate this tab.
+              </p>
+            )
+          ))}
+      </div>
     </div>
   );
 }
@@ -195,11 +205,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function OverviewTab({ analysis }: { analysis: Analysis }) {
-  const pm = analysis.position_management;
+  // Position Management is intentionally not rendered here (spec 021 FR-011);
+  // the payload still ships on the analysis for other consumers (spec 015).
   return (
     <div className="space-y-4">
       <Section title="Verdict">
-        <p className="leading-relaxed text-zinc-200">{analysis.summary}</p>
+        <FormattedProse text={analysis.summary} />
       </Section>
 
       {analysis.key_trends.length > 0 && (
@@ -224,45 +235,92 @@ function OverviewTab({ analysis }: { analysis: Analysis }) {
         </Section>
       )}
 
-      {pm && (
-        <Section title="Position Management">
-          <div className="grid gap-4 text-sm sm:grid-cols-2">
-            <div>
-              <p className="mb-1 text-zinc-500">Stair-step stops</p>
-              <p className="font-mono text-zinc-200">
-                {pm.stair_step_stops.map((s) => s.toFixed(2)).join("  ·  ")}
-              </p>
-            </div>
-            <div>
-              <p className="mb-1 text-zinc-500">Sizing</p>
-              <p className="text-zinc-200">{pm.position_sizing}</p>
-            </div>
-            <div className="sm:col-span-2">
-              <p className="mb-1 text-zinc-500">Trailing stop</p>
-              <p className="text-zinc-200">{pm.trailing_stop_recommendation}</p>
-            </div>
-          </div>
-        </Section>
+    </div>
+  );
+}
+
+const STANCE_STYLES: Record<string, string> = {
+  bullish: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  neutral: "border-zinc-700 bg-zinc-800 text-zinc-300",
+  bearish: "border-red-500/30 bg-red-500/10 text-red-400",
+};
+
+function ChangesSinceLastNote({ changes }: { changes: ChangesSinceLast }) {
+  const moved = changes.signal.changed || changes.conviction.changed;
+  const hasFlagChanges = changes.flags_added.length > 0 || changes.flags_removed.length > 0;
+
+  return (
+    <div className="space-y-2 text-sm text-zinc-300">
+      {!moved && !hasFlagChanges && (
+        <p className="text-zinc-500">
+          No material change since the previous analysis — signal, conviction, and flags all held.
+        </p>
       )}
+      {changes.signal.changed && (
+        <p>
+          Signal moved from <span className="text-zinc-400">{changes.signal.from}</span> to{" "}
+          <span className="font-medium text-zinc-100">{changes.signal.to}</span>.
+        </p>
+      )}
+      {changes.conviction.changed && (
+        <p>
+          Conviction moved from <span className="text-zinc-400">{changes.conviction.from}</span> to{" "}
+          <span className="font-medium text-zinc-100">{changes.conviction.to}</span>.
+        </p>
+      )}
+      {changes.flags_added.length > 0 && (
+        <p className="text-amber-400/90">New flags: {changes.flags_added.join("; ")}</p>
+      )}
+      {changes.flags_removed.length > 0 && (
+        <p className="text-zinc-500">Cleared: {changes.flags_removed.join("; ")}</p>
+      )}
+      <p className="text-xs text-zinc-600">
+        compared against the analysis from{" "}
+        {formatDate(changes.previous_timestamp) || changes.previous_timestamp}
+      </p>
     </div>
   );
 }
 
 function AISummaryTab({ analysis }: { analysis: Analysis }) {
-  const { technical, fundamental, recommendation } = analysis.sub_reports ?? {};
-  // Market-wide, so it isn't part of the per-ticker analysis payload.
-  const { data: breadth } = useMarketBreadth();
+  const { technical, fundamental, recommendation, news } = analysis.sub_reports ?? {};
+  const changes = analysis.changes_since_last;
   return (
     <div className="space-y-4">
+      {changes && (
+        <Section title="What changed since the last analysis">
+          <ChangesSinceLastNote changes={changes} />
+        </Section>
+      )}
+
+      {news?.stance && (
+        <Section title={`News stance — ${news.stance.direction}`}>
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                STANCE_STYLES[news.stance.direction] ?? STANCE_STYLES.neutral
+              }`}
+            >
+              {news.stance.direction}
+            </span>
+            <span className="text-xs text-zinc-600">
+              from {news.news_count} recent {news.news_count === 1 ? "article" : "articles"}
+              {news.as_of && ` — most recent ${formatDate(news.as_of) || news.as_of}`}
+            </span>
+          </div>
+          <FormattedProse text={news.stance.reasoning} />
+        </Section>
+      )}
+
       {technical && (
         <Section
           title={`Technical — ${technical.overall_technical_signal} (${technical.confidence})`}
         >
-          <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
-            <p>{technical.momentum_summary}</p>
-            <p>{technical.tfc_narrative}</p>
-            <p>{technical.bf_position_narrative}</p>
-            <p>{technical.volume_narrative}</p>
+          <div className="space-y-4">
+            <FormattedProse text={technical.momentum_summary} />
+            <FormattedProse text={technical.tfc_narrative} />
+            <FormattedProse text={technical.bf_position_narrative} />
+            <FormattedProse text={technical.volume_narrative} />
             {technical.key_levels && (
               <p className="font-mono text-xs text-zinc-400">
                 support {technical.key_levels.support.join(" / ")} · resistance{" "}
@@ -277,9 +335,7 @@ function AISummaryTab({ analysis }: { analysis: Analysis }) {
         <Section
           title={`Fundamental — ${fundamental.overall_fundamental_signal} (${fundamental.confidence})`}
         >
-          <p className="mb-3 text-sm leading-relaxed text-zinc-300">
-            {fundamental.narrative}
-          </p>
+          <FormattedProse text={fundamental.narrative} className="mb-3" />
           <div className="flex flex-wrap gap-2 text-xs">
             {fundamental.revenue_trend && (
               <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-zinc-300">
@@ -307,23 +363,16 @@ function AISummaryTab({ analysis }: { analysis: Analysis }) {
 
       {recommendation && (
         <Section title={`Market Timing — ${recommendation.recommendation}`}>
-          <p className="mb-2 text-sm leading-relaxed text-zinc-300">
-            {recommendation.rationale}
-          </p>
+          {/* The breadth/divergence chart lives on the Macro page — repeating
+              it here was duplicate information (spec 021 FR-023). The caveats
+              below are the part that's specific to this ticker. */}
+          <FormattedProse text={recommendation.rationale} className="mb-2" />
           <p className="text-xs text-zinc-500">
             NYMO {recommendation.nymo_current ?? "–"} ({recommendation.nymo_signal}) ·
             NAMO {recommendation.namo_current ?? "–"}
           </p>
-          {/* The rationale often cites a SPY/NYMO divergence — show it rather
-              than only describing it. Rendered whenever breadth data exists, so
-              the relationship stays inspectable with no divergence in force. */}
-          {breadth && (
-            <div className="mt-3">
-              <BreadthDivergenceChart breadth={breadth} />
-            </div>
-          )}
           {recommendation.caveats.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs text-amber-400/90">
+            <ul className="mt-3 space-y-1.5 text-xs text-amber-400/90">
               {recommendation.caveats.map((c) => (
                 <li key={c}>⚠ {c}</li>
               ))}

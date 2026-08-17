@@ -84,6 +84,13 @@ def make_crew(valid=True, financials=None):
         "moves": [], "available": False, "note": "test"}
     crew.get_earnings_sentiment = lambda t: {"news": [], "earnings_surprises": [],
                                              "transcripts": [], "transcripts_note": "n/a"}
+    # 021 additions
+    crew.get_insider_quarterly_stats = lambda t, db=None: []
+    crew.get_beneficial_ownership = lambda t, db=None: {
+        "filings": [], "direction": None, "stale": False}
+    crew.get_stock_news = lambda t, db=None: {
+        "articles": [], "timeline": [], "trend": "mixed", "news_count": 0,
+        "as_of": None, "stale": False}
     return crew
 
 
@@ -96,7 +103,8 @@ def test_run_produces_full_analyses_document():
     assert doc["conviction"] in ("high", "medium", "low")
     assert "timestamp" in doc and "summary" in doc
     assert set(doc["sub_reports"]) == {"technical", "fundamental", "insider",
-                                       "institutional", "sentiment", "recommendation"}
+                                       "institutional", "sentiment", "recommendation",
+                                       "news"}
     # deterministic pieces flow through
     assert doc["sub_reports"]["technical"]["strat_result"]["tfc"]["status"] in (
         "full_bullish", "full_bearish", "conflict")
@@ -110,8 +118,11 @@ def test_run_produces_full_analyses_document():
     # the insider stub has no recent_summary → None)
     assert doc["recent_institutional_activity"] == "mixed"
     assert doc["recent_insider_summary"] is None
+    # first-ever pull for this ticker → nothing to diff against (021 FR-025)
+    assert doc["changes_since_last"] is None
     # seven LLM calls: tech, fund, insider, institutional, sentiment,
-    # recommender, strategist — macro no longer runs per ticker
+    # recommender, strategist — macro no longer runs per ticker, and the news
+    # agent short-circuits without articles rather than calling the model
     assert len(crew.client.calls) == 7
 
 
@@ -130,7 +141,8 @@ def test_invalid_ticker_with_financials_proceeds():
 def test_parallel_prefetch_produces_same_shape():
     doc = make_crew().run("AAPL", parallel_prefetch=True)
     assert set(doc["sub_reports"]) == {"technical", "fundamental", "insider",
-                                       "institutional", "sentiment", "recommendation"}
+                                       "institutional", "sentiment", "recommendation",
+                                       "news"}
 
 
 def test_earnings_dates_extraction():
@@ -150,3 +162,85 @@ def test_price_summary():
     assert summary["last_close"] > 0
     assert summary["low_60d"] <= summary["high_60d"]
     assert _price_summary([]) == {}
+
+
+# --- 021-stock-page-redesign: changes since last analysis ---------------------
+
+def test_diff_since_last_is_none_on_first_pull():
+    from crew import diff_since_last
+    assert diff_since_last(None, "bullish", "high", []) is None
+
+
+def test_diff_since_last_reports_signal_and_conviction_moves():
+    from crew import diff_since_last
+
+    previous = {"timestamp": "2026-08-01T00:00:00Z", "signal": "neutral",
+                "conviction": "low", "flags": ["stale financials"]}
+    diff = diff_since_last(previous, "bullish", "high", ["gap unfilled"])
+
+    assert diff["previous_timestamp"] == "2026-08-01T00:00:00Z"
+    assert diff["signal"] == {"from": "neutral", "to": "bullish", "changed": True}
+    assert diff["conviction"] == {"from": "low", "to": "high", "changed": True}
+    assert diff["flags_added"] == ["gap unfilled"]
+    assert diff["flags_removed"] == ["stale financials"]
+
+
+def test_diff_since_last_marks_unchanged_when_nothing_moved():
+    from crew import diff_since_last
+
+    previous = {"timestamp": "2026-08-01T00:00:00Z", "signal": "bullish",
+                "conviction": "high", "flags": ["a"]}
+    diff = diff_since_last(previous, "bullish", "high", ["a"])
+
+    assert diff["signal"]["changed"] is False
+    assert diff["conviction"]["changed"] is False
+    assert diff["flags_added"] == [] and diff["flags_removed"] == []
+
+
+def test_run_diffs_against_the_stored_previous_analysis():
+    crew = make_crew()
+    crew.db["analyses"].insert_one({
+        "ticker": "AAPL", "timestamp": "2026-08-01T00:00:00Z",
+        "signal": "bearish", "conviction": "low", "flags": ["old flag"],
+    })
+
+    doc = crew.run("aapl")
+
+    changes = doc["changes_since_last"]
+    assert changes is not None
+    assert changes["signal"]["from"] == "bearish"
+    assert changes["signal"]["to"] == doc["signal"]
+    assert "old flag" in changes["flags_removed"]
+
+
+def test_run_attaches_news_subreport_and_flow_fields():
+    crew = make_crew()
+    crew.get_stock_news = lambda t, db=None: {
+        "articles": [{"date": "2026-08-15", "datetime": "2026-08-15 09:00:00",
+                      "source": "Wire", "headline": "Record beat", "url": "u",
+                      "text_excerpt": "strong demand", "bullish_count": 3,
+                      "bearish_count": 0, "ai_summary": None}],
+        "timeline": [{"date": "2026-08-15", "bullish": 3, "bearish": 0, "article_count": 1}],
+        "trend": "bullish", "news_count": 1, "as_of": "2026-08-15", "stale": False,
+    }
+    crew.get_insider_quarterly_stats = lambda t, db=None: [
+        {"year": 2026, "quarter": 2, "acquired_transactions": 7, "disposed_transactions": 40,
+         "acquired_disposed_ratio": 0.175, "total_acquired": 303199, "total_disposed": 927380,
+         "total_purchases": 1, "total_sales": 12}
+    ]
+    crew.get_beneficial_ownership = lambda t, db=None: {
+        "filings": [{"filer": "Capital Research", "filing_date": "2026-06-04",
+                     "shares": 75279354, "pct_of_class": 11.1, "filer_type": "IA", "url": "u"}],
+        "direction": "accumulating", "stale": False,
+    }
+
+    doc = crew.run("aapl")
+    subs = doc["sub_reports"]
+
+    assert subs["news"]["trend"] == "bullish"
+    assert subs["news"]["news_count"] == 1
+    assert subs["insider"]["quarterly_stats"][0]["total_disposed"] == 927380
+    assert subs["institutional"]["beneficial_direction"] == "accumulating"
+    assert subs["institutional"]["beneficial_filings"][0]["filer"] == "Capital Research"
+    # with articles present the news agent does call the model → eight calls
+    assert len(crew.client.calls) == 8

@@ -23,10 +23,13 @@ FMP_BASE = "https://financialmodelingprep.com/stable/"
 
 # resolution -> (period, interval) fetched
 # each fetches enough history so the client's 200-period MAs are real
+# monthly/yearly windows are sized to the Charts-tab panels (021): one candle
+# per calendar month over ~3y, one per calendar year over ~15y
 RESOLUTIONS = {
     "daily": ("2y", "1d"),
     "weekly": ("5y", "1wk"),
-    "monthly": ("max", "1mo"),
+    "monthly": ("3y", "1mo"),
+    "yearly": ("15y", "1y"),
 }
 
 
@@ -73,8 +76,14 @@ def get_price(ticker: str, resolution: str = "daily", db=Depends(db_dependency))
     return {"ticker": ticker, "resolution": resolution, "bars": bars}
 
 
-def _fetch_eod(ticker: str) -> pd.DataFrame:
+def _fetch_eod(ticker: str, years: int | None = None) -> pd.DataFrame:
+    """Daily EOD bars. Without an explicit `from`, FMP returns only ~5 years —
+    not enough for the yearly panel's 10–15 candles — so callers needing deep
+    history pass the number of years they want (021: yearly resolution)."""
     url = f"{FMP_BASE}historical-price-eod/full?symbol={ticker}&apikey={settings.fmp_api_key}"
+    if years:
+        start = (datetime.now(timezone.utc) - timedelta(days=365 * years + 30)).strftime("%Y-%m-%d")
+        url += f"&from={start}"
     r = requests.get(url, timeout=15)
     r.raise_for_status()
     raw = r.json()
@@ -105,11 +114,16 @@ def _slice_period(df: pd.DataFrame, period: str) -> pd.DataFrame:
 
 def _fetch_history(ticker: str, period: str, interval: str) -> pd.DataFrame:
     """Isolated for test monkeypatching."""
-    daily = _fetch_eod(ticker)
+    years = int(period[:-1]) if period.endswith("y") else None
+    # Only ask for deep history when the panel needs it — the default window
+    # already covers daily/weekly/monthly and costs less to fetch and cache.
+    daily = _fetch_eod(ticker, years=years if years and years > 5 else None)
     if interval == "1d":
         return _slice_period(daily, period)
     if interval == "1wk":
         return _slice_period(_resample(daily, "W"), period)
     if interval == "1mo":
         return _slice_period(_resample(daily, "ME"), period)
+    if interval == "1y":
+        return _slice_period(_resample(daily, "YE"), period)
     raise ValueError(f"unsupported interval: {interval}")
