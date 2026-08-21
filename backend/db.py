@@ -61,6 +61,10 @@ PRICE_HISTORY = "price_history"
 INSIDER_CACHE = "insider_cache"
 PULL_METRICS = "pull_metrics"
 
+# 026-macro-market-dashboard — agent-runner's economics_worker scheduling
+# marker; backend never reads it, kept in sync per constitution VI convention.
+ECONOMICS_META = "economics_meta"
+
 
 @lru_cache(maxsize=1)
 def get_db() -> Database:
@@ -93,3 +97,11 @@ def ensure_indexes(db: Database) -> None:
     # 60-minute window is compared in code so the stale copy survives expiry and
     # can still be served when a refresh fails (specs/022 data-model.md §2).
     db[MARKET_NEWS_CACHE].create_index([("key", ASCENDING)], unique=True)
+    # 026-macro-market-dashboard — written by agent-runner's economics_pull job;
+    # backend only reads these, but declares the same indexes per constitution VI.
+    db[TREASURY_RATES].create_index([("date", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", ASCENDING), ("event", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", DESCENDING)])
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", ASCENDING)], unique=True)
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", DESCENDING)])
+    db[MARKET_RISK_PREMIUM].create_index([("country", ASCENDING)], unique=True)

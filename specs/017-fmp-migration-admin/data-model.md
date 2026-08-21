@@ -163,10 +163,18 @@ Same shape as `stock_news` minus `ticker` (nullable when FMP tags one); unique o
 
 | Field | Type | Notes |
 |---|---|---|
-| `indicator` | string | unique with `date`; only series NOT in `tools/macro.py` DEFAULT_INDICATORS (FR-016) |
+| `indicator` | string | unique with `date`; ~~only series NOT in `tools/macro.py` DEFAULT_INDICATORS (FR-016)~~ — **amended, see note below** |
 | `date` | date | |
 | `value` | float | |
 | `source`, `collected_at` | — | envelope |
+
+> **Amendment (2026-08-21, specs/026-macro-market-dashboard)**
+>
+> Two shapes in this section were written before the endpoints were exercised, and 026 corrected them:
+>
+> 1. **`economic_indicators` — the non-FRED-only restriction is lifted.** 026's clarification session selected FMP `economic-indicators` as the *single* source for the Macro page's growth / inflation / employment / policy-rate tiles, which overlap FRED's `GDP`/`CPIAUCSL`/`UNRATE`/`FEDFUNDS`. This collection may now hold series that duplicate `tools/macro.py` DEFAULT_INDICATORS. Nothing read or wrote the collection at the time of amendment, so there is no migration. `tools/macro.py`'s FRED path is unchanged and continues to serve the sector macro worker; no code blends the two sources. See 026 research.md D3 and plan.md Complexity Tracking.
+>
+> 2. **`market_risk_premium` has no provider `date` field.** The live response carries only `country`, `continent`, `countryRiskPremium`, `totalEquityRiskPremium`. The unique key is `country` alone, and `collected_at` serves as the as-of date. See 026 research.md D5.
 
 ### `insider_feed` note
 

@@ -1,64 +1,28 @@
-// React Query hooks for /earnings endpoints: trigger a scan, poll it to
-// completion, enqueue selected tickers, and lazy-load a ticker's move history.
+// React Query hooks for /earnings endpoints: the filtered calendar and
+// enqueuing selected tickers. spec: specs/025-earnings-page-filters
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { api } from "../api/client";
-import type { EarningsCalendarEntry, EarningsHistory, EarningsScanDoc } from "../api/types";
+import type { EarningsCalendarResponse } from "../api/types";
 
-/** Upcoming pre-screened calendar (read-only on the backend — queuing a
- * ticker is an explicit per-row action via useAnalyzeTickers). */
-export function useEarningsCalendar(days: number) {
+/** Date-windowed earnings calendar with actuals/surprise for anything already
+ * reported (read-only on the backend — queuing a ticker is an explicit
+ * per-row action via useAnalyzeTickers). Query-keyed by the exact window so
+ * TanStack Query's per-key caching gives cache reuse across repeated preset
+ * clicks and discards stale out-of-order responses for free (FR-027d/e,
+ * research.md D8) — no polling (refetchInterval stays off, Constitution
+ * Principle V). */
+export function useEarningsCalendar(from: string, to: string) {
   return useQuery({
-    queryKey: ["earnings-calendar", days],
+    queryKey: ["earnings-calendar", from, to],
     queryFn: async () => {
-      const { data } = await api.get<EarningsCalendarEntry[]>(`/earnings/calendar?days=${days}`);
-      return data;
-    },
-    staleTime: 60 * 60 * 1000, // backend caches 4h; don't hammer on tab focus
-  });
-}
-
-/** Scan lifecycle: POST /earnings/scan returns a scan_id; the agent-runner
- * picks the job up from Mongo, so we poll every 3s until complete/failed. */
-export function useEarningsScan() {
-  const [scanId, setScanId] = useState<string | null>(null);
-
-  const start = useMutation({
-    mutationFn: async (daysAhead: number) => {
-      const { data } = await api.post<{ scan_id: string; status: string }>(
-        "/earnings/scan",
-        { days_ahead: daysAhead },
+      const { data } = await api.get<EarningsCalendarResponse>(
+        `/earnings/calendar?from=${from}&to=${to}`,
       );
       return data;
     },
-    onSuccess: (data) => setScanId(data.scan_id),
+    staleTime: 4 * 60 * 60 * 1000, // backend caches 4h per window; don't hammer on tab focus
+    placeholderData: (previous) => previous, // keep prior rows visible while a new window loads (FR-027c)
   });
-
-  const scan = useQuery({
-    queryKey: ["earnings-scan", scanId],
-    queryFn: async () => {
-      const { data } = await api.get<EarningsScanDoc>(`/earnings/scan/${scanId}`);
-      return data;
-    },
-    enabled: scanId !== null,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      return status === "complete" || status === "failed" ? false : 3000;
-    },
-  });
-
-  const status = start.isPending
-    ? "running"
-    : (scanId ? (scan.data?.status ?? "running") : "idle");
-
-  return {
-    startScan: (daysAhead: number) => start.mutate(daysAhead),
-    scan: scan.data,
-    // pending (not yet claimed) and running both read as "scanning" for the UI
-    isScanning: status === "pending" || status === "running",
-    status,
-    startError: start.isError,
-  };
 }
 
 /** Direct enqueue — no chat step. The crew picks the job up on its next poll. */
@@ -72,18 +36,5 @@ export function useAnalyzeTickers() {
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["queue"] }),
-  });
-}
-
-/** Post-earnings move log for the candidate detail card (fetched on open). */
-export function useEarningsHistory(ticker: string | null) {
-  return useQuery({
-    queryKey: ["earnings-history", ticker],
-    queryFn: async () => {
-      const { data } = await api.get<EarningsHistory>(`/earnings/history/${ticker}`);
-      return data;
-    },
-    enabled: ticker !== null,
-    staleTime: 24 * 60 * 60 * 1000, // backend caches 24h anyway
   });
 }

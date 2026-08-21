@@ -19,3 +19,20 @@ export function formatDate(iso: string): string | null {
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
+
+/** "Sep 4, 8:30 AM ET" — economic-calendar release times are quoted in US
+ * market convention regardless of the viewer's own timezone, so the
+ * timezone must be explicit rather than left to the browser's locale
+ * (specs/026-macro-market-dashboard FR-022). */
+export function formatEasternTime(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const formatted = new Intl.DateTimeFormat(undefined, {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
+  return `${formatted} ET`;
+}

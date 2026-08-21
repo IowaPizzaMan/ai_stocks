@@ -33,7 +33,7 @@ test("zoneBands ignores readings inside the bands", () => {
   ]);
 });
 
-test("mergeSeries aligns both panes on one sorted date spine", () => {
+test("mergeSeries aligns all three series on one sorted date spine", () => {
   const merged = mergeSeries(
     [
       { date: "2026-08-02", close: 630 },
@@ -43,11 +43,14 @@ test("mergeSeries aligns both panes on one sorted date spine", () => {
       { date: "2026-08-01", value: -12 },
       { date: "2026-08-03", value: -20 },
     ],
+    [
+      { date: "2026-08-01", value: -5 },
+    ],
   );
   expect(merged).toEqual([
-    { date: "2026-08-01", close: 625, osc: -12 },
-    { date: "2026-08-02", close: 630, osc: null },
-    { date: "2026-08-03", close: null, osc: -20 },
+    { date: "2026-08-01", close: 625, nymo: -12, namo: -5 },
+    { date: "2026-08-02", close: 630, nymo: null, namo: null },
+    { date: "2026-08-03", close: null, nymo: -20, namo: null },
   ]);
 });
 
@@ -78,7 +81,10 @@ const breadth = (overrides: Partial<MarketBreadth> = {}): MarketBreadth => ({
     { date: "2026-08-01", value: 31.2 },
     { date: "2026-08-02", value: 18.4 },
   ],
-  namo: [],
+  namo: [
+    { date: "2026-08-01", value: 12.5 },
+    { date: "2026-08-02", value: 9.1 },
+  ],
   divergence: {
     type: "bearish",
     description: "SPY made a higher high while NYMO set a lower high",
@@ -115,4 +121,27 @@ test("omits the caption when no divergence is in force", () => {
   });
   render(<BreadthDivergenceChart breadth={none} />);
   expect(screen.queryByText(/divergence —/)).toBeNull();
+});
+
+test("labels the oscillator pane with both series and renders with no toggle controls", () => {
+  render(<BreadthDivergenceChart breadth={breadth()} />);
+  expect(screen.getByText("SPY vs NYMO / NAMO")).toBeDefined();
+  // The removed duplicate chart's NYMO/NAMO toggle is gone entirely — both
+  // series render together, nothing to switch between.
+  expect(screen.queryAllByRole("button")).toHaveLength(0);
+});
+
+test("renders with a shared oscillator pane even when NAMO has no data", () => {
+  // NYMO alone still gates the empty state (research D8) — NAMO's absence
+  // shouldn't blank the whole chart.
+  render(<BreadthDivergenceChart breadth={breadth({ namo: [] })} />);
+  expect(screen.queryByText(/no breadth data yet/)).toBeNull();
+  expect(screen.getByText(/bearish divergence/)).toBeDefined();
+});
+
+test("the divergence caption no longer carries a NYMO-only toggle caveat", () => {
+  // Previously said "measured on NYMO; switch back to see it drawn" when
+  // NAMO was selected — that caveat only made sense with a toggle.
+  render(<BreadthDivergenceChart breadth={breadth()} />);
+  expect(screen.queryByText(/switch back to see it drawn/)).toBeNull();
 });

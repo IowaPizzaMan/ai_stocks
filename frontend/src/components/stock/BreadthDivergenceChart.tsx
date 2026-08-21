@@ -1,11 +1,14 @@
 // Spec: specs/component-specs/frontend/components/stock/BreadthDivergenceChart.md
 //
 // Two stacked panes on one date axis: SPY closes over the McClellan oscillator.
-// The divergence is drawn, not just described — each series gets its two swing
-// anchors dotted and joined by a dashed trend line, and the two lines slope
-// opposite ways. Ticker-independent by design (SPY + breadth only), so it also
-// backs the market-flow feed card.
-import { type ReactNode, useState } from "react";
+// The oscillator pane carries both NYMO and NAMO as two lines on one shared
+// ±60 scale (specs/026-macro-market-dashboard, Q2) so the two exchanges read
+// as a comparison, not two separate boxes. The divergence is drawn, not just
+// described — it's measured against NYMO only (market_flow_rules.md §4), so
+// its swing anchors and dashed trend line sit on the NYMO line specifically.
+// Ticker-independent by design (SPY + breadth only), so it also backs the
+// market-flow feed card.
+import { type ReactNode } from "react";
 import {
   ComposedChart,
   Line,
@@ -63,15 +66,17 @@ export function zoneBands(series: BreadthPoint[]): ZoneBand[] {
   return bands;
 }
 
-/** One row per date across both series so the panes share exact categories. */
-export function mergeSeries(spy: SpyPoint[], osc: BreadthPoint[]) {
+/** One row per date across all three series so the panes share exact categories. */
+export function mergeSeries(spy: SpyPoint[], nymo: BreadthPoint[], namo: BreadthPoint[]) {
   const closes = new Map(spy.map((p) => [p.date, p.close]));
-  const values = new Map(osc.map((p) => [p.date, p.value]));
-  const dates = [...new Set([...closes.keys(), ...values.keys()])].sort();
+  const nymoValues = new Map(nymo.map((p) => [p.date, p.value]));
+  const namoValues = new Map(namo.map((p) => [p.date, p.value]));
+  const dates = [...new Set([...closes.keys(), ...nymoValues.keys(), ...namoValues.keys()])].sort();
   return dates.map((date) => ({
     date,
     close: closes.get(date) ?? null,
-    osc: values.get(date) ?? null,
+    nymo: nymoValues.get(date) ?? null,
+    namo: namoValues.get(date) ?? null,
   }));
 }
 
@@ -178,18 +183,14 @@ const TOOLTIP_STYLE = {
 
 export default function BreadthDivergenceChart({
   breadth,
-  oscillator: initialOscillator = "nymo",
   compact = false,
 }: {
   breadth: MarketBreadth;
-  oscillator?: "nymo" | "namo";
   compact?: boolean;
 }) {
-  const [oscillator, setOscillator] = useState(initialOscillator);
-  const series = breadth[oscillator];
   const divergence: Divergence = breadth.divergence;
 
-  if (!series.length || !breadth.spy.length) {
+  if (!breadth.nymo.length || !breadth.spy.length) {
     return (
       <div className="flex h-28 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-600">
         no breadth data yet — the agent-runner computes it once a day
@@ -197,12 +198,12 @@ export default function BreadthDivergenceChart({
     );
   }
 
-  const data = mergeSeries(breadth.spy, series);
-  const bands = zoneBands(series);
+  const data = mergeSeries(breadth.spy, breadth.nymo, breadth.namo);
+  // Zone shading tracks NYMO — the primary signal (market_flow_rules.md §4)
+  // and the series divergences are actually measured against.
+  const bands = zoneBands(breadth.nymo);
   const color = DIVERGENCE_COLOR[divergence.type];
-  // Divergence is measured against NYMO (market_flow_rules.md §4 — NYMO is the
-  // primary signal), so the anchors only belong on the NYMO pane.
-  const showDivergence = divergence.type !== "none" && oscillator === "nymo";
+  const showDivergence = divergence.type !== "none";
   const closeByDate = new Map(breadth.spy.map((p) => [p.date, p.close]));
   // A marker can only sit on a date the axis has a category for, so snap each
   // resolution to the nearest charted session.
@@ -216,26 +217,9 @@ export default function BreadthDivergenceChart({
   return (
     <div>
       {!compact && (
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-wide text-zinc-600">
-            SPY vs {oscillator.toUpperCase()}
-          </p>
-          <div className="flex gap-1">
-            {(["nymo", "namo"] as const).map((key) => (
-              <button
-                key={key}
-                onClick={() => setOscillator(key)}
-                className={`rounded px-2 py-0.5 text-[10px] uppercase transition-colors ${
-                  oscillator === key
-                    ? "bg-zinc-700 text-white"
-                    : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-                }`}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="mb-1 text-[10px] uppercase tracking-wide text-zinc-600">
+          SPY vs NYMO / NAMO
+        </p>
       )}
 
       <ResponsiveContainer width="100%" height={compact ? 80 : 130}>
@@ -343,18 +327,32 @@ export default function BreadthDivergenceChart({
           <Line
             yAxisId="osc"
             type="monotone"
-            dataKey="osc"
+            dataKey="nymo"
             stroke={CHART_DEFAULTS.bfActiveColor}
             strokeWidth={1.5}
             dot={false}
             connectNulls
             isAnimationActive={false}
-            name={oscillator.toUpperCase()}
+            name="NYMO"
+          />
+          <Line
+            yAxisId="osc"
+            type="monotone"
+            dataKey="namo"
+            stroke={CHART_DEFAULTS.bfPriorColor}
+            strokeWidth={1.5}
+            dot={false}
+            connectNulls
+            isAnimationActive={false}
+            name="NAMO"
           />
 
           {showDivergence && divergenceOverlay(divergence.osc_points, "osc", color)}
 
-          <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [Number(v).toFixed(1), oscillator.toUpperCase()]} />
+          <Tooltip
+            {...TOOLTIP_STYLE}
+            formatter={(v, name) => [Number(v).toFixed(1), name as string]}
+          />
         </ComposedChart>
       </ResponsiveContainer>
 
@@ -369,9 +367,6 @@ export default function BreadthDivergenceChart({
               {divergence.price_points[1].value} on {divergence.price_points[1].date}; NYMO{" "}
               {divergence.osc_points[0]?.value} → {divergence.osc_points[1]?.value})
             </>
-          )}
-          {oscillator === "namo" && (
-            <span className="text-zinc-500"> — measured on NYMO; switch back to see it drawn</span>
           )}
         </p>
       )}

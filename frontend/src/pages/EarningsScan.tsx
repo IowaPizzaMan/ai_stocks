@@ -1,134 +1,105 @@
-// Spec: specs/component-specs/frontend/pages/EarningsScan.md
-// Single-pane scan view: the upcoming calendar is always browsable with a
-// per-row Queue button (the backend calendar endpoint is read-only); running
-// a scan scores the top candidates into a ranked table. Not conversational.
-import { useEffect, useState } from "react";
-import type { EarningsCandidate } from "../api/types";
-import EarningsCalendarTable from "../components/earnings/EarningsCalendarTable";
-import EarningsCandidateCard from "../components/earnings/EarningsCandidateCard";
-import ScanControls, { type ScanConfig } from "../components/earnings/ScanControls";
-import UpcomingEarningsTable from "../components/earnings/UpcomingEarningsTable";
-import {
-  useAnalyzeTickers,
-  useEarningsCalendar,
-  useEarningsScan,
-} from "../hooks/useEarningsScan";
+// Spec: specs/025-earnings-page-filters. Auto-loading, date-windowed earnings
+// calendar — no manual scan trigger (FR-000). Date changes refetch the
+// server; the size sliders and big-movers toggle filter client-side with
+// zero additional requests (FR-027b).
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import EarningsFilterBar, {
+  DEFAULT_MIN_EPS,
+  DEFAULT_MIN_REV,
+  getDefaultWindow,
+} from "../components/earnings/EarningsFilterBar";
+import EarningsTable from "../components/earnings/EarningsTable";
+import { useAnalyzeTickers, useEarningsCalendar } from "../hooks/useEarningsScan";
+import { filterEntries } from "../lib/earningsFilters";
 
 export default function EarningsScan() {
-  const { startScan, scan, isScanning, status, startError } = useEarningsScan();
-  const analyze = useAnalyzeTickers();
+  const [searchParams] = useSearchParams();
   const [queuedTickers, setQueuedTickers] = useState<Set<string>>(new Set());
-  const [minCapBn, setMinCapBn] = useState(0.5);
-  const [daysAhead, setDaysAhead] = useState(7);
-  const [detail, setDetail] = useState<EarningsCandidate | null>(null);
-
-  const calendar = useEarningsCalendar(daysAhead);
+  const analyze = useAnalyzeTickers();
 
   useEffect(() => {
-    document.title = "StockAI — Earnings Scanner";
+    document.title = "StockAI — Earnings";
   }, []);
 
-  const onScan = (config: ScanConfig) => {
-    setDaysAhead(config.days_ahead);
-    setMinCapBn(config.min_market_cap_bn);
-    startScan(config.days_ahead);
-  };
+  const defaultWindow = getDefaultWindow();
+  const from = searchParams.get("from") ?? defaultWindow.from;
+  const to = searchParams.get("to") ?? defaultWindow.to;
+  const minRev = Number(searchParams.get("min_rev") ?? DEFAULT_MIN_REV);
+  const minEps = Number(searchParams.get("min_eps") ?? DEFAULT_MIN_EPS);
+  const moversOnly = searchParams.get("movers") === "1";
+
+  const calendar = useEarningsCalendar(from, to);
+
+  const rawEntries = calendar.data?.entries ?? [];
+  const filteredEntries = useMemo(
+    () => filterEntries(rawEntries, { minRev, minEps, moversOnly }),
+    [rawEntries, minRev, minEps, moversOnly],
+  );
 
   const analyzeTicker = (ticker: string) => {
     analyze.mutate([ticker]);
     setQueuedTickers((prev) => new Set(prev).add(ticker));
   };
 
-  // backend screens at $500M; the dropdown narrows the displayed set further
-  const candidates = (scan?.candidates ?? []).filter(
-    (c) => c.market_cap >= minCapBn * 1e9,
-  );
-  const calendarEntries = (calendar.data ?? []).filter(
-    (e) => e.market_cap >= minCapBn * 1e9,
-  );
+  const isInitialLoad = calendar.isLoading;
+  const dateWindowEmpty = !calendar.isLoading && !calendar.isError && rawEntries.length === 0;
+  const filtersEmptiedIt = !dateWindowEmpty && filteredEntries.length === 0 && rawEntries.length > 0;
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      <h1 className="text-xl font-semibold">Earnings Scanner</h1>
+      <h1 className="text-xl font-semibold">Earnings</h1>
 
-      <ScanControls
-        onScan={onScan}
-        onMinCapChange={setMinCapBn}
-        onDaysChange={setDaysAhead}
-        isScanning={isScanning}
+      <EarningsFilterBar
+        visibleCount={filteredEntries.length}
+        totalCount={rawEntries.length}
       />
 
-      {isScanning && (
-        <p className="text-sm text-zinc-400">
-          Scanning companies reporting in the next {daysAhead} days… this enriches the
-          top candidates with earnings history, insider activity, and volume data
-          (takes a couple of minutes).
+      {calendar.data?.stale && (
+        <p className="rounded-lg border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-400">
+          Showing cached data — the earnings provider is temporarily unavailable
+          {calendar.data.fetched_at ? ` (as of ${calendar.data.fetched_at})` : ""}.
         </p>
       )}
 
-      {status === "failed" && (
+      {calendar.isError && (
         <p className="py-4 text-center text-sm text-red-400">
-          Scan failed{scan?.error ? `: ${scan.error}` : ""} — is the agent-runner up?
+          Couldn't load the earnings calendar — is the backend running?
         </p>
       )}
 
-      {startError && (
-        <p className="py-4 text-center text-sm text-red-400">
-          Couldn't start the scan — is the backend running?
-        </p>
-      )}
+      {!calendar.isError && (
+        <>
+          {calendar.isFetching && !isInitialLoad && (
+            <p className="text-xs text-zinc-500">Updating window…</p>
+          )}
 
-      {status === "complete" && (
-        <p className="text-sm text-zinc-500">
-          Scored {candidates.length}
-          {scan?.scored_count !== candidates.length ? ` of ${scan?.scored_count}` : ""} candidates
-          (screened {scan?.total_screened} companies ≥ $500M reporting in the next{" "}
-          {scan?.days_ahead} days).
-        </p>
-      )}
+          <EarningsTable
+            entries={filteredEntries}
+            isLoading={isInitialLoad}
+            queuedTickers={queuedTickers}
+            onQueueTicker={analyzeTicker}
+          />
 
-      {(isScanning || (status === "complete" && candidates.length > 0)) && (
-        <EarningsCalendarTable
-          candidates={candidates}
-          isLoading={isScanning}
-          queuedTickers={queuedTickers}
-          onAnalyzeTicker={analyzeTicker}
-          onShowDetails={setDetail}
-        />
-      )}
+          {dateWindowEmpty && (
+            <p className="py-8 text-center text-sm text-zinc-500">
+              No companies report in this window — try a wider date range.
+            </p>
+          )}
 
-      {status === "complete" && candidates.length === 0 && (
-        <p className="py-8 text-center text-sm text-zinc-500">
-          No candidates above the selected market-cap floor — lower it or widen the window.
-        </p>
-      )}
+          {filtersEmptiedIt && moversOnly && (
+            <p className="py-8 text-center text-sm text-zinc-500">
+              "Big movers only" is hiding every company in this window — turn it off to see
+              the rest.
+            </p>
+          )}
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase text-zinc-500">
-          Upcoming earnings (next {daysAhead} days, ≥ $500M)
-        </h2>
-        {calendar.isError && (
-          <p className="py-4 text-center text-sm text-red-400">
-            Couldn't load the calendar — is the backend running?
-          </p>
-        )}
-        <UpcomingEarningsTable
-          entries={calendarEntries}
-          isLoading={calendar.isLoading}
-          queuedTickers={queuedTickers}
-          onQueueTicker={analyzeTicker}
-        />
-      </section>
-
-      {detail && (
-        <EarningsCandidateCard
-          candidate={detail}
-          queued={queuedTickers.has(detail.ticker)}
-          onAnalyze={(t) => {
-            analyzeTicker(t);
-          }}
-          onClose={() => setDetail(null)}
-        />
+          {filtersEmptiedIt && !moversOnly && (
+            <p className="py-8 text-center text-sm text-zinc-500">
+              No companies match the revenue/EPS floors — try lowering them.
+            </p>
+          )}
+        </>
       )}
     </div>
   );

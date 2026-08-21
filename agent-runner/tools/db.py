@@ -62,6 +62,10 @@ PRICE_HISTORY = "price_history"
 INSIDER_CACHE = "insider_cache"
 PULL_METRICS = "pull_metrics"
 
+# 026-macro-market-dashboard — economics_worker's own daily-scheduling marker,
+# separate from dataset_meta's success/failure freshness (mirrors BREADTH_META).
+ECONOMICS_META = "economics_meta"
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -118,6 +122,15 @@ def ensure_indexes(db: Database | None = None) -> None:
     # stages over time, per spec FR-003)
     db[PULL_METRICS].create_index([("ticker", ASCENDING), ("started_at", DESCENDING)])
     db[PULL_METRICS].create_index("started_at", expireAfterSeconds=30 * 24 * 3600)
+    # 026-macro-market-dashboard — treasury_rates is a maintained store (no TTL,
+    # same discipline as price_history): a backfill-then-daily-extend history the
+    # curve/spread reads depend on, so expiry would destroy the baseline.
+    db[TREASURY_RATES].create_index([("date", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", ASCENDING), ("event", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", DESCENDING)])
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", ASCENDING)], unique=True)
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", DESCENDING)])
+    db[MARKET_RISK_PREMIUM].create_index([("country", ASCENDING)], unique=True)
 
 
 def sanitize_floats(value):
