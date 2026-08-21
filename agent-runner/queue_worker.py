@@ -15,6 +15,7 @@ from logging_config import get_logger
 from tools.admin_jobs import JOB_DATASETS, JOB_HANDLERS, STALE_MINUTES
 from tools.db import (
     ANALYSES,
+    PULL_METRICS,
     WORK_QUEUE,
     ensure_indexes,
     get_db,
@@ -110,6 +111,36 @@ def _run_admin_job(db, job) -> bool:
     return True
 
 
+def _write_pull_metrics(db, job, crew, outcome: str) -> None:
+    """Persists the pull-cost breakdown for this job (024 US1, FR-001..FR-004).
+
+    A crew that reports nothing (a stub, or a run that raised before finishing
+    prefetch) simply writes nothing — measurement is diagnostic and must never
+    become a precondition for running an analysis.
+    """
+    pull = getattr(crew, "last_pull", None)
+    if not pull:
+        return
+    db[PULL_METRICS].insert_one({
+        "ticker": job["ticker"],
+        "job_id": str(job["_id"]),
+        "mode": pull.get("mode", "delta"),
+        "started_at": pull.get("started_at"),
+        "completed_at": pull.get("completed_at"),
+        "total_ms": pull.get("total_ms", 0),
+        "outcome": outcome,
+        "stages": pull.get("stages", []),
+    })
+
+
+def _record_pull_metrics(db, job, crew, outcome: str) -> None:
+    """FR-005 — a failure in measurement must not cost us the analysis."""
+    try:
+        _write_pull_metrics(db, job, crew, outcome)
+    except Exception:
+        logger.exception("failed to write pull metrics for %s", job.get("ticker"))
+
+
 def claim_and_run_next(db=None, crew=None) -> bool:
     """Claim the oldest pending job and run it to completion.
     Returns False when the queue is empty (caller sleeps), True otherwise."""
@@ -130,21 +161,25 @@ def claim_and_run_next(db=None, crew=None) -> bool:
         return _run_admin_job(db, job)
 
     ticker = job["ticker"]
-    logger.info("claimed job %s for %s", job["_id"], ticker)
+    # 024 — absent means delta, so jobs queued before this feature (and every
+    # existing enqueue call site) stay valid with no migration (FR-021).
+    mode = job.get("mode") or "delta"
+    logger.info("claimed job %s for %s (mode=%s)", job["_id"], ticker, mode)
     crew = crew if crew is not None else Crew(db=db)
 
     try:
         # earnings-scanner jobs opt in to parallel prefetch (user picked them
         # from a ranked list and is waiting on the result)
-        result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")))
+        result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")), mode=mode)
         result = sanitize_floats(result)
         write_db(ANALYSES, result, upsert_key="ticker", db=db)
         db[WORK_QUEUE].update_one(
             {"_id": job["_id"]},
             {"$set": {"status": "done", "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
-        logger.info("%s analysis done (signal=%s conviction=%s)",
-                    ticker, result.get("signal"), result.get("conviction"))
+        _record_pull_metrics(db, job, crew, "done")
+        logger.info("%s analysis done (mode=%s signal=%s conviction=%s)",
+                    ticker, mode, result.get("signal"), result.get("conviction"))
     except TickerDelistedError as exc:
         logger.warning("%s appears delisted — marking removed_from_market", exc.ticker)
         mark_ticker_removed(exc.ticker, reason=str(exc), db=db)
@@ -153,6 +188,7 @@ def claim_and_run_next(db=None, crew=None) -> bool:
             {"$set": {"status": "failed", "delisted": True, "error": str(exc),
                       "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
+        _record_pull_metrics(db, job, crew, "failed")
     except Exception as exc:
         logger.exception("%s job failed", ticker)
         db[WORK_QUEUE].update_one(
@@ -160,5 +196,6 @@ def claim_and_run_next(db=None, crew=None) -> bool:
             {"$set": {"status": "failed", "delisted": False, "error": str(exc),
                       "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
+        _record_pull_metrics(db, job, crew, "failed")
 
     return True

@@ -18,6 +18,7 @@ from pymongo.database import Database
 
 from logging_config import get_logger
 from settings import settings
+from tools import metrics
 from tools.db import FMP_ENTITLEMENTS, get_db, track_fmp_call
 
 logger = get_logger(__name__)
@@ -83,19 +84,39 @@ def fmp_get(path: str, db: Database | None = None) -> list | dict:
     sep = "&" if "?" in path else "?"
     url = f"{FMP_BASE}{path}{sep}apikey={settings.fmp_api_key}"
     r = requests.get(url, timeout=15)
+    # Attribute the call before raise_for_status: a 402/403 still cost us the
+    # round trip, and a stage that spent time on failures is worth seeing (024).
+    _record_metrics(r)
     r.raise_for_status()
     return r.json()
+
+
+def _record_metrics(response) -> None:
+    """Attributes this call to the active pull stage (024, FR-002). Never raises
+    — measurement must not be able to fail a pull (FR-005)."""
+    try:
+        metrics.record_call(len(response.content or b""))
+    except Exception:  # pragma: no cover - defensive; instrumentation is not load-bearing
+        logger.debug("metrics attribution failed", exc_info=True)
 
 
 _OHLCV_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 
 
-def fetch_eod_history(ticker: str, db: Database | None = None) -> pd.DataFrame:
-    """Full available EOD history for a ticker from FMP (dividend/split
-    adjusted), shaped like yfinance's history() output — Open/High/Low/Close/
-    Volume columns, ascending DatetimeIndex — so downstream consumers
-    (resampling, indicators) need no changes (research D2/D3)."""
-    raw = fmp_get(f"historical-price-eod/full?symbol={ticker}", db=db)
+def fetch_eod_history(ticker: str, db: Database | None = None, start=None) -> pd.DataFrame:
+    """EOD history for a ticker from FMP (dividend/split adjusted), shaped like
+    yfinance's history() output — Open/High/Low/Close/Volume columns, ascending
+    DatetimeIndex — so downstream consumers (resampling, indicators) need no
+    changes (research D2/D3).
+
+    `start` bounds the request to bars on or after that date (024 US2). Note
+    this saves transfer and parse time, NOT an API call: a bounded request costs
+    the same single call as an unbounded one (research D1).
+    """
+    path = f"historical-price-eod/full?symbol={ticker}"
+    if start is not None:
+        path += f"&from={start.isoformat()}"
+    raw = fmp_get(path, db=db)
     rows = raw.get("historical", raw) if isinstance(raw, dict) else raw
     if not rows:
         return pd.DataFrame(columns=_OHLCV_COLUMNS)

@@ -1,23 +1,26 @@
 """Spec: specs/component-specs/backend/routers/earnings.md
 
-Not conversational — the scan produces a ranked table and selecting tickers
-posts straight to the work queue. The scoring scan itself runs in the
-agent-runner (it needs Ollama), so POST /scan just inserts a pending doc in
-`earnings_scans` that earnings_scan_worker.py claims; the frontend polls
-GET /scan/{scan_id} until it flips to complete/failed.
+Not conversational — selecting tickers off the calendar posts straight to the
+work queue. `POST /scan` and `GET /scan/{scan_id}` remain below for the
+agent-runner's scoring worker, but specs/025-earnings-page-filters removed
+their only caller (the frontend's manual scan trigger); they are dormant, not
+deleted (KNOWN_ISSUES.md).
 """
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 import earnings_data
 from db import EARNINGS_SCANS, WORK_QUEUE
 from deps import db_dependency
+from fmp import FmpBudgetExceededError
 from registry import register_ticker
 
 router = APIRouter(prefix="/earnings", tags=["earnings"])
+
+MAX_CALENDAR_SPAN_DAYS = 90
 
 
 def _utcnow() -> datetime:
@@ -33,15 +36,41 @@ class AnalyzeRequest(BaseModel):
 
 
 @router.get("/calendar")
-def get_calendar(days: int = 7, db=Depends(db_dependency)):
-    """Pre-screened upcoming earnings (raw, unscored). Cached 4h.
+def get_calendar(
+    from_: date = Query(..., alias="from"),
+    to: date = Query(...),
+    db=Depends(db_dependency),
+):
+    """Every company >=$500M cap reporting between `from` and `to` (inclusive),
+    with actuals/surprise for anything already reported. Cached 4h per exact
+    window (contracts/earnings-calendar.md, specs/025-earnings-page-filters).
 
-    Read-only, deviating from the spec's auto-ingest design: during earnings
-    season the calendar holds 600-900 names, and registering + enqueueing them
-    all meant ~1-min crew runs for hours and a bloated ticker_index for Run
-    All sweeps. Tickers enter the system one at a time instead — the user
-    queues them from the calendar table via POST /earnings/analyze."""
-    return earnings_data.get_earnings_calendar(days_ahead=days, db=db)
+    Read-only, deviating from the original spec's auto-ingest design: during
+    earnings season the calendar holds hundreds of names, and registering +
+    enqueueing them all meant ~1-min crew runs for hours and a bloated
+    ticker_index for Run All sweeps. Tickers enter the system one at a time
+    instead — the user queues them from the calendar table via
+    POST /earnings/analyze."""
+    if from_ > to:
+        raise HTTPException(status_code=422, detail="'from' must not be after 'to'")
+    if (to - from_).days > MAX_CALENDAR_SPAN_DAYS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"date range too wide (max {MAX_CALENDAR_SPAN_DAYS} days)",
+        )
+
+    try:
+        return earnings_data.get_earnings_calendar(start=from_, end=to, db=db)
+    except FmpBudgetExceededError:
+        raise HTTPException(
+            status_code=503,
+            detail="Earnings calendar temporarily unavailable — FMP daily budget spent",
+        ) from None
+    except earnings_data.CalendarUnavailableError:
+        raise HTTPException(
+            status_code=502, detail="Earnings calendar provider unavailable") from None
+    except earnings_data.UniverseUnavailableError:
+        raise HTTPException(status_code=502, detail="Company universe unavailable") from None
 
 
 @router.post("/scan")

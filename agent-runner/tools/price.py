@@ -4,13 +4,19 @@ Indicators are computed directly with pandas (pandas-ta 0.3.x was pulled from
 PyPI and 0.4.x is an incompatible py3.12-only rewrite — see spec).
 
 Sourced from FMP (stable API) as of specs/017-fmp-migration-admin — yfinance
-is retired. get_price_history() fetches one full daily history per ticker
-and derives weekly/monthly/quarterly/yearly by local resample instead of
-three separate network calls (previously one yfinance call per resolution).
+is retired. get_price_history() derives weekly/monthly/quarterly/yearly by
+local resample instead of separate network calls per resolution.
+
+As of specs/024-delta-data-pulls these read the maintained daily series from
+tools/price_store.py with refresh="none" — the series is refreshed exactly once
+per pull by Crew._prefetch, so the three readers here can no longer each
+trigger their own download (FR-014, SC-003; previously `price` and `indicators`
+downloaded the same full history twice in one pull).
 """
 import pandas as pd
 
-from tools.fmp_client import FmpBudgetExceededError, fetch_eod_history, fmp_get
+from tools import price_store
+from tools.fmp_client import FmpBudgetExceededError, fmp_get
 
 
 def _slice_period(df: pd.DataFrame, period: str) -> pd.DataFrame:
@@ -37,11 +43,11 @@ def _resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
     return df.resample(rule).agg(agg).dropna(subset=["Open"])
 
 
-def get_price_history(ticker: str, period: str = "1y") -> dict:
+def get_price_history(ticker: str, period: str = "1y", db=None) -> dict:
     """OHLCV history at daily/weekly/monthly/quarterly/yearly resolution —
-    skills need all five for TFC. One FMP fetch backs all five; weekly/
+    skills need all five for TFC. One stored series backs all five; weekly/
     monthly/quarterly/yearly are resampled locally."""
-    daily_full = fetch_eod_history(ticker)
+    daily_full, _ = price_store.get_series(ticker, refresh="none", db=db)
     monthly_full = _resample(daily_full, "ME")
     return {
         "daily": _slice_period(daily_full, period).reset_index().to_dict(orient="records"),
@@ -97,16 +103,18 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def get_technical_indicators(ticker: str) -> list[dict]:
+def get_technical_indicators(ticker: str, db=None) -> list[dict]:
     """Last 30 days of indicator signals on 1y of daily bars."""
-    df = _slice_period(fetch_eod_history(ticker), "1y")
+    series, _ = price_store.get_series(ticker, refresh="none", db=db)
+    df = _slice_period(series, "1y")
     return compute_indicators(df).tail(30).reset_index().to_dict(orient="records")
 
 
-def get_accumulation_score(ticker: str, lookback_days: int = 60) -> dict:
+def get_accumulation_score(ticker: str, lookback_days: int = 60, db=None) -> dict:
     from skills import accumulation
 
-    df = _slice_period(fetch_eod_history(ticker), f"{lookback_days}d")
+    series, _ = price_store.get_series(ticker, refresh="none", db=db)
+    df = _slice_period(series, f"{lookback_days}d")
     return accumulation.run(ticker, df)
 
 

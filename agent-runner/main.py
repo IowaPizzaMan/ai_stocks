@@ -8,12 +8,15 @@ Four loops in one process:
 - market breadth refresh once daily (NYMO/NAMO + SPY divergence tracking)
 - macro refresh, throttled to at most once an hour (per-sector economic
   reads, independent of any ticker's analysis — specs/020-surface-macro-ui)
+- economics refresh once daily (treasury rates, economic calendar, indicators,
+  risk premium for the Macro dashboard — specs/026-macro-market-dashboard)
 """
 import time
 from datetime import datetime, timezone
 
 from breadth_worker import run_daily_breadth_if_due
 from earnings_scan_worker import claim_and_run_next_scan
+from economics_worker import run_daily_economics_if_due
 from institutional_flow_worker import run_daily_scan_if_due
 from logging_config import get_logger
 from macro_worker import run_macro_refresh_if_due
@@ -34,6 +37,7 @@ def main() -> None:
             run_daily_scan_if_due(now=now)
             run_daily_breadth_if_due(now=now)
             run_macro_refresh_if_due(now=now)
+            run_daily_economics_if_due(now=now)
             scanned = claim_and_run_next_scan()
             worked = claim_and_run_next()
             if not (scanned or worked):

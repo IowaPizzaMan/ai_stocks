@@ -45,9 +45,25 @@ STOCK_NEWS = "stock_news"
 MARKET_NEWS = "market_news"
 COMPANY_INFO = "company_info"
 
+# 021-stock-page-redesign — per-ticker pull-time caches, keep in sync with agent-runner/tools/db.py
+STOCK_NEWS_CACHE = "stock_news_cache"
+BENEFICIAL_OWNERSHIP_CACHE = "beneficial_ownership_cache"
+
 # 022-market-news-feed — keep in sync with agent-runner/tools/db.py
 MARKET_NEWS_CACHE = "market_news_cache"
 FMP_USAGE = "fmp_usage"
+
+# 024-delta-data-pulls — keep in sync with agent-runner/tools/db.py.
+# price_history is a maintained store, not a cache: one doc per ticker holding the
+# full daily series, extended incrementally. It deliberately has NO TTL — expiry
+# would destroy the baseline every delta pull depends on. Retired price_cache.
+PRICE_HISTORY = "price_history"
+INSIDER_CACHE = "insider_cache"
+PULL_METRICS = "pull_metrics"
+
+# 026-macro-market-dashboard — agent-runner's economics_worker scheduling
+# marker; backend never reads it, kept in sync per constitution VI convention.
+ECONOMICS_META = "economics_meta"
 
 
 @lru_cache(maxsize=1)
@@ -81,3 +97,11 @@ def ensure_indexes(db: Database) -> None:
     # 60-minute window is compared in code so the stale copy survives expiry and
     # can still be served when a refresh fails (specs/022 data-model.md §2).
     db[MARKET_NEWS_CACHE].create_index([("key", ASCENDING)], unique=True)
+    # 026-macro-market-dashboard — written by agent-runner's economics_pull job;
+    # backend only reads these, but declares the same indexes per constitution VI.
+    db[TREASURY_RATES].create_index([("date", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", ASCENDING), ("event", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", DESCENDING)])
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", ASCENDING)], unique=True)
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", DESCENDING)])
+    db[MARKET_RISK_PREMIUM].create_index([("country", ASCENDING)], unique=True)

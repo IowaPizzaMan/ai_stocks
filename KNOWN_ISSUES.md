@@ -33,24 +33,45 @@
   likely in wherever weekly/monthly % change stats are computed/labeled for
   display than in the candle data itself — needs a repro in the running app
   to pin down which component reads the wrong field.
-- **Two backend FMP call sites bypass the daily budget counter, so `fmp_usage`
-  under-reports real spend.** `backend/routers/price.py` and
-  `backend/earnings_data.py::_fmp_get` both call FMP with a bare
-  `requests.get` and never increment `fmp_usage` — only the agent-runner
-  (`tools/fmp_client.py`) and, as of `specs/022-market-news-feed`, the new
-  `backend/fmp.py` do. The agent-runner's soft cap therefore throttles against
-  a number lower than the true daily total, and could keep spending after the
-  real 250/day ceiling is reached. Found 2026-08-16 while planning 022, which
-  added the backend's first guard but deliberately did not retrofit two working
-  call paths outside its scope. Fix is mechanical: route both through
-  `backend.fmp.fmp_get` (note `price.py` currently constructs its own URL with
-  a `from=` parameter, which `fmp_get` passes through unchanged).
+- **One backend FMP call site still bypasses the daily budget counter, so
+  `fmp_usage` under-reports real spend.** `backend/earnings_data.py::_fmp_get`
+  calls FMP with a bare `requests.get` and never increments `fmp_usage` — only
+  the agent-runner (`tools/fmp_client.py`), `backend/fmp.py` (from
+  `specs/022-market-news-feed`), and `backend/price_store.py` (from
+  `specs/024-delta-data-pulls`) do. The agent-runner's soft cap therefore
+  throttles against a number slightly lower than the true daily total. Found
+  2026-08-16 while planning 022. **Partly fixed 2026-08-17**: 024 rewrote
+  `backend/routers/price.py` onto the price store, which routes through
+  `backend.fmp.fmp_get`, so that call site now counts. Remaining fix is
+  mechanical: route `earnings_data.py::_fmp_get` through `backend.fmp.fmp_get`
+  too.
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
   measured one session early for what was actually an after-close print.
 
 ## Design limitations (accepted for now)
+
+- **A stock split silently invalidates stored price history until someone
+  presses Full Refresh.** As of `specs/024-delta-data-pulls`, delta retrieval is
+  the default: a pull appends only the trading days it is missing. But a split
+  or dividend re-adjustment rewrites the values of bars *already stored*, and
+  nothing detects it — there is no drift detection and no scheduled
+  re-baselining anywhere in the system (FR-010). The stored series stays quietly
+  wrong, charts included, until the operator triggers a full refresh on that
+  stock. Nothing warns them, so there is no signal to act on other than noticing
+  a chart looks off. This was a deliberate choice made during
+  `/speckit-clarify` on 2026-08-17 (Q4/Q5) to keep the default path as fast and
+  as simple as possible, taken with the failure mode understood. The remedy is
+  `Full Refresh ⟳` on the stock page. Revisit if it bites in practice — the
+  design is written so detect-and-flag can be added additively.
+- **Insider transactions changed order as a side effect of 024.**
+  `get_insider_activity` now returns transactions newest-first. Merging a stored
+  set with a fetched one destroys provider order, so an explicit sort became
+  necessary; descending was chosen because `agents/insider_analyst.py` truncates
+  to `transactions[:15]` and publishes them as `recent_transactions`, which
+  arbitrary provider order never actually guaranteed. Behavior change, not a
+  bug, but noted here since it alters what the LLM sees.
 
 - **Scan enrichment caps at the top 40 by market cap** (`MAX_CANDIDATES`).
   Peak weeks screen 900+ companies, so mid-caps below the cut — often the
@@ -76,9 +97,23 @@
   or blocks, scans fail with "Nasdaq screener returned no usable rows" (there's
   no fallback source wired). Same class of risk as the Wikipedia/slickcharts
   breadth scrape.
-- **Fetch layer duplicated between containers.** `backend/earnings_data.py`
-  mirrors `agent-runner/tools/earnings_calendar.py` by hand (they share only
-  Mongo), like the `db.py` collection constants. Divergence risk on every edit.
+- **Fetch layer duplicated between containers — and now genuinely diverged, not
+  just duplicated.** `backend/earnings_data.py` mirrors
+  `agent-runner/tools/earnings_calendar.py` by hand (they share only Mongo),
+  like the `db.py` collection constants. As of specs/025-earnings-page-filters
+  the two sides no longer even agree on a provider: the backend calendar now
+  sources from FMP `stable/earnings-calendar` (actuals + surprise, no
+  bmo/amc), while the agent-runner's scanner stays on Finnhub (forward-only,
+  no actuals) because the scan's only frontend caller was removed and
+  widening the change into the scanner was out of scope. The two write
+  distinctly-shaped `earnings_cache` docs on purpose —
+  `{"type": "calendar_range", "from", "to"}` (backend) vs.
+  `{"type": "calendar", "days": N}` (agent-runner) — specifically so this
+  divergence can't silently corrupt either side's cache (constitution
+  Principle VI). If the scanner is ever revived, deciding whether it should
+  move onto the same FMP source is an open question, not a foregone one — it
+  would also need to pick up the actuals/surprise fields that FMP has and
+  Finnhub-with-agent-runner does not.
 - **NYMO/NAMO zone thresholds (±60) are uncalibrated** against StockCharts —
   computed locally per the breadth spec, never validated.
 - **Superinvestor/Dataroma requires Playwright**, which is Docker-only; local
@@ -146,7 +181,17 @@
 
 - **Admin page was never scaffolded into a route.** Spec exists
   (`Admin.md`), no `frontend/src/pages/Admin.tsx` and no route in `App.tsx`.
-- *(nothing currently outstanding beyond the Admin page)*
+- **The earnings scan lifecycle is dormant — reachable by API, not by UI.**
+  specs/025-earnings-page-filters removed the earnings page's manual "Scan
+  Earnings" button (and `ScanControls`/`EarningsCalendarTable`/
+  `EarningsCandidateCard`) in favor of an auto-loading filtered calendar.
+  `POST /earnings/scan`, `GET /earnings/scan/{scan_id}`,
+  `earnings_scan_worker.py`, and `agents/earnings_scanner.py` were deliberately
+  left in place (025's spec scoped their deletion out) but now have no
+  frontend caller. `POST /earnings/analyze` and `GET /earnings/history/{ticker}`
+  remain reachable — the first from the new table's Queue button, the second
+  with no current UI consumer either. Reviving the scan UI, or removing the
+  dead endpoints outright, is an open decision for a future feature.
 
 ## Upstream / API-tier constraints (facts, not fixable in code)
 
@@ -155,7 +200,17 @@
     APP 402, same key/day) → `get_financials` degrades that endpoint to `[]`
     and the crew leans on yfinance,
   - quarterly statements 402 beyond ~4 periods → `limit=4`,
-  - `earnings-calendar` truncates to ~15 rows → calendar comes from Finnhub,
+  - ~~`earnings-calendar` truncates to ~15 rows → calendar comes from Finnhub~~
+    **no longer reproduces as of 2026-08-17.** Live probes on the current key
+    returned 789 rows for `from=2026-08-15&to=2026-08-19` and 2,347 rows for
+    `from=2026-08-10&to=2026-08-15`, with `epsActual`/`revenueActual` populated
+    on 2,146 / 1,697 of the past-window rows. Either the key's entitlement
+    changed or FMP lifted the limit. `specs/025-earnings-page-filters` moves the
+    backend calendar onto this endpoint because Finnhub's calendar carries no
+    actuals; note it returns **no bmo/amc time field**, so that column is lost
+    in the move (research.md D4). The agent-runner's scanner stays on Finnhub,
+    so the two services now use different providers for the same concept and
+    write different cache-key shapes into `earnings_cache` (research.md D7),
   - `company-screener` and constituent endpoints 402 → Nasdaq screener /
     Wikipedia / slickcharts scrapes,
   - insider + all 13F endpoints 402/403 → Finnhub insider + yfinance holders,

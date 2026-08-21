@@ -12,6 +12,42 @@
 
 ---
 
+## Retrieval strategy — delta by default (2026-08-17)
+
+As of `specs/024-delta-data-pulls`, per-stock data is retrieved **incrementally**:
+a pull requests only the period beyond what is already stored, rather than
+re-downloading the whole dataset whenever a time-based cache expired.
+
+| Dataset | Store | Delta anchor | Saves |
+|---|---|---|---|
+| EOD price history | `price_history` (one doc per ticker) | `coverage.last_date` − 1 day | transfer + parse time, **not** API calls |
+| Stock news | `stock_news_cache` | newest stored `publishedDate` − 1 day | **API calls** (the endpoint pages at 250 articles) |
+| Insider transactions | `insider_cache` | newest stored transaction date − 1 day | transfer time |
+
+**A bounded FMP price request costs the same single API call as an unbounded
+one.** Delta price fetching therefore reduces bytes and parse time, not quota.
+News is the opposite: a narrower window genuinely means fewer requests.
+
+Three rules worth knowing before changing any of this:
+
+1. **Requests always start one day *before* the newest stored record.** Starting
+   at `last_date + 1` silently drops a trading day whenever the provider's day
+   boundary and the stored date disagree. The merge is keyed and idempotent, so
+   the deliberate overlap costs one row.
+2. **`price_history`, `stock_news_cache` and `insider_cache` must never carry a
+   TTL index.** They are maintained stores, not caches — expiring the document
+   destroys the baseline every delta reads from, which silently restores
+   full-dataset fetching with no error anywhere.
+3. **Nothing re-baselines automatically.** There is no drift detection and no
+   scheduled full refresh. A split leaves stored history wrong until the
+   operator presses `Full Refresh ⟳` on the stock page — a recorded, accepted
+   limitation (see `KNOWN_ISSUES.md`).
+
+Full retrieval happens in exactly three cases: a first-ever pull, a gap wider
+than 2 years, or an operator-initiated full refresh.
+
+---
+
 ## Financial Modeling Prep (FMP)
 
 **Access:** API key required · **Paid tier as of 2026-08-15** (upgraded from the 250 calls/day free tier — see specs/017-fmp-migration-admin) · 250 calls/min soft throttle (headroom under the plan's actual limit), configurable daily soft cap (disabled by default; set to 225 to survive a downgrade back to free-tier without code changes) · Cache-first via `agent-runner/tools/fmp_client.py`  

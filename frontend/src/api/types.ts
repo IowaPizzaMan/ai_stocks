@@ -357,11 +357,106 @@ export interface MarketFlowEvent {
   created_at: string;
 }
 
+// --- Economics dashboard (specs/026-macro-market-dashboard) -----------------
+// GET /market/treasury-curve, /market/economic-calendar,
+// /market/economic-indicators, /market/risk-premium — all read-only shapes
+// over what agent-runner/tools/economics.py already wrote; see
+// specs/026-macro-market-dashboard/contracts/macro-api.md.
+
+export interface Freshness {
+  as_of: string | null;
+  stale: boolean;
+}
+
+export interface CurvePoint {
+  maturity: string; // "1M".."30Y"
+  months: number; // proportional x-axis value, not an evenly-spaced category
+  current: number | null;
+  month_ago: number | null;
+  year_ago: number | null;
+}
+
+export type SpreadKey = "10y-2y" | "30y-10y" | "10y-3m";
+
+export interface SpreadSeriesPoint {
+  date: string;
+  bps: number;
+}
+
+export interface Spread {
+  key: SpreadKey;
+  label: string;
+  current_bps: number | null;
+  change_bps: number | null;
+  inverted: boolean;
+  series: SpreadSeriesPoint[];
+}
+
+export interface TreasuryCurve extends Freshness {
+  session: string | null;
+  curve: CurvePoint[];
+  comparison_sessions: { month_ago: string | null; year_ago: string | null };
+  spreads: Spread[];
+}
+
+export type CalendarComparison = "above" | "below" | "in_line" | null;
+
+export interface EconomicEvent {
+  date: string;
+  event: string;
+  impact: "High" | "Medium";
+  previous: number | null;
+  estimate: number | null;
+  unit: string | null;
+}
+
+export interface ReportedEconomicEvent extends EconomicEvent {
+  actual: number;
+  comparison: CalendarComparison;
+  surprise: number | null;
+}
+
+export interface EconomicCalendar extends Freshness {
+  timezone: string;
+  upcoming: EconomicEvent[];
+  reported: ReportedEconomicEvent[];
+}
+
+export type IndicatorDirection = "up" | "down" | "flat" | null;
+
+export interface IndicatorTile {
+  key: string;
+  label: string;
+  series: string;
+  value: number;
+  unit: string;
+  as_of: string;
+  direction: IndicatorDirection;
+  change: number | null;
+  lagging: boolean;
+}
+
+export interface EconomicIndicators extends Freshness {
+  indicators: IndicatorTile[];
+}
+
+export interface RiskPremium extends Freshness {
+  country: string | null;
+  total_equity_risk_premium: number | null;
+  country_risk_premium: number | null;
+  collected_at: string | null;
+}
+
+// 024-delta-data-pulls: delta is the default; "full" is the operator's
+// rebuild-from-scratch escape hatch. Absent on jobs queued before the feature.
+export type PullMode = "delta" | "full";
+
 export interface QueueJob {
   ticker: string;
   status: string;
   source?: string;
   created_at: string;
+  mode?: PullMode;
 }
 
 export interface QueueStatus {
@@ -374,73 +469,69 @@ export interface QueueStatus {
 export interface EnqueueResponse {
   ticker: string;
   job_id: string;
-  status: "enqueued" | "already_queued";
+  status: "enqueued" | "already_queued" | "upgraded_to_full";
+  mode?: PullMode;
 }
+
+// 024-delta-data-pulls (US1) — per-stage pull cost
+export type StageRetrieval = "incremental" | "full" | "stored";
+export type StageOutcome = "fetched" | "stored" | "degraded" | "skipped" | "failed";
+
+export interface PullStage {
+  name: string;
+  elapsed_ms: number;
+  requests: number;
+  bytes: number;
+  retrieval: StageRetrieval | null;
+  outcome: StageOutcome | null;
+}
+
+export interface Pull {
+  job_id: string;
+  mode: PullMode;
+  started_at: string;
+  completed_at: string;
+  total_ms: number;
+  outcome: "done" | "failed" | "degraded";
+  /** Server-sorted most-expensive-first, so the client never re-ranks. */
+  stages: PullStage[];
+  accounted_ms: number;
+  /** Wall time the stage breakdown does not explain — surfaced, not hidden. */
+  unaccounted_ms: number;
+}
+
+export interface PullMetrics {
+  ticker: string;
+  pulls: Pull[];
+}
+
+/** spec: specs/025-earnings-page-filters/contracts/earnings-calendar.md.
+ * `report_time` (bmo/amc) is gone — the FMP source that carries actuals has
+ * no time-of-day field (research.md D4). */
+export type EarningsReportingState = "upcoming" | "reported" | "awaiting";
 
 export interface EarningsCalendarEntry {
   ticker: string;
   company: string;
-  report_date: string;
-  report_time: "bmo" | "amc" | "unknown";
-  eps_estimate: number | null;
-  revenue_estimate: number | null;
-  market_cap: number;
-  sector: string | null;
-}
-
-export interface EarningsScoreBreakdown {
-  move_pts: number;
-  beat_pts: number;
-  revision_pts: number;
-  insider_pts: number;
-  accumulation_pts: number;
-}
-
-export interface EarningsCandidate {
-  ticker: string;
-  company: string;
-  report_date: string;
-  report_time: "bmo" | "amc" | "unknown";
   sector: string | null;
   market_cap: number;
-  score: number;
-  score_breakdown: EarningsScoreBreakdown;
-  avg_abs_move_pct: number;
-  beat_rate: number;
-  history_quarters: number;
-  eps_revision: "up" | "flat" | "down";
-  insider_signal: "cluster" | "single" | "none";
-  accumulation_score: number;
-  one_line_thesis: string;
-}
-
-export interface EarningsScanDoc {
-  scan_id: string;
-  status: "pending" | "running" | "complete" | "failed";
-  days_ahead: number;
-  candidates?: EarningsCandidate[];
-  total_screened?: number;
-  scored_count?: number;
-  top_count?: number;
-  error?: string;
-}
-
-export interface EarningsQuarter {
-  period: string;
+  report_date: string;
   eps_estimate: number | null;
   eps_actual: number | null;
-  surprise_pct: number | null;
-  beat: boolean;
-  move_pct: number;
-  move_abs: number;
+  revenue_estimate: number | null;
+  revenue_actual: number | null;
+  eps_surprise_pct: number | null;
+  revenue_surprise_pct: number | null;
+  beat: boolean | null;
+  reporting_state: EarningsReportingState;
+  last_updated: string;
 }
 
-export interface EarningsHistory {
-  ticker: string;
-  quarters: EarningsQuarter[];
-  avg_abs_move_pct: number;
-  beat_rate: number;
-  num_quarters: number;
+export interface EarningsCalendarResponse {
+  entries: EarningsCalendarEntry[];
+  total_before_screen: number;
+  stale: boolean;
+  fetched_at: string;
 }
 
 export type FlowAction = "new_position" | "add" | "trim" | "exit";

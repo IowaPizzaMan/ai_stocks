@@ -54,6 +54,18 @@ COMPANY_INFO = "company_info"
 STOCK_NEWS_CACHE = "stock_news_cache"
 BENEFICIAL_OWNERSHIP_CACHE = "beneficial_ownership_cache"
 
+# 024-delta-data-pulls — keep in sync with backend/db.py.
+# price_history is a maintained store, not a cache: one doc per ticker holding the
+# full daily series, extended incrementally. It deliberately has NO TTL — expiry
+# would destroy the baseline every delta pull depends on. Retired price_cache.
+PRICE_HISTORY = "price_history"
+INSIDER_CACHE = "insider_cache"
+PULL_METRICS = "pull_metrics"
+
+# 026-macro-market-dashboard — economics_worker's own daily-scheduling marker,
+# separate from dataset_meta's success/failure freshness (mirrors BREADTH_META).
+ECONOMICS_META = "economics_meta"
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -88,14 +100,37 @@ def ensure_indexes(db: Database | None = None) -> None:
     # sector (macro) or the whole run (superinvestor) — see crew.py callers.
     db[MACRO_ANALYSIS_CACHE].create_index([("sector", ASCENDING)], unique=True)
     db[SUPERINVESTOR_MOVES_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
-    # 021 — news refreshes per pull (24h), 13D/G filings move on filing cadence (7d)
-    db[STOCK_NEWS_CACHE].create_index("fetched_at", expireAfterSeconds=24 * 3600)
+    # 021 — 13D/G filings move on filing cadence (7d)
+    # 024 — stock_news_cache deliberately has NO TTL any more: the document is
+    # the baseline every delta news fetch reads from, so expiring it would
+    # silently restore full-window fetching with no error anywhere. Retention is
+    # enforced on merge instead (news.merge_articles drops articles past
+    # NEWS_DAYS). Dropping the old index on existing deployments is a one-time
+    # mongosh step — see specs/024-delta-data-pulls/quickstart.md.
     db[STOCK_NEWS_CACHE].create_index([("ticker", ASCENDING)], unique=True)
     db[BENEFICIAL_OWNERSHIP_CACHE].create_index("fetched_at", expireAfterSeconds=7 * 24 * 3600)
     db[BENEFICIAL_OWNERSHIP_CACHE].create_index([("ticker", ASCENDING)], unique=True)
     db[BREADTH_DIVERGENCES].create_index([("resolved", DESCENDING)])
     db[MARKET_FLOW_EVENTS].create_index([("event_id", ASCENDING)], unique=True)
     db[MARKET_FLOW_EVENTS].create_index([("created_at", DESCENDING)])
+    # 024 — one series doc per ticker. No TTL: this is a store, not a cache.
+    db[PRICE_HISTORY].create_index([("ticker", ASCENDING)], unique=True)
+    # 024 — insider transactions become a maintained store too (US4). No TTL,
+    # same reason as above; retention is trimmed on merge to LOOKBACK_DAYS.
+    db[INSIDER_CACHE].create_index([("ticker", ASCENDING)], unique=True)
+    # 024 — pull diagnostics, expired after 30 days (only enough history to rank
+    # stages over time, per spec FR-003)
+    db[PULL_METRICS].create_index([("ticker", ASCENDING), ("started_at", DESCENDING)])
+    db[PULL_METRICS].create_index("started_at", expireAfterSeconds=30 * 24 * 3600)
+    # 026-macro-market-dashboard — treasury_rates is a maintained store (no TTL,
+    # same discipline as price_history): a backfill-then-daily-extend history the
+    # curve/spread reads depend on, so expiry would destroy the baseline.
+    db[TREASURY_RATES].create_index([("date", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", ASCENDING), ("event", ASCENDING)], unique=True)
+    db[ECONOMIC_CALENDAR_EVENTS].create_index([("date", DESCENDING)])
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", ASCENDING)], unique=True)
+    db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", DESCENDING)])
+    db[MARKET_RISK_PREMIUM].create_index([("country", ASCENDING)], unique=True)
 
 
 def sanitize_floats(value):

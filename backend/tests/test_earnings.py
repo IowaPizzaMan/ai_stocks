@@ -1,17 +1,27 @@
 """Earnings router tests — fetch layer faked, mongomock via conftest client."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-from db import EARNINGS_CACHE, EARNINGS_SCANS, TICKER_INDEX, WORK_QUEUE
+from db import EARNINGS_SCANS, TICKER_INDEX, WORK_QUEUE
+from fmp import FmpBudgetExceededError
 from routers import earnings as earnings_router
 
-CALENDAR = [
-    {"ticker": "BIG", "company": "Big Co", "report_date": "2026-08-04",
-     "report_time": "bmo", "eps_estimate": 1.0, "revenue_estimate": 1e9,
-     "market_cap": 50e9, "sector": "Technology"},
-    {"ticker": "MID", "company": "Mid Co", "report_date": "2026-08-05",
-     "report_time": "amc", "eps_estimate": 0.5, "revenue_estimate": 5e8,
-     "market_cap": 5e9, "sector": "Energy"},
-]
+CALENDAR_PAYLOAD = {
+    "entries": [
+        {"ticker": "BIG", "company": "Big Co", "report_date": "2026-08-15",
+         "eps_estimate": 1.0, "eps_actual": None, "revenue_estimate": 1e9,
+         "revenue_actual": None, "eps_surprise_pct": None, "revenue_surprise_pct": None,
+         "beat": None, "reporting_state": "upcoming", "market_cap": 50e9,
+         "sector": "Technology", "last_updated": "2026-08-17"},
+        {"ticker": "MID", "company": "Mid Co", "report_date": "2026-08-16",
+         "eps_estimate": 0.5, "eps_actual": None, "revenue_estimate": 5e8,
+         "revenue_actual": None, "eps_surprise_pct": None, "revenue_surprise_pct": None,
+         "beat": None, "reporting_state": "upcoming", "market_cap": 5e9,
+         "sector": "Energy", "last_updated": "2026-08-17"},
+    ],
+    "total_before_screen": 2,
+    "stale": False,
+    "fetched_at": datetime.now(timezone.utc).isoformat(),
+}
 
 
 # --- GET /earnings/calendar -----------------------------------------------------
@@ -19,29 +29,67 @@ CALENDAR = [
 def test_calendar_is_read_only(client, db, monkeypatch):
     """Deliberate deviation from the spec's auto-ingest: pulling the calendar
     must never register tickers or feed the work queue (peak weeks hold
-    600-900 names — the user queues individual rows instead)."""
+    hundreds of names — the user queues individual rows instead)."""
     monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar",
-                        lambda days_ahead, db: CALENDAR)
+                        lambda start, end, db: CALENDAR_PAYLOAD)
 
-    r = client.get("/earnings/calendar?days=5")
+    r = client.get("/earnings/calendar?from=2026-08-15&to=2026-08-19")
     assert r.status_code == 200
-    assert [e["ticker"] for e in r.json()] == ["BIG", "MID"]
+    body = r.json()
+    assert [e["ticker"] for e in body["entries"]] == ["BIG", "MID"]
+    assert body["total_before_screen"] == 2
+    assert body["stale"] is False
 
     assert db[WORK_QUEUE].count_documents({}) == 0
     assert db[TICKER_INDEX].count_documents({}) == 0
 
 
-def test_calendar_serves_from_shared_cache(client, db, monkeypatch):
-    """The real fetch layer must honor a cache doc written by the agent-runner."""
-    db[EARNINGS_CACHE].insert_one({
-        "type": "calendar", "days": 7, "data": CALENDAR,
-        "fetched_at": datetime.now(timezone.utc) - timedelta(hours=1),
-    })
-    monkeypatch.setattr(earnings_router.earnings_data, "_finnhub_get",
-                        lambda *a, **kw: (_ for _ in ()).throw(AssertionError("should be cached")))
+def test_calendar_serves_from_shared_cache(client, monkeypatch):
+    """The router must pass through whatever earnings_data returns, including
+    the cached-window path — the real caching/dedupe/ordering behavior is
+    covered directly in test_earnings_data.py."""
+    monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar",
+                        lambda start, end, db: CALENDAR_PAYLOAD)
 
-    r = client.get("/earnings/calendar")
-    assert [e["ticker"] for e in r.json()] == ["BIG", "MID"]
+    r = client.get("/earnings/calendar?from=2026-08-15&to=2026-08-19")
+    assert [e["ticker"] for e in r.json()["entries"]] == ["BIG", "MID"]
+
+
+def test_calendar_rejects_inverted_range(client):
+    r = client.get("/earnings/calendar?from=2026-08-19&to=2026-08-15")
+    assert r.status_code == 422
+
+
+def test_calendar_rejects_span_over_90_days(client):
+    r = client.get("/earnings/calendar?from=2026-01-01&to=2026-12-31")
+    assert r.status_code == 422
+
+
+def test_calendar_budget_exceeded_returns_503(client, monkeypatch):
+    def _raise(start, end, db):
+        raise FmpBudgetExceededError("cap")
+
+    monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar", _raise)
+    r = client.get("/earnings/calendar?from=2026-08-15&to=2026-08-19")
+    assert r.status_code == 503
+
+
+def test_calendar_provider_unavailable_returns_502(client, monkeypatch):
+    def _raise(start, end, db):
+        raise earnings_router.earnings_data.CalendarUnavailableError("down")
+
+    monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar", _raise)
+    r = client.get("/earnings/calendar?from=2026-08-15&to=2026-08-19")
+    assert r.status_code == 502
+
+
+def test_calendar_universe_unavailable_returns_502(client, monkeypatch):
+    def _raise(start, end, db):
+        raise earnings_router.earnings_data.UniverseUnavailableError("down")
+
+    monkeypatch.setattr(earnings_router.earnings_data, "get_earnings_calendar", _raise)
+    r = client.get("/earnings/calendar?from=2026-08-15&to=2026-08-19")
+    assert r.status_code == 502
 
 
 # --- scan lifecycle ---------------------------------------------------------------

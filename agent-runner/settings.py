@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     queue_poll_seconds: int = 30
     institutional_scan_hour_utc: int = 22  # daily market-wide scan, after US close
     breadth_refresh_hour_utc: int = 21  # NYMO/NAMO + divergence sweep, after US close
+    economics_refresh_hour_utc: int = 22  # treasury/calendar/indicators/risk-premium pull
 
 
 settings = Settings()

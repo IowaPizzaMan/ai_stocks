@@ -1,80 +1,69 @@
 # frontend/src/pages/EarningsScan.tsx
 
+**Superseded by specs/025-earnings-page-filters — rewritten below.** The manual scan
+trigger, `ScanControls`, `EarningsCalendarTable` (scored-candidate table), and
+`EarningsCandidateCard` are removed from this page. See KNOWN_ISSUES.md for the now-dormant
+backend scan endpoints this leaves behind.
+
 ## Purpose
-URL: `/earnings`. Not conversational. A single-pane scan results view: run a scan, get a ranked table, click a ticker to queue it for the agentic crew. No chat interface, no LLM in the ticker-selection loop.
+URL: `/earnings`. Not conversational. Auto-loading, date-windowed earnings calendar: on
+arrival, with no button press, shows companies reporting today−2 through today+2, ordered
+by market cap, with actual EPS/revenue and a beat/miss surprise for anything already
+reported. Filters live in URL search params.
 
 ## Layout
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Earnings Scanner                    [Scan controls ▼]      │
+│  Earnings                                                    │
 ├─────────────────────────────────────────────────────────────┤
-│  [ScanControls]                                              │
-│  [EarningsCalendarTable]  ← click a row or [Analyze ▶] to    │
-│                              enqueue that ticker directly     │
+│  [EarningsFilterBar]  — presets, custom dates, sliders,      │
+│                          big-movers toggle, window/count      │
+│  [staleness banner]   — only when calendar.data.stale         │
+│  [EarningsTable]       — always market-cap-sorted             │
+│  [empty-state message] — date-window-empty or filters-emptied │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Single-pane layout: full-width table. Optional `EarningsCandidateCard` panel/modal opens for a candidate on demand to show score breakdown before queuing.
-
 ## State
-
-```typescript
-const [scanId, setScanId]         = useState<string | null>(null)
-const [scanStatus, setScanStatus] = useState<'idle'|'running'|'complete'|'failed'>('idle')
-const [candidates, setCandidates] = useState<EarningsCandidate[]>([])
-const [queuedTickers, setQueuedTickers] = useState<Set<string>>(new Set())
-```
+Filter state lives entirely in URL search params (`from`, `to`, `min_rev`, `min_eps`,
+`movers`), read via `useSearchParams`. The only component state is the local
+`queuedTickers: Set<string>` set for the Queue button's optimistic "Queued" badge —
+identical to the old page's pattern.
 
 ## Key Behaviors
 
-### 1. Trigger Scan
-"Scan" button in `ScanControls` → `POST /earnings/scan` → receives `scan_id` → starts polling `GET /earnings/scan/{scan_id}` every 3 seconds until `status === "complete"`. On complete: populate candidates table.
+### 1. Auto-load, no trigger
+`useEarningsCalendar(from, to)` fires on mount with the resolved window (defaulting to
+today∓2 via `EarningsFilterBar`'s `getDefaultWindow()` when no URL params are present).
+There is no scan button anywhere on this page.
 
-```typescript
-const triggerScan = async () => {
-  setScanStatus('running')
-  const { scan_id } = await api.post('/earnings/scan', { days_ahead: daysAhead }).then(r => r.data)
-  setScanId(scan_id)
-  const poll = setInterval(async () => {
-    const result = await api.get(`/earnings/scan/${scan_id}`).then(r => r.data)
-    if (result.status === 'complete') {
-      clearInterval(poll)
-      setScanStatus('complete')
-      setCandidates(result.candidates)
-    } else if (result.status === 'failed') {
-      clearInterval(poll)
-      setScanStatus('failed')
-    }
-  }, 3000)
-}
-```
+### 2. Client-side filtering
+`filterEntries(entries, { minRev, minEps, moversOnly })`
+(`frontend/src/lib/earningsFilters.ts`) runs in a `useMemo` over the fetched entries. It
+never triggers a request — only a `from`/`to` change does that.
 
-### 2. Click ticker → enqueue directly
-Clicking a row (or its Analyze button) in `EarningsCalendarTable` calls `onAnalyzeTicker(ticker)`, which posts straight to `/earnings/analyze` and marks the ticker as queued. No intermediate confirmation step, no chat round-trip.
+### 3. Click ticker → enqueue directly
+Unchanged from the old page: `EarningsTable`'s Queue button calls
+`useAnalyzeTickers().mutate([ticker])`, which posts to `/earnings/analyze`. The ticker
+symbol itself is now a `<Link to="/stock/:ticker">` and does not trigger the Queue action
+(FR-024) — the two are separate interactive elements in the same cell.
 
-```typescript
-const analyzeTicker = async (ticker: string) => {
-  await api.post('/earnings/analyze', { tickers: [ticker] })
-  setQueuedTickers(prev => new Set(prev).add(ticker))
-}
-```
-
-The row shows a "Queued" badge in place of the Analyze button once `queuedTickers.has(ticker)` is true. `queue_worker.py` (component-specs/agent-runner/queue_worker.md) picks the job up on its next poll cycle — the crew runs asynchronously from here on.
-
-### 3. Optional detail card
-Clicking a "details" affordance (separate from the row's queue action) opens `EarningsCandidateCard` with the full score breakdown. Its own `onAnalyze` button enqueues via the same direct path as above.
-
-## Running State UX
-While scan is running (30–60s):
-- Table shows a skeleton loader
-- Progress indicator (spinner or animated dots) with label "Scanning {n} companies reporting in the next {days} days..."
+### 4. Degraded states
+- `calendar.isError` → explicit error message, not an empty table.
+- `calendar.data.stale` → amber banner above the table; rows still render.
+- `rawEntries.length === 0` → "no companies report in this window" (date-driven empty
+  state).
+- `filteredEntries.length === 0 && rawEntries.length > 0` → distinguishes the big-movers
+  toggle as the cause (FR-016d) from the size sliders.
+- `calendar.isFetching && !isInitialLoad` → prior rows stay visible with a small "Updating
+  window…" indicator (FR-027c) rather than blanking the table; enabled by
+  `useEarningsCalendar`'s `placeholderData: (previous) => previous`.
 
 ## Sub-components
-
-### `ScanControls` (see its own spec)
-### `EarningsCalendarTable` (see its own spec — row click enqueues directly, no chat)
-### `EarningsCandidateCard` (optional detail panel, see its own spec)
+- `EarningsFilterBar` (own spec below) — date presets/custom dates, size sliders,
+  big-movers toggle.
+- `EarningsTable` (own spec below) — the single results table.
 
 ## Dependencies
-- `useEarningsScan` hook (new)
-- `EarningsCalendarTable`, `EarningsCandidateCard`, `ScanControls`
+- `useEarningsCalendar`, `useAnalyzeTickers` (`hooks/useEarningsScan.ts`)
+- `filterEntries` (`lib/earningsFilters.ts`)

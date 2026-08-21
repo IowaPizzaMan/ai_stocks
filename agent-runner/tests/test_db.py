@@ -80,6 +80,34 @@ def test_ensure_indexes_idempotent(db):
     assert any("ticker" in str(k) for k in names)
 
 
+def test_ensure_indexes_builds_price_history_unique_ticker(db):
+    """024 — one series document per ticker, so the uniqueness is the guard that
+    keeps a second doc from silently shadowing the stored history."""
+    dbmod.ensure_indexes(db=db)
+    info = db[dbmod.PRICE_HISTORY].index_information()
+    assert any(
+        spec.get("unique") and spec.get("key") == [("ticker", 1)] for spec in info.values()
+    )
+
+
+def test_ensure_indexes_builds_pull_metrics_lookup_and_ttl(db):
+    """024 — pull diagnostics are queried newest-first per ticker and expire at 30d."""
+    dbmod.ensure_indexes(db=db)
+    info = db[dbmod.PULL_METRICS].index_information()
+    assert any(spec.get("key") == [("ticker", 1), ("started_at", -1)] for spec in info.values())
+    assert any(
+        spec.get("expireAfterSeconds") == 30 * 24 * 3600 for spec in info.values()
+    )
+
+
+def test_price_history_has_no_ttl_index(db):
+    """024 — price_history is a store, not a cache. A TTL here would delete the
+    baseline every delta pull reads from, silently restoring full re-downloads."""
+    dbmod.ensure_indexes(db=db)
+    info = db[dbmod.PRICE_HISTORY].index_information()
+    assert not any("expireAfterSeconds" in spec for spec in info.values())
+
+
 def test_ensure_indexes_unique_ticker_index_is_fail_soft(db):
     now = datetime.now(timezone.utc)
     db[dbmod.ANALYSES].insert_many([

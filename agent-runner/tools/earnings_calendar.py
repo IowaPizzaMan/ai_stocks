@@ -25,7 +25,8 @@ from pymongo.database import Database
 from logging_config import get_logger
 from tools.db import EARNINGS_CACHE, get_db
 from tools.finnhub_client import finnhub_get
-from tools.fmp_client import fetch_eod_history, fmp_get
+from tools import price_store
+from tools.fmp_client import fmp_get
 
 logger = get_logger(__name__)
 
@@ -175,7 +176,7 @@ def get_earnings_history(ticker: str, num_quarters: int = 8,
     moves = []
     if reported:
         try:
-            closes = fetch_eod_history(ticker, db=db)["Close"]
+            closes = price_store.get_series(ticker, refresh="delta", db=db)[0]["Close"]
         except Exception as exc:
             logger.info("price history unavailable for %s: %s", ticker, exc)
             closes = pd.Series(dtype=float)

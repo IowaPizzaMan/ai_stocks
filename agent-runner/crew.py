@@ -8,6 +8,7 @@ per sector and surfaced on its own UI page, not woven into a ticker's
 sub-reports or verdict (specs/020-surface-macro-ui). Agents call Ollama
 directly with structured output (see llm.py) — no CrewAI tool-calling.
 """
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -30,7 +31,9 @@ from tools import financials as financials_tool
 from tools import insider as insider_tool
 from tools import institutional as institutional_tool
 from tools import news as news_tool
+from tools import metrics
 from tools import price as price_tool
+from tools import price_store
 from tools import sentiment as sentiment_tool
 from tools import superinvestor as superinvestor_tool
 from tools.db import get_db, get_latest_analysis
@@ -125,6 +128,7 @@ class Crew:
         self.client = client  # None → llm.py default Ollama client
         # fetchers as attributes so tests can swap them out
         self.is_ticker_valid = price_tool.is_ticker_valid
+        self.refresh_price_series = price_store.get_series
         self.get_price_history = price_tool.get_price_history
         self.get_technical_indicators = price_tool.get_technical_indicators
         self.get_financials = financials_tool.get_financials
@@ -138,28 +142,67 @@ class Crew:
         self.get_earnings_sentiment = sentiment_tool.get_earnings_sentiment
         self.get_stock_news = news_tool.get_stock_news
 
-    def _prefetch(self, ticker: str, parallel: bool) -> dict:
+    def _price_stage(self, ticker: str, mode: str) -> dict:
+        """The pull's single price refresh, then the shaped history.
+
+        This is the only place a pull touches the provider for price. Every
+        later reader (`indicators`, accumulation) reads the stored series with
+        refresh="none", which is what makes "no dataset is downloaded twice in a
+        pull" structural rather than incidental (FR-014, SC-003).
+        """
+        refresh = "full" if mode == "full" else "delta"
+        _, meta = self.refresh_price_series(ticker, refresh=refresh, db=self.db)
+        stage = metrics.current_stage()
+        if stage is not None:
+            stage.mark(retrieval=meta.get("retrieval"), outcome=meta.get("outcome"))
+        return self.get_price_history(ticker, db=self.db)
+
+    def _prefetch(self, ticker: str, parallel: bool, recorder=None, mode: str = "delta") -> dict:
+        # A full refresh rebuilds every delta-maintained dataset for this ticker
+        # in one action, not just price — the operator should not have to know
+        # which one is wrong (FR-024).
+        rebuild = mode == "full"
         jobs = {
-            "price": lambda: self.get_price_history(ticker),
-            "indicators": lambda: self.get_technical_indicators(ticker),
+            "price": lambda: self._price_stage(ticker, mode),
+            "indicators": lambda: self.get_technical_indicators(ticker, db=self.db),
             "financials": lambda: self.get_financials(ticker, db=self.db),
             "earnings": lambda: self.get_earnings_data(ticker),
             "breadth": lambda: self.get_market_breadth(db=self.db),
-            "insider": lambda: self.get_insider_activity(ticker),
+            "insider": lambda: self.get_insider_activity(ticker, db=self.db, rebuild=rebuild),
             "insider_stats": lambda: self.get_insider_quarterly_stats(ticker, db=self.db),
             "institutional": lambda: self.get_institutional_holdings(ticker, db=self.db),
             "beneficial": lambda: self.get_beneficial_ownership(ticker, db=self.db),
             "sentiment": lambda: self.get_earnings_sentiment(ticker),
-            "news": lambda: self.get_stock_news(ticker, db=self.db),
+            "news": lambda: self.get_stock_news(ticker, db=self.db, rebuild=rebuild),
         }
+
+        def staged(key, fn):
+            # The recorder is entered *inside* the callable so attribution works
+            # in the pool branch too — a pool worker runs one stage at a time on
+            # its own thread, which thread-local state tracks correctly and
+            # contextvars would not (024 research D7).
+            def run():
+                with metrics.stage_recorder(key, recorder):
+                    return fn()
+            return run
+
+        staged_jobs = {key: staged(key, fn) for key, fn in jobs.items()}
         if parallel:
             with ThreadPoolExecutor(max_workers=6) as pool:
-                futures = {key: pool.submit(fn) for key, fn in jobs.items()}
+                futures = {key: pool.submit(fn) for key, fn in staged_jobs.items()}
                 return {key: f.result(timeout=120) for key, f in futures.items()}
-        return {key: fn() for key, fn in jobs.items()}
+        return {key: fn() for key, fn in staged_jobs.items()}
 
-    def run(self, ticker: str, parallel_prefetch: bool = False) -> dict:
+    def run(self, ticker: str, parallel_prefetch: bool = False, mode: str = "delta") -> dict:
         ticker = ticker.upper()
+
+        # Pull-cost record for this run (024 US1). Kept on the instance rather
+        # than returned, so the analyses document keeps exactly the shape every
+        # existing consumer expects (FR-020).
+        recorder = metrics.PullRecorder()
+        started_at = datetime.now(timezone.utc)
+        run_started = time.monotonic()
+        self.last_pull = None
 
         # 0. cheap existence check before burning LLM time; financials get one
         # chance to disagree so a single flaky source can't delist a ticker
@@ -170,7 +213,7 @@ class Crew:
             logger.info("%s: FMP existence check failed but financials resolve — proceeding", ticker)
 
         # 1. data prefetch
-        data = self._prefetch(ticker, parallel_prefetch)
+        data = self._prefetch(ticker, parallel_prefetch, recorder=recorder, mode=mode)
         price_history = data["price"]
 
         # 2. deterministic skills
@@ -254,6 +297,14 @@ class Crew:
         # Read the prior analysis before this run's document replaces it, so the
         # "what changed" note compares against what the user last saw (FR-025).
         previous = get_latest_analysis(ticker, db=self.db)
+
+        self.last_pull = {
+            "mode": mode,
+            "started_at": started_at,
+            "completed_at": datetime.now(timezone.utc),
+            "total_ms": int((time.monotonic() - run_started) * 1000),
+            "stages": recorder.stages(),
+        }
 
         # 4. final analyses document — the two recent_* flags ride top-level
         # (like sector/signal) so the feed projection serves them to the cards

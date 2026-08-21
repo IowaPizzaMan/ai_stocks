@@ -2,7 +2,10 @@
 import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AnalysisFeedItem, Conviction, Signal } from "../../api/types";
+import { useDeleteTicker } from "../../hooks/useAnalysis";
 import { relativeTime } from "../../lib/time";
+import RemoveIcon from "../shared/RemoveIcon";
+import RemoveTickerConfirm from "./RemoveTickerConfirm";
 import TilePreview from "./TilePreview";
 
 const FILL: Record<Signal, string> = {
@@ -40,8 +43,10 @@ function buildAriaLabel(analysis: AnalysisFeedItem): string {
 
 export default function AnalysisTile({ analysis }: { analysis: AnalysisFeedItem }) {
   const navigate = useNavigate();
+  const deleteMutation = useDeleteTicker();
   const tileRef = useRef<HTMLDivElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [placement, setPlacement] = useState<{ x: "left" | "right"; y: "top" | "bottom" }>({
     x: "left",
     y: "bottom",
@@ -67,7 +72,7 @@ export default function AnalysisTile({ analysis }: { analysis: AnalysisFeedItem 
   const fillClass = isKnownSignal(analysis.signal) ? FILL[analysis.signal] : FALLBACK_FILL;
   const level = convictionLevel(analysis.conviction);
   const tickerSizeClass = analysis.ticker.length > 5 ? "text-[10px]" : "text-[13px]";
-  const previewPositionClass = [
+  const flyoutPositionClass = [
     placement.y === "top" ? "bottom-full mb-1" : "top-full mt-1",
     placement.x === "right" ? "right-0" : "left-0",
   ].join(" ");
@@ -102,10 +107,42 @@ export default function AnalysisTile({ analysis }: { analysis: AnalysisFeedItem 
         ))}
       </span>
 
-      {previewOpen && (
-        <div className={`absolute z-20 ${previewPositionClass}`}>
-          <TilePreview analysis={analysis} />
+      {/* Delete control — a real <button>, but nested inside the tile's own
+          clickable area, so both click and keydown must stop propagation to
+          keep it from also triggering the tile's navigation. */}
+      <button
+        type="button"
+        aria-label={`Delete ${analysis.ticker} and its data`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setConfirmOpen(true);
+        }}
+        onKeyDown={(e) => e.stopPropagation()}
+        className={`absolute right-0.5 top-0.5 z-10 rounded p-0.5 text-zinc-400 transition-opacity hover:bg-black/30 hover:text-red-400 ${
+          previewOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <RemoveIcon className="h-3 w-3" />
+      </button>
+
+      {confirmOpen ? (
+        <div className={`absolute z-20 ${flyoutPositionClass}`}>
+          <RemoveTickerConfirm
+            ticker={analysis.ticker}
+            pending={deleteMutation.isPending}
+            error={deleteMutation.isError ? `Couldn't delete ${analysis.ticker} — try again.` : null}
+            onCancel={() => setConfirmOpen(false)}
+            onConfirm={() =>
+              deleteMutation.mutate(analysis.ticker, { onSuccess: () => setConfirmOpen(false) })
+            }
+          />
         </div>
+      ) : (
+        previewOpen && (
+          <div className={`absolute z-20 ${flyoutPositionClass}`}>
+            <TilePreview analysis={analysis} />
+          </div>
+        )
       )}
     </div>
   );

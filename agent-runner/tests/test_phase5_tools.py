@@ -31,13 +31,20 @@ def test_insider_normalization_and_net_direction(monkeypatch):
         return {"data": [{"year": 2026, "month": 7, "mspr": 25.0}]}
 
     monkeypatch.setattr(insider, "finnhub_get", fake_get)
-    out = insider.get_insider_activity("aapl")
+    out = insider.get_insider_activity("aapl", db=mongomock.MongoClient()["t"])
 
+    # 024 — transactions come back newest-first now. Merging a stored set with a
+    # fetched one destroys provider order, so an explicit sort is required; the
+    # descending choice makes insider_analyst's `transactions[:15]` actually mean
+    # "the 15 most recent" for a field it publishes as `recent_transactions`,
+    # which arbitrary provider order never guaranteed.
     types = [t["transaction_type"] for t in out["transactions"]]
-    assert types == ["purchase", "sale", "option_exercise"]
-    assert out["transactions"][0]["total_value"] == 500_000
-    assert out["transactions"][1]["shares"] == 2000  # abs of negative change
-    assert out["transactions"][2]["is_open_market"] is False
+    assert types == ["option_exercise", "sale", "purchase"]
+
+    by_type = {t["transaction_type"]: t for t in out["transactions"]}
+    assert by_type["purchase"]["total_value"] == 500_000
+    assert by_type["sale"]["shares"] == 2000  # abs of negative change
+    assert by_type["option_exercise"]["is_open_market"] is False
     assert out["net_direction"] == "net_buyer"
     assert out["mspr_monthly"][0]["mspr"] == 25.0
 

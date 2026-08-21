@@ -1,55 +1,63 @@
 # api/routers/earnings.py
 
 ## Purpose
-API endpoints for the earnings scanner feature. Handles calendar fetching, scan triggering (async), polling for results, and enqueuing tickers for full analysis. Not conversational — selecting a ticker calls `POST /earnings/analyze` directly, no chat turn.
+API endpoints for the earnings feature. `GET /earnings/calendar` is the primary,
+auto-loading endpoint behind the earnings page (specs/025-earnings-page-filters). The scan
+lifecycle (`POST /scan`, `GET /scan/{scan_id}`) and `POST /earnings/analyze` remain for the
+agent-runner's scoring worker but currently have no frontend caller — the earnings page's
+manual scan trigger was removed in 025 (see KNOWN_ISSUES.md). Selecting a ticker off the
+calendar still calls `POST /earnings/analyze` directly, no chat turn.
 
-Pulling the calendar is also one of the two ways a ticker can enter the system automatically (the other being an institutional flow scan — see `institutional_flow_worker.md`). Every ticker returned by `GET /earnings/calendar` is registered in `ticker_index` and enqueued for analysis, so it's picked up by the queue worker without the user having to select it individually. The existing `POST /earnings/analyze` handoff (user selects specific tickers from the scored, ranked list) still works exactly as before for "analyze this one right now" — the two paths just both feed the same `work_queue`.
+**Deviates from the original auto-ingest design described below in one respect that
+predates 025 and remains true**: `GET /earnings/calendar` is read-only. It does not
+register tickers or enqueue analysis — during earnings season the calendar holds hundreds
+of names, and auto-enqueuing all of them meant multi-hour crew runs and a bloated
+`ticker_index`. Tickers enter the system one at a time via `POST /earnings/analyze`
+instead, fired from the calendar table's per-row Queue action.
 
 ## Endpoints
 
-### `GET /earnings/calendar?days=7`
-Returns the pre-screened upcoming earnings list (raw, without scoring). Fast — hits cache if available. Registers and enqueues every ticker in the result, whether served from cache or freshly fetched — cheap and idempotent, since `register_ticker` and the queue's pending/running check are both no-ops on repeat calls.
+### `GET /earnings/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD` (spec 025)
+Every company ≥$500M cap reporting in the inclusive `[from, to]` window, with actuals and
+derived surprise for anything already reported. Replaced the previous `?days=N`
+forward-only signature — a backward-looking window is required to show surprise data at
+all, since reported companies live in the past. See
+`specs/025-earnings-page-filters/contracts/earnings-calendar.md` for the full contract.
+
+Read-only (see Purpose above) — never touches `work_queue` or `ticker_index`. Cached 4h
+per exact `(from, to)` window in `earnings_cache` under
+`{"type": "calendar_range", "from", "to"}` — deliberately not `{"type": "calendar", ...}`,
+which `agent-runner/tools/earnings_calendar.py` still writes (Finnhub-sourced, forward-only,
+no actuals) for the scoring scanner. The two shapes must never collide in the shared
+collection (constitution Principle VI).
 
 ```python
-from registry import register_ticker
-
-@router.get("/earnings/calendar")
-def get_earnings_calendar(days: int = 7, db = Depends(db_dependency)):
-    cached = db.earnings_cache.find_one(
-        { "type": "calendar", "days": days, "fetched_at": { "$gt": four_hours_ago() } },
-        { "_id": 0 }
-    )
-    if cached:
-        data = cached["data"]
-    else:
-        # Trigger a fresh fetch (synchronous — calendar fetch is fast, ~1s)
-        from tools.earnings_calendar import get_earnings_calendar as fetch_calendar
-        data = fetch_calendar(days_ahead=days)
-        db.earnings_cache.replace_one(
-            { "type": "calendar", "days": days },
-            { "type": "calendar", "days": days, "data": data, "fetched_at": datetime.utcnow() },
-            upsert=True
-        )
-
-    _register_and_enqueue_calendar(data, db)
-    return data
-
-def _register_and_enqueue_calendar(calendar: list[dict], db) -> None:
-    for entry in calendar:
-        ticker = entry["ticker"].upper()
-        record = db.ticker_index.find_one({ "ticker": ticker })
-        if record and record.get("status") == "removed_from_market":
-            continue  # don't resurrect a known-delisted ticker just because it appears on a stale calendar row
-
-        register_ticker(db, ticker, source="earnings_calendar", name=entry.get("company"), sector=entry.get("sector"))
-
-        already_queued = db.work_queue.find_one({ "ticker": ticker, "status": { "$in": ["pending", "running"] } })
-        if not already_queued:
-            db.work_queue.insert_one({
-                "ticker": ticker, "status": "pending", "source": "earnings_calendar",
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
-            })
+@router.get("/calendar")
+def get_calendar(from_: date = Query(..., alias="from"), to: date = Query(...), db=Depends(db_dependency)):
+    if from_ > to:
+        raise HTTPException(422, "'from' must not be after 'to'")
+    if (to - from_).days > 90:
+        raise HTTPException(422, "date range too wide (max 90 days)")
+    try:
+        return earnings_data.get_earnings_calendar(start=from_, end=to, db=db)
+    except FmpBudgetExceededError:
+        raise HTTPException(503, "...budget spent")  # no cached window for this range either
+    except earnings_data.CalendarUnavailableError:
+        raise HTTPException(502, "...provider unavailable")
+    except earnings_data.UniverseUnavailableError:
+        raise HTTPException(502, "...universe unavailable")
 ```
+
+Response envelope: `{"entries": [...], "total_before_screen": int, "stale": bool, "fetched_at": iso8601}`.
+Each entry carries `eps_actual`/`revenue_actual`/`eps_surprise_pct`/`revenue_surprise_pct`/
+`beat`/`reporting_state` in addition to the estimates and market data the old shape had.
+`report_time` (bmo/amc) is gone — the FMP source has no time-of-day field
+(`research.md` D4). `entries` arrives sorted by `market_cap` descending; the client must
+not re-sort.
+
+On a spent FMP budget or an unreachable provider, serves the newest cached window
+regardless of TTL age and marks it `stale: true`; only 502/503s when no cache exists at all
+for that exact window (fail-soft, constitution Principle IV).
 
 ### `POST /earnings/scan`
 Kicks off a full scoring scan (async — takes 30–60s). Returns a `scan_id` immediately. Frontend polls `GET /earnings/scan/{scan_id}` for results.

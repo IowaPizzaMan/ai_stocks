@@ -154,7 +154,10 @@ def _fake_closes() -> pd.DataFrame:
 
 def test_earnings_history_end_to_end(db, monkeypatch):
     monkeypatch.setattr(ec, "fmp_get", lambda path, db=None: FAKE_EARNINGS)
-    monkeypatch.setattr(ec, "fetch_eod_history", lambda ticker, db=None: _fake_closes())
+    monkeypatch.setattr(
+        ec.price_store, "get_series",
+        lambda ticker, refresh="none", db=None: (_fake_closes(), {"requests": 1}),
+    )
     out = ec.get_earnings_history("bigco", num_quarters=8, db=db)
 
     assert out["ticker"] == "BIGCO"
