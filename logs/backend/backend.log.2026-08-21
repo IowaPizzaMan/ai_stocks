@@ -1,0 +1,8 @@
+2026-08-21 15:47:16,868 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-21 15:47:16,894 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-21 15:47:16,906 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-21 15:47:16,907 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-21 15:48:34,503 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-21 15:48:34,524 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-21 15:48:34,535 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-21 15:48:34,537 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache

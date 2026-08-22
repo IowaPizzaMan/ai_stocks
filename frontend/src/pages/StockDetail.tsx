@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Analysis, ChangesSinceLast } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
+import TabBar from "../components/shared/TabBar";
 import ChartsTab from "../components/stock/ChartsTab";
 import FormattedProse from "../components/stock/FormattedProse";
 import NewsTab from "../components/stock/NewsTab";
@@ -159,27 +160,19 @@ export default function StockDetail() {
 
       {/* Tabs render whenever there's price data — charts don't need an
           analysis (FR-009); analysis-backed tabs show their own empty states. */}
-      <nav className="flex flex-wrap gap-1 border-b border-zinc-800">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => navigate(`#${tab.id}`, { replace: true })}
-            className={`px-3 py-2 text-sm transition-colors ${
-              activeTab === tab.id
-                ? "border-b-2 border-sky-500 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-        {latest && (
-          <span className="ml-auto self-center text-xs text-zinc-600">
-            analyzed {relativeTime(latest.timestamp)}
-            {formatDate(latest.timestamp) && ` — data as of ${formatDate(latest.timestamp)}`}
-          </span>
-        )}
-      </nav>
+      <TabBar
+        tabs={TABS}
+        activeTab={activeTab}
+        onSelect={(id) => navigate(`#${id}`, { replace: true })}
+        trailing={
+          latest && (
+            <>
+              analyzed {relativeTime(latest.timestamp)}
+              {formatDate(latest.timestamp) && ` — data as of ${formatDate(latest.timestamp)}`}
+            </>
+          )
+        }
+      />
 
       <div className="mt-6">
         {activeTab === "charts" && (

@@ -65,6 +65,10 @@ PULL_METRICS = "pull_metrics"
 # marker; backend never reads it, kept in sync per constitution VI convention.
 ECONOMICS_META = "economics_meta"
 
+# 027-stocks-news-tab-ai-summary — singleton document (no key field; callers use
+# find_one({})/replace_one({}, ..., upsert=True)), keep in sync with agent-runner/tools/db.py
+PORTFOLIO_DIGEST_CACHE = "portfolio_digest_cache"
+
 
 @lru_cache(maxsize=1)
 def get_db() -> Database:

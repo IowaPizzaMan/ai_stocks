@@ -24,6 +24,8 @@ export function useQueueStatus() {
         // only refresh signal it gets (the panel itself never polls).
         queryClient.invalidateQueries({ queryKey: ["pull-metrics"] });
         queryClient.invalidateQueries({ queryKey: ["price"] });
+        // 027: the portfolio_digest admin job has no other refresh signal either.
+        queryClient.invalidateQueries({ queryKey: ["portfolio-digest"] });
       }
       return busy ? 5000 : false;
     },

@@ -66,6 +66,10 @@ PULL_METRICS = "pull_metrics"
 # separate from dataset_meta's success/failure freshness (mirrors BREADTH_META).
 ECONOMICS_META = "economics_meta"
 
+# 027-stocks-news-tab-ai-summary — singleton document (no key field; callers use
+# find_one({})/replace_one({}, ..., upsert=True)), keep in sync with backend/db.py
+PORTFOLIO_DIGEST_CACHE = "portfolio_digest_cache"
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)

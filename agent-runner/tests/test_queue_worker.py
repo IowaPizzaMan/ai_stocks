@@ -6,6 +6,7 @@ import pytest
 
 import queue_worker
 from crew import TickerDelistedError
+from tools import admin_jobs
 from tools.db import ANALYSES, TICKER_INDEX, WATCHLIST, WORK_QUEUE
 
 
@@ -164,3 +165,24 @@ def test_fresh_running_job_not_recovered(db):
     })
     assert queue_worker.claim_and_run_next(db=db, crew=FakeCrew()) is False
     assert db[WORK_QUEUE].find_one({"ticker": "BUSY"})["status"] == "running"
+
+
+# --- 027-stocks-news-tab-ai-summary: non-ticker admin-job dispatch ----------
+# First real exercise of the job_type dispatch branch for a job type other
+# than economics_pull (which runs on its own timer, never through work_queue).
+
+
+def test_non_ticker_job_type_is_claimed_and_dispatched_to_its_handler(db, monkeypatch):
+    db[WORK_QUEUE].insert_one({
+        "job_type": "portfolio_digest", "status": "pending",
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
+    })
+    calls = []
+    monkeypatch.setitem(admin_jobs.JOB_HANDLERS, "portfolio_digest", lambda db: calls.append(db) or 3)
+
+    result = queue_worker.claim_and_run_next(db=db, crew=FakeCrew())
+
+    assert result is True
+    assert calls == [db]
+    job = db[WORK_QUEUE].find_one({"job_type": "portfolio_digest"})
+    assert job["status"] == "done"

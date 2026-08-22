@@ -452,7 +452,8 @@ export interface RiskPremium extends Freshness {
 export type PullMode = "delta" | "full";
 
 export interface QueueJob {
-  ticker: string;
+  ticker?: string; // absent on non-ticker admin jobs, e.g. job_type "portfolio_digest"
+  job_type?: string; // absent = ordinary per-ticker analysis job
   status: string;
   source?: string;
   created_at: string;
@@ -668,4 +669,24 @@ export interface WatchlistItem {
   last_signal?: Signal;
   last_conviction?: Conviction;
   last_analyzed?: string;
+}
+
+// 027-stocks-news-tab-ai-summary — cross-stock AI summary panel on the Stocks
+// page. Contract: specs/027-stocks-news-tab-ai-summary/contracts/portfolio-digest-api.md
+
+export interface PortfolioDigestHighlight {
+  ticker: string;
+  signal: Signal;
+  conviction: Conviction;
+  note: string;
+}
+
+export interface PortfolioDigestResponse {
+  as_of: string | null; // generated_at of the last successful synthesis
+  overview: string | null;
+  highlights: PortfolioDigestHighlight[];
+  stock_count: number;
+  total_tracked_count: number;
+  capped: boolean;
+  stale: boolean; // true when a regeneration attempt failed more recently than the last success
 }

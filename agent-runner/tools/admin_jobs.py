@@ -16,10 +16,15 @@ from typing import Callable
 
 from pymongo.database import Database
 from tools.economics import run_economics_pull
+from tools.portfolio import run_portfolio_digest
 
 # job_type -> handler(db) -> int (record_count written, for dataset_meta)
 JOB_HANDLERS: dict[str, Callable[[Database], int]] = {
     "economics_pull": run_economics_pull,
+    # 027-stocks-news-tab-ai-summary — cross-stock AI summary panel. First
+    # real user of this dispatch branch besides economics_pull (which
+    # actually runs on its own timer, not through work_queue).
+    "portfolio_digest": run_portfolio_digest,
 }
 
 # job_type -> stale-running recovery minutes override (default 30 if absent)

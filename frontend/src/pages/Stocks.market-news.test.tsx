@@ -1,4 +1,6 @@
-// Stocks page ↔ market news panel integration — specs/022-market-news-feed.
+// Stocks page ↔ market news panel integration — specs/022-market-news-feed,
+// relocated behind the News tab by specs/027-stocks-news-tab-ai-summary
+// (FR-002: content/behavior unchanged by the move, only its location did).
 // Kept in its own file from Stocks.test.tsx (which covers the grid) so the two
 // concerns don't fight over one module's mocks.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -50,6 +52,11 @@ const FEED = {
   page_size: 60,
 };
 
+const EMPTY_DIGEST = {
+  as_of: null, overview: null, highlights: [], stock_count: 0, total_tracked_count: 0,
+  capped: false, stale: false,
+};
+
 /** Records every URL + params pair the page requests. */
 function mockApi({ newsFails = false } = {}) {
   const calls: { url: string; params?: Record<string, unknown> }[] = [];
@@ -60,17 +67,18 @@ function mockApi({ newsFails = false } = {}) {
         return newsFails ? Promise.reject(new Error("boom")) : Promise.resolve({ data: NEWS });
       }
       if (url.includes("/analysis/feed")) return Promise.resolve({ data: FEED });
+      if (url.includes("/portfolio/digest")) return Promise.resolve({ data: EMPTY_DIGEST });
       return Promise.resolve({ data: {} });
     },
   );
   return calls;
 }
 
-function renderStocks(search = "") {
+function renderStocks(searchAndHash = "") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[`/${search}`]}>
+      <MemoryRouter initialEntries={[`/${searchAndHash}`]}>
         <Routes>
           <Route path="/" element={<Stocks />} />
         </Routes>
@@ -79,30 +87,33 @@ function renderStocks(search = "") {
   );
 }
 
-// --- US1: placement ---------------------------------------------------------
+// --- US1 (spec 027): the panel now lives on its own News tab -----------------
 
-test("renders the market news panel below the analysis grid", async () => {
+test("the market news panel appears on the News tab, not the default grid tab", async () => {
   mockApi();
-  const { container } = renderStocks();
+  renderStocks();
 
-  // the panel's heading shows during loading too, so wait for real content
-  await waitFor(() => expect(screen.getByText("Nebius momentum has staying power")).toBeTruthy());
-  await waitFor(() => expect(screen.getByText("Bullish")).toBeTruthy());
-
-  const html = container.innerHTML;
-  // the grid's signal heading must appear before the news section
-  expect(html.indexOf("Bullish")).toBeLessThan(html.indexOf("Market News"));
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeTruthy());
+  expect(screen.queryByText("Nebius momentum has staying power")).toBeNull();
 });
 
-// --- US1: filter independence (FR-001b) -------------------------------------
+test("the grid tab never requests market news at all — it isn't mounted there", async () => {
+  const calls = mockApi();
+  renderStocks();
+
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeTruthy());
+  expect(calls.some((c) => c.url.includes("/market/news"))).toBe(false);
+});
+
+// --- US1: filter independence (FR-001b, unchanged by the relocation) --------
 
 test("grid filters do not change the news request or its articles", async () => {
   const calls = mockApi();
-  renderStocks("?sector=Technology&signal=bullish&ticker=AAPL");
+  renderStocks("?sector=Technology&signal=bullish&ticker=AAPL#news");
 
   await waitFor(() => expect(screen.getByText("Nebius momentum has staying power")).toBeTruthy());
 
-  // the feed request carries the filters…
+  // the feed request (still made in the background) carries the filters…
   const feedCall = calls.find((c) => c.url.includes("/analysis/feed"));
   expect(feedCall?.params).toMatchObject({ sector: "Technology", signal: "bullish", ticker: "AAPL" });
 
@@ -112,33 +123,37 @@ test("grid filters do not change the news request or its articles", async () => 
   expect(newsCalls[0].url).toBe("/market/news");
   expect(newsCalls[0].params).toBeUndefined();
 
-  // and the same articles render regardless
   expect(screen.getByText("Nebius momentum has staying power")).toBeTruthy();
 });
 
 test("the news panel renders identically with and without filters", async () => {
   mockApi();
-  const { unmount } = renderStocks();
+  const { unmount } = renderStocks("#news");
   const target = "Nebius momentum has staying power";
   await waitFor(() => expect(screen.getByText(target)).toBeTruthy());
   const unfiltered = screen.getByText(target).textContent;
   unmount();
 
   mockApi();
-  renderStocks("?sector=Healthcare&conviction=low");
+  renderStocks("?sector=Healthcare&conviction=low#news");
   await waitFor(() => expect(screen.getByText(target)).toBeTruthy());
   expect(screen.getByText(target).textContent).toBe(unfiltered);
 });
 
-// --- US3: a news failure must not degrade the grid (FR-012) -----------------
+// --- US3 (spec 022): a news failure degrades gracefully, confined to its tab -
 
-test("the analysis grid still renders when the news request fails", async () => {
+test("a market news failure shows a graceful message on the News tab, never an error page", async () => {
+  mockApi({ newsFails: true });
+  renderStocks("#news");
+
+  await waitFor(() => expect(screen.getByText(/market news is unavailable/i)).toBeTruthy());
+});
+
+test("a market news failure has no effect on the grid tab, which never requested it", async () => {
   mockApi({ newsFails: true });
   renderStocks();
 
-  await waitFor(() => expect(screen.getByText(/market news is unavailable/i)).toBeTruthy());
-
-  // grid content is intact
-  expect(screen.getByText("Bullish")).toBeTruthy();
+  await waitFor(() => expect(screen.getByText("Bullish")).toBeTruthy());
   expect(screen.getByText("AAPL")).toBeTruthy();
+  expect(screen.queryByText(/market news is unavailable/i)).toBeNull();
 });

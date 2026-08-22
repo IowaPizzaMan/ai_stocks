@@ -14,6 +14,7 @@ from routers import (
     logs,
     macro,
     market,
+    portfolio,
     price,
     queue,
     sectors,
@@ -59,6 +60,7 @@ app.include_router(queue.router)
 app.include_router(earnings.router)
 app.include_router(institutional_flow.router)
 app.include_router(logs.router)
+app.include_router(portfolio.router)
 
 
 @app.get("/health")

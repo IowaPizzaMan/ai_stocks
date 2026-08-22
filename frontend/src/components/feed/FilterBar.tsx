@@ -21,6 +21,12 @@ export default function FilterBar() {
   const busyCount = (queue?.pending_count ?? 0) + (queue?.running_count ?? 0);
 
   useEffect(() => {
+    // Guarded so this never fires a no-op navigation on mount — react-router's
+    // setSearchParams navigates via a hash-less relative URL, which would
+    // otherwise silently clear any URL hash present (e.g. the Stocks page's
+    // #news tab anchor, specs/027) even when the ticker filter didn't change.
+    const current = searchParams.get("ticker") ?? "";
+    if (debouncedSearch === current) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
