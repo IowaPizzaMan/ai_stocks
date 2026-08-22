@@ -60,15 +60,10 @@ BENEFICIAL_OWNERSHIP_CACHE = "beneficial_ownership_cache"
 # would destroy the baseline every delta pull depends on. Retired price_cache.
 PRICE_HISTORY = "price_history"
 INSIDER_CACHE = "insider_cache"
-PULL_METRICS = "pull_metrics"
 
 # 026-macro-market-dashboard — economics_worker's own daily-scheduling marker,
 # separate from dataset_meta's success/failure freshness (mirrors BREADTH_META).
 ECONOMICS_META = "economics_meta"
-
-# 027-stocks-news-tab-ai-summary — singleton document (no key field; callers use
-# find_one({})/replace_one({}, ..., upsert=True)), keep in sync with backend/db.py
-PORTFOLIO_DIGEST_CACHE = "portfolio_digest_cache"
 
 
 def _utcnow() -> datetime:
@@ -122,10 +117,6 @@ def ensure_indexes(db: Database | None = None) -> None:
     # 024 — insider transactions become a maintained store too (US4). No TTL,
     # same reason as above; retention is trimmed on merge to LOOKBACK_DAYS.
     db[INSIDER_CACHE].create_index([("ticker", ASCENDING)], unique=True)
-    # 024 — pull diagnostics, expired after 30 days (only enough history to rank
-    # stages over time, per spec FR-003)
-    db[PULL_METRICS].create_index([("ticker", ASCENDING), ("started_at", DESCENDING)])
-    db[PULL_METRICS].create_index("started_at", expireAfterSeconds=30 * 24 * 3600)
     # 026-macro-market-dashboard — treasury_rates is a maintained store (no TTL,
     # same discipline as price_history): a backfill-then-daily-extend history the
     # curve/spread reads depend on, so expiry would destroy the baseline.
@@ -135,6 +126,28 @@ def ensure_indexes(db: Database | None = None) -> None:
     db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", ASCENDING)], unique=True)
     db[ECONOMIC_INDICATORS].create_index([("indicator", ASCENDING), ("date", DESCENDING)])
     db[MARKET_RISK_PREMIUM].create_index([("country", ASCENDING)], unique=True)
+    # 028-dashboard-tweaks-batch US6 — provider's own array position (rank) is
+    # what the read endpoint sorts on, since the endpoint supplies no volume
+    # to sort by and upsert writes don't preserve insertion order (R9).
+    db[MARKET_MOVERS].create_index(
+        [("date", DESCENDING), ("category", ASCENDING), ("rank", ASCENDING)]
+    )
+    db[MARKET_MOVERS].create_index(
+        [("date", ASCENDING), ("category", ASCENDING), ("ticker", ASCENDING)], unique=True
+    )
+    # 028-dashboard-tweaks-batch US4 — congress_trades: trade_id unique for
+    # idempotent upsert; disclosure_date-ordered for the default listing and
+    # the 90-day summary window (R8, judged on disclosure_date, not
+    # transaction_date); ticker/person_id for their respective filters.
+    db[CONGRESS_TRADES].create_index([("trade_id", ASCENDING)], unique=True)
+    db[CONGRESS_TRADES].create_index([("disclosure_date", DESCENDING)])
+    db[CONGRESS_TRADES].create_index([("ticker", ASCENDING), ("disclosure_date", DESCENDING)])
+    db[CONGRESS_TRADES].create_index([("person_id", ASCENDING)])
+    # 029-company-profile-tweaks — company_info was reserved (spec 017) but
+    # never written to until now. No TTL: same discipline as price_history —
+    # expiry would silently drop a ticker's sector/industry off the Sectors
+    # rollup and the industry filter with no error anywhere.
+    db[COMPANY_INFO].create_index([("ticker", ASCENDING)], unique=True)
 
 
 def sanitize_floats(value):

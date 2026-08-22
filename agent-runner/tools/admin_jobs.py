@@ -15,21 +15,32 @@ constitution Principle V/VI, kept in sync by hand against the same contract.
 from typing import Callable
 
 from pymongo.database import Database
+from tools.congress import run_congress_trades_pull
 from tools.economics import run_economics_pull
-from tools.portfolio import run_portfolio_digest
+from tools.market_movers import run_market_movers_pull
+from tools.sector_etfs import run_sector_etf_pull
 
 # job_type -> handler(db) -> int (record_count written, for dataset_meta)
 JOB_HANDLERS: dict[str, Callable[[Database], int]] = {
     "economics_pull": run_economics_pull,
-    # 027-stocks-news-tab-ai-summary — cross-stock AI summary panel. First
-    # real user of this dispatch branch besides economics_pull (which
-    # actually runs on its own timer, not through work_queue).
-    "portfolio_digest": run_portfolio_digest,
+    # 028-dashboard-tweaks-batch US6 — implements only the "actives" category
+    # of 017's registered job; gainers/losers remain unwritten (R9).
+    "market_movers_pull": run_market_movers_pull,
+    # 028-dashboard-tweaks-batch US5 — not in 017's registry (that spec's
+    # sector_performance_pull is a different dataset, R5); reuses price_store
+    # unchanged for the 11 sector ETFs.
+    "sector_etf_pull": run_sector_etf_pull,
+    # 028-dashboard-tweaks-batch US4 — implements 017's already-registered
+    # job, reusing its pinned congress_trades schema (R7).
+    "congress_trades_pull": run_congress_trades_pull,
 }
 
 # job_type -> stale-running recovery minutes override (default 30 if absent)
 STALE_MINUTES: dict[str, int] = {
     "economics_pull": 15,  # per contracts/admin-jobs-api.md's registry table
+    "market_movers_pull": 10,  # per 017's registry table
+    "sector_etf_pull": 10,  # matches market_movers_pull — same order of I/O
+    "congress_trades_pull": 15,  # per 017's registry table
 }
 
 # job_type -> dataset_meta dataset name (one entry per job_type; a job that
@@ -45,4 +56,13 @@ STALE_MINUTES: dict[str, int] = {
 # without raising, which economics_pull's handler never does by design; adding
 # it here would let that generic write silently overwrite a correctly-recorded
 # partial failure. See specs/026-macro-market-dashboard/research.md D1.
-JOB_DATASETS: dict[str, str] = {}
+JOB_DATASETS: dict[str, str] = {
+    # 028-dashboard-tweaks-batch US6 — simple atomic-per-run handler (either
+    # the fetch succeeds and rows are written, or it raises before writing
+    # anything), so the generic success/failed write is accurate here, unlike
+    # economics_pull's per-sub-pull nuance above.
+    "market_movers_pull": "market_movers",
+    # 028-dashboard-tweaks-batch US4 — a single record_count already reflects
+    # a one-chamber-failed partial success correctly; per 017's registry table.
+    "congress_trades_pull": "congress_trades",
+}

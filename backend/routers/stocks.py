@@ -5,6 +5,8 @@ delete / bulk add). No router prefix — this module serves both /stocks/* and
 /tickers* paths.
 """
 import re
+from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -13,11 +15,11 @@ from pymongo import ReturnDocument
 from db import (
     ANALYSES,
     BENEFICIAL_OWNERSHIP_CACHE,
+    COMPANY_INFO,
     EARNINGS_CACHE,
     FINANCIALS_CACHE,
     INSTITUTIONAL_CACHE,
     INSTITUTIONAL_FLOW,
-    PULL_METRICS,
     STOCK_NEWS_CACHE,
     TICKER_INDEX,
     TRANSCRIPTS_CACHE,
@@ -38,6 +40,10 @@ class TickerStatusUpdate(BaseModel):
 
 class BulkAddRequest(BaseModel):
     tickers: str
+
+
+class SentimentUpdate(BaseModel):
+    sentiment: Literal["liked", "disliked"]
 
 
 @router.get("/stocks/search")
@@ -137,12 +143,64 @@ def bulk_add_tickers(body: BulkAddRequest, db=Depends(db_dependency)):
     return {"added": added, "already_existed": already_existed, "invalid": invalid}
 
 
+@router.get("/stocks/industries")
+def list_industries(db=Depends(db_dependency)):
+    """Distinct industries among tracked (non-removed) tickers, sorted —
+    sourced from ticker_index so the industry filter can never offer a choice
+    that yields an empty grid (contracts/sector-and-industry.md, FR-024).
+    Registered before /stocks/{ticker} — Starlette matches path routes in
+    registration order, so a literal segment must precede a wildcard one or
+    "industries" would be swallowed as a ticker symbol."""
+    values = db[TICKER_INDEX].distinct(
+        "industry", {"industry": {"$nin": [None, ""]}, "status": {"$ne": "removed_from_market"}}
+    )
+    return {"industries": sorted(values)}
+
+
 @router.get("/stocks/{ticker}")
 def get_ticker(ticker: str, db=Depends(db_dependency)):
     record = db[TICKER_INDEX].find_one({"ticker": ticker.upper()}, {"_id": 0})
     if not record:
         raise HTTPException(status_code=404, detail="Unknown ticker.")
     return record
+
+
+@router.put("/stocks/{ticker}/sentiment")
+def set_sentiment(ticker: str, body: SentimentUpdate, db=Depends(db_dependency)):
+    """Like/dislike (specs/028-dashboard-tweaks-batch US3). 404s when the
+    ticker isn't tracked (FR-006a) — a tag can only ever exist for a stock the
+    feed filter can actually surface (R11). Re-sending the currently-stored
+    value toggles it off (FR-008); the two states are mutually exclusive by
+    construction since it's a single field (FR-007)."""
+    ticker = ticker.upper()
+    existing = db[TICKER_INDEX].find_one({"ticker": ticker}, {"sentiment": 1})
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"{ticker} is not tracked.")
+
+    if existing.get("sentiment") == body.sentiment:
+        db[TICKER_INDEX].update_one(
+            {"ticker": ticker},
+            {"$set": {"sentiment": None, "sentiment_at": None}},
+        )
+        return {"ticker": ticker, "sentiment": None}
+
+    db[TICKER_INDEX].update_one(
+        {"ticker": ticker},
+        {"$set": {"sentiment": body.sentiment, "sentiment_at": datetime.now(timezone.utc)}},
+    )
+    return {"ticker": ticker, "sentiment": body.sentiment}
+
+
+@router.delete("/stocks/{ticker}/sentiment")
+def clear_sentiment(ticker: str, db=Depends(db_dependency)):
+    ticker = ticker.upper()
+    result = db[TICKER_INDEX].update_one(
+        {"ticker": ticker},
+        {"$set": {"sentiment": None, "sentiment_at": None}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"{ticker} is not tracked.")
+    return {"ticker": ticker, "sentiment": None}
 
 
 @router.get("/stocks/{ticker}/financials")
@@ -162,42 +220,79 @@ def get_signals(ticker: str, db=Depends(db_dependency)):
     return {"ticker": doc["ticker"], "timestamp": doc["timestamp"], **doc.get("sub_reports", {})}
 
 
-MAX_PULL_METRICS = 20
+def _split_range(range_str: str | None) -> tuple[float | None, float | None]:
+    """FMP's 52-week range comes as "224.69-344.57" (contracts/company-profile-api.md)."""
+    if not range_str or "-" not in range_str:
+        return None, None
+    low, _, high = range_str.partition("-")
+    try:
+        return float(low), float(high)
+    except ValueError:
+        return None, None
 
 
-@router.get("/stocks/{ticker}/pull-metrics")
-def get_pull_metrics(ticker: str, limit: int = 1, db=Depends(db_dependency)):
-    """Recent pull-cost breakdowns for a ticker (024 US1).
+@router.get("/stocks/{ticker}/profile")
+def get_company_profile(ticker: str, db=Depends(db_dependency)):
+    """Cache-only read (Principle IV — never issues a provider call). 404
+    means "never fetched", distinct from a 200 with sparse fields for an
+    ETF/fund. price/change/change_percentage/volume are deliberately
+    excluded (FR-011b) — the frontend derives those from price bars instead,
+    so this section can never disagree with the Charts tab (research R7)."""
+    doc = db[COMPANY_INFO].find_one({"ticker": ticker.upper()}, {"_id": 0})
+    if not doc or not doc.get("profile"):
+        raise HTTPException(status_code=404, detail="No profile cached for this ticker.")
+    p = doc["profile"]
+    range_low, range_high = _split_range(p.get("range"))
+    return {
+        "ticker": ticker.upper(),
+        "name": p.get("name"),
+        "exchange": p.get("exchange"),
+        "exchange_full": p.get("exchange_full"),
+        "sector": p.get("sector"),
+        "industry": p.get("industry"),
+        "country": p.get("country"),
+        "currency": p.get("currency"),
+        "website": p.get("website"),
+        "ceo": p.get("ceo"),
+        "full_time_employees": p.get("full_time_employees"),
+        "ipo_date": p.get("ipo_date"),
+        "description": p.get("description"),
+        "logo_url": None if p.get("default_image") or not p.get("image") else p.get("image"),
+        "market_cap": p.get("market_cap"),
+        "beta": p.get("beta"),
+        "last_dividend": p.get("last_dividend"),
+        "range_low": range_low,
+        "range_high": range_high,
+        "average_volume": p.get("average_volume"),
+        "is_etf": p.get("is_etf", False),
+        "is_fund": p.get("is_fund", False),
+        "is_actively_trading": p.get("is_actively_trading"),
+        "fetched_at": doc.get("profile_fetched_at"),
+    }
 
-    Stages come back most-expensive-first and unaccounted time is computed here
-    rather than in the client: SC-006 asks the operator to spot the top three
-    stages without extra work, and FR-004 wants the time the breakdown cannot
-    explain to be visible rather than silently dropped.
-    """
-    ticker = ticker.upper()
-    limit = max(1, min(limit, MAX_PULL_METRICS))
 
-    docs = list(
-        db[PULL_METRICS]
-        .find({"ticker": ticker}, {"_id": 0})
-        .sort("started_at", -1)
-        .limit(limit)
+@router.get("/stocks/{ticker}/peers")
+def get_company_peers(ticker: str, db=Depends(db_dependency)):
+    """Always 200 — empty is a valid state, not an error. Sorted server-side
+    (market cap descending, nulls last, symbol tiebreak) so every client gets
+    the same order (contracts/company-profile-api.md, research R8)."""
+    doc = db[COMPANY_INFO].find_one({"ticker": ticker.upper()}, {"_id": 0})
+    peers = (doc or {}).get("peers") or []
+    ordered = sorted(
+        peers,
+        key=lambda p: (p.get("market_cap") is None, -(p.get("market_cap") or 0), p.get("symbol") or ""),
     )
-    if not docs:
-        raise HTTPException(status_code=404, detail="No pull recorded for this ticker.")
+    return {"ticker": ticker.upper(), "peers": ordered, "fetched_at": (doc or {}).get("peers_fetched_at")}
 
-    pulls = []
-    for doc in docs:
-        stages = sorted(doc.get("stages", []),
-                        key=lambda s: s.get("elapsed_ms", 0), reverse=True)
-        accounted = sum(s.get("elapsed_ms", 0) for s in stages)
-        total = doc.get("total_ms", 0)
-        pulls.append({
-            **doc,
-            "stages": stages,
-            "accounted_ms": accounted,
-            # Clamped: a stage clock overrunning the pull clock is a bug, but it
-            # should not surface to the operator as negative time.
-            "unaccounted_ms": max(0, total - accounted),
-        })
-    return {"ticker": ticker, "pulls": pulls}
+
+@router.get("/stocks/{ticker}/employee-count")
+def get_employee_count(ticker: str, db=Depends(db_dependency)):
+    """Always 200. Sorted ascending by period so the chart plots
+    chronologically without client-side sorting (FR-015)."""
+    doc = db[COMPANY_INFO].find_one({"ticker": ticker.upper()}, {"_id": 0})
+    records = sorted((doc or {}).get("employee_counts") or [], key=lambda r: r.get("period_of_report") or "")
+    return {
+        "ticker": ticker.upper(),
+        "records": records,
+        "fetched_at": (doc or {}).get("employee_counts_fetched_at"),
+    }

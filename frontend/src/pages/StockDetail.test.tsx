@@ -71,10 +71,21 @@ function analysis(overrides: Partial<Analysis> = {}): Analysis {
   };
 }
 
-function renderPage(hash = "", data: Analysis | null = analysis()) {
+function renderPage(hash = "", data: Analysis | null = analysis(), pullMetricsData: unknown = {}) {
   (api.get as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+    if (url.includes("/pull-metrics")) return Promise.resolve({ data: pullMetricsData });
     if (url.includes("/price")) return Promise.resolve({ data: { bars } });
     if (url.includes("/queue")) return Promise.resolve({ data: { pending: [], running: [] } });
+    // specs/029-company-profile-tweaks — no profile fetched yet is the
+    // realistic pre-pull state: 404 for the profile, empty lists for
+    // peers/employee-count (never a bare 200 {} as if the shape were unknown).
+    if (url.includes("/profile")) {
+      return Promise.reject(Object.assign(new Error("not found"), { response: { status: 404 } }));
+    }
+    if (url.includes("/peers")) return Promise.resolve({ data: { ticker: "AAPL", peers: [], fetched_at: null } });
+    if (url.includes("/employee-count")) {
+      return Promise.resolve({ data: { ticker: "AAPL", records: [], fetched_at: null } });
+    }
     if (url.match(/\/stocks\/[^/]+$/)) return Promise.resolve({ data: { ticker: "AAPL", name: "Apple" } });
     if (url.includes("/analysis")) {
       return data
@@ -112,6 +123,25 @@ test("an explicit #overview hash still opens the Overview tab", async () => {
 test("an unknown hash falls back to the Charts tab", async () => {
   renderPage("#bogus-removed-tab");
   await waitFor(() => expect(screen.getByText(/rate of change/i)).toBeTruthy());
+});
+
+// specs/028-dashboard-tweaks-batch US7 (FR-025) — pull-cost diagnostics
+// removed. Pull-metrics is mocked with real stage data so this test would
+// genuinely have shown "Pull cost" before the panel was deleted, rather
+// than passing vacuously on an empty mock response.
+test("no Pull cost section exists when analysis is present", async () => {
+  renderPage("", analysis(), {
+    ticker: "AAPL",
+    pulls: [{ mode: "delta", outcome: "done", total_ms: 500, stages: [] }],
+  });
+  await waitFor(() => expect(screen.getByText(/rate of change/i)).toBeTruthy());
+  expect(screen.queryByText(/pull cost/i)).toBeNull();
+});
+
+test("no Pull cost section exists with no prior analysis", async () => {
+  renderPage("", null);
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeTruthy());
+  expect(screen.queryByText(/pull cost/i)).toBeNull();
 });
 
 test("no Deep Dive section exists anywhere on the page", async () => {

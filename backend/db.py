@@ -59,15 +59,10 @@ FMP_USAGE = "fmp_usage"
 # would destroy the baseline every delta pull depends on. Retired price_cache.
 PRICE_HISTORY = "price_history"
 INSIDER_CACHE = "insider_cache"
-PULL_METRICS = "pull_metrics"
 
 # 026-macro-market-dashboard — agent-runner's economics_worker scheduling
 # marker; backend never reads it, kept in sync per constitution VI convention.
 ECONOMICS_META = "economics_meta"
-
-# 027-stocks-news-tab-ai-summary — singleton document (no key field; callers use
-# find_one({})/replace_one({}, ..., upsert=True)), keep in sync with agent-runner/tools/db.py
-PORTFOLIO_DIGEST_CACHE = "portfolio_digest_cache"
 
 
 @lru_cache(maxsize=1)

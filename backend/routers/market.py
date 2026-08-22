@@ -22,9 +22,11 @@ from db import (
     ECONOMIC_INDICATORS,
     MACRO_ANALYSIS_CACHE,
     MARKET_FLOW_EVENTS,
+    MARKET_MOVERS,
     MARKET_NEWS_CACHE,
     MARKET_RISK_PREMIUM,
     TREASURY_RATES,
+    WORK_QUEUE,
 )
 from deps import db_dependency
 from fmp import FmpBudgetExceededError, fmp_get
@@ -83,6 +85,76 @@ def get_flow_events(limit: int = Query(default=5, ge=1, le=50),
     return list(
         db[MARKET_FLOW_EVENTS].find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
     )
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Top Traded Stocks — specs/028-dashboard-tweaks-batch US6
+#
+# Read-only over market_movers (category="actives"), written by the
+# agent-runner's market_movers_pull admin job
+# (agent-runner/tools/market_movers.py). This router never calls a provider
+# itself; POST /refresh only enqueues that job, deduped like Portfolio
+# Summary's regenerate (routers/portfolio.py).
+#
+# The provider supplies no volume, so ordering can't come from it — the job
+# stamps its own array position as `rank`, and that is what this endpoint
+# sorts by (R9). `volume` is never present in the response, not sent as null.
+# ──────────────────────────────────────────────────────────────────────────
+
+MOST_ACTIVES_DEFAULT_LIMIT = 20
+MOST_ACTIVES_MAX_LIMIT = 100
+
+
+@router.get("/most-actives")
+def get_most_actives(
+    limit: int = Query(default=MOST_ACTIVES_DEFAULT_LIMIT, ge=1, le=MOST_ACTIVES_MAX_LIMIT),
+    db=Depends(db_dependency),
+):
+    """Always 200 — an empty result before the first refresh is a valid
+    state, not an error (mirrors /market/news and /portfolio/digest)."""
+    latest = db[MARKET_MOVERS].find_one(
+        {"category": "actives"}, {"_id": 0, "date": 1}, sort=[("date", -1)]
+    )
+    if not latest:
+        return {"items": [], "as_of": None, "date": None}
+
+    date = latest["date"]
+    items = list(
+        db[MARKET_MOVERS]
+        .find({"category": "actives", "date": date}, {"_id": 0, "volume": 0})
+        .sort("rank", 1)
+        .limit(limit)
+    )
+    as_of = max((i["collected_at"] for i in items), default=None)
+    for i in items:
+        i.pop("collected_at", None)
+        i.pop("date", None)
+        i.pop("category", None)
+        i.pop("rank", None)
+        i.pop("source", None)
+    return {
+        "items": items,
+        "as_of": _as_utc(as_of).isoformat() if as_of else None,
+        "date": date,
+    }
+
+
+@router.post("/most-actives/refresh")
+def refresh_most_actives(db=Depends(db_dependency)):
+    existing = db[WORK_QUEUE].find_one(
+        {"job_type": "market_movers_pull", "status": {"$in": ["pending", "running"]}}
+    )
+    if existing:
+        return {"status": "already_queued", "job_id": str(existing["_id"])}
+
+    now = datetime.now(timezone.utc)
+    result = db[WORK_QUEUE].insert_one({
+        "job_type": "market_movers_pull",
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+    })
+    return {"status": "enqueued", "job_id": str(result.inserted_id)}
 
 
 # ──────────────────────────────────────────────────────────────────────────

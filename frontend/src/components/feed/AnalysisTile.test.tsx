@@ -89,6 +89,31 @@ test("a missing/unrecognized conviction renders zero filled dots, not a misleadi
   expect(filled).toHaveLength(0);
 });
 
+// specs/029-company-profile-tweaks US3 (FR-021a) — logo chip beside the ticker.
+
+test("renders a logo image beside the ticker when logo_url is present", () => {
+  const { container } = renderTile(
+    analysis({ ticker: "AAPL", logo_url: "https://images.financialmodelingprep.com/symbol/AAPL.png" }),
+  );
+  const img = container.querySelector("img");
+  expect(img).not.toBeNull();
+  expect(img?.getAttribute("src")).toBe("https://images.financialmodelingprep.com/symbol/AAPL.png");
+  expect(screen.getByText("AAPL")).toBeDefined(); // ticker still renders in full
+});
+
+test("renders the neutral fallback, no broken image, when logo_url is null", () => {
+  const { container } = renderTile(analysis({ ticker: "AAPL", logo_url: null }));
+  expect(container.querySelector("img")).toBeNull();
+  expect(screen.getByText("AAPL")).toBeDefined();
+});
+
+test("conviction dots are unaffected by the logo chip", () => {
+  const { container } = renderTile(analysis({ ticker: "AAPL", conviction: "high" }));
+  const dots = container.querySelectorAll("[data-dot]");
+  expect(dots).toHaveLength(3);
+  expect(container.querySelectorAll('[data-dot][data-filled="true"]')).toHaveLength(3);
+});
+
 test("the ticker is the only visible text on the tile face", () => {
   const { container } = renderTile(analysis({ ticker: "MSFT", summary: "Should not appear" }));
   expect(container.textContent).toBe("MSFT");

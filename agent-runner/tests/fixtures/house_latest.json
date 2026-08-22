@@ -1,0 +1,20 @@
+[
+  {
+    "symbol": "META",
+    "senateId": "M001217",
+    "disclosureDate": "2026-07-27",
+    "transactionDate": "2026-06-17",
+    "firstName": "Jared",
+    "lastName": "Moskowitz",
+    "office": "Jared Moskowitz",
+    "district": "FL23",
+    "owner": "",
+    "assetDescription": "Meta Platforms Inc (1)",
+    "assetType": "Stock",
+    "type": "Purchase",
+    "amount": "$1,001 - $15,000",
+    "capitalGainsOver200USD": false,
+    "comment": "",
+    "link": "https://disclosures-clerk.house.gov/public_disc/ptr-pdf"
+  }
+]

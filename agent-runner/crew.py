@@ -27,6 +27,7 @@ from agents import (
 from logging_config import get_logger
 from skills import accumulation, gap_analysis, market_flow, the_strat
 from tools import breadth as breadth_tool
+from tools import company_profile as company_profile_tool
 from tools import financials as financials_tool
 from tools import insider as insider_tool
 from tools import institutional as institutional_tool
@@ -141,6 +142,7 @@ class Crew:
         self.get_superinvestor_activity = superinvestor_tool.get_superinvestor_activity
         self.get_earnings_sentiment = sentiment_tool.get_earnings_sentiment
         self.get_stock_news = news_tool.get_stock_news
+        self.refresh_company_profile = company_profile_tool.refresh_company_info
 
     def _price_stage(self, ticker: str, mode: str) -> dict:
         """The pull's single price refresh, then the shaped history.
@@ -174,6 +176,11 @@ class Crew:
             "beneficial": lambda: self.get_beneficial_ownership(ticker, db=self.db),
             "sentiment": lambda: self.get_earnings_sentiment(ticker),
             "news": lambda: self.get_stock_news(ticker, db=self.db, rebuild=rebuild),
+            # 029-company-profile-tweaks — writes company_info + denormalizes
+            # sector/industry/name/logo_url onto ticker_index itself; nothing
+            # downstream reads data["profile"], so the analyses document's
+            # shape is unchanged (research R5).
+            "profile": lambda: self.refresh_company_profile(ticker, mode=mode, db=self.db),
         }
 
         def staged(key, fn):

@@ -37,6 +37,17 @@ Every endpoint wraps its payload:
 
 ### `GET /market/congress-trades?limit=50&ticker=NVDA`
 
+> **SUPERSEDED (2026-08-22) by `specs/028-dashboard-tweaks-batch`.** This endpoint was
+> never implemented — it was designed for a "Market Overview" page that was not built, so
+> it has no consumer and there is no compatibility cost to relocating it. Spec 028 builds a
+> dedicated Congress page and serves it from a new `backend/routers/congress.py`
+> (`GET /congress/trades`, `GET /congress/summary`, `POST /congress/refresh`), adding
+> `politician` and `chamber` filters this sketch lacked. See
+> `specs/028-dashboard-tweaks-batch/contracts/congress-api.md` and its research R10.
+>
+> The **`congress_trades` collection schema below and in this spec's data-model.md remains
+> canonical** — 028 reuses it unchanged rather than defining a parallel shape (Principle VI).
+
 `data`: `[ { "chamber": "senate", "politician": "…", "ticker": "NVDA", "transaction_type": "buy", "amount_range": "$15,001–$50,000", "transaction_date": "…", "disclosure_date": "…" } ]` — newest by `disclosure_date`; `ticker` filter optional (StockDetail reuse).
 
 ### `GET /market/insider-feed?limit=50`

@@ -1,21 +1,22 @@
-"""Pull-cost recording across a crew run.
+"""In-process pull-cost instrumentation across a crew run (crew.last_pull).
 Spec: specs/024-delta-data-pulls (US1, FR-001..FR-005).
 
 Reuses test_crew's fully-faked Crew (no network, no LLM) — this file is about
 what gets *measured* during a pull, not what the pull computes.
-"""
-import mongomock
-import pytest
 
-import queue_worker
+specs/028-dashboard-tweaks-batch US7 removed queue_worker's *persistence* of
+this data (the pull_metrics collection and its UI panel) — deliberately not
+this instrumentation itself: crew.last_pull / tools/metrics.py are unrelated
+in-process bookkeeping that other things may still read (research.md R12).
+"""
 from tests.test_crew import make_crew
 from tools import metrics
-from tools.db import ANALYSES, PULL_METRICS, WORK_QUEUE
 
 # every stage Crew._prefetch dispatches
 EXPECTED_STAGES = {
     "price", "indicators", "financials", "earnings", "breadth", "insider",
     "insider_stats", "institutional", "beneficial", "sentiment", "news",
+    "profile",  # 029-company-profile-tweaks
 }
 
 
@@ -131,85 +132,3 @@ def test_metrics_do_not_leak_between_runs():
     first = len(crew.last_pull["stages"])
     crew.run("aapl")
     assert len(crew.last_pull["stages"]) == first
-
-
-# --- persistence (queue_worker) ------------------------------------------------
-
-
-@pytest.fixture
-def db():
-    return mongomock.MongoClient()["pull_metrics_test"]
-
-
-@pytest.fixture(autouse=True)
-def reset_startup():
-    queue_worker._started = False
-    yield
-    queue_worker._started = False
-
-
-class MetricsCrew:
-    """Crew stub that reports a pull-cost record the way the real one does."""
-
-    def __init__(self, last_pull=None, error=None):
-        self.last_pull = last_pull if last_pull is not None else {
-            "mode": "delta",
-            "total_ms": 100,
-            "stages": [{"name": "price", "elapsed_ms": 60, "requests": 1,
-                        "bytes": 2048, "retrieval": "incremental", "outcome": "fetched"}],
-        }
-        self.error = error
-
-    def run(self, ticker, parallel_prefetch=False, mode="delta"):
-        if self.error:
-            raise self.error
-        return {"ticker": ticker, "signal": "bullish", "conviction": "high"}
-
-
-def _enqueue(db, ticker="AAPL"):
-    from datetime import datetime, timezone
-    db[WORK_QUEUE].insert_one({
-        "ticker": ticker, "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-        "updated_at": datetime.now(timezone.utc),
-    })
-
-
-def test_completed_job_persists_one_pull_metrics_document(db):
-    _enqueue(db)
-    queue_worker.claim_and_run_next(db=db, crew=MetricsCrew())
-
-    docs = list(db[PULL_METRICS].find({}))
-    assert len(docs) == 1
-    assert docs[0]["ticker"] == "AAPL"
-    assert docs[0]["outcome"] == "done"
-    assert docs[0]["stages"][0]["name"] == "price"
-    assert docs[0]["total_ms"] == 100
-    assert "started_at" in docs[0] and "completed_at" in docs[0]
-
-
-def test_metrics_write_failure_does_not_fail_the_job(db, monkeypatch):
-    """FR-005 — measurement must never cost us the analysis."""
-    _enqueue(db)
-
-    def explode(*args, **kwargs):
-        raise RuntimeError("metrics collection is on fire")
-
-    monkeypatch.setattr(queue_worker, "_write_pull_metrics", explode)
-    handled = queue_worker.claim_and_run_next(db=db, crew=MetricsCrew())
-
-    assert handled is True
-    assert db[WORK_QUEUE].find_one({})["status"] == "done"
-    assert db[ANALYSES].find_one({"ticker": "AAPL"})["signal"] == "bullish"
-
-
-def test_crew_without_metrics_support_is_tolerated(db):
-    """Legacy/fake crews that expose no last_pull must not break the worker."""
-    class BareCrew:
-        def run(self, ticker, parallel_prefetch=False, mode="delta"):
-            return {"ticker": ticker, "signal": "neutral", "conviction": "low"}
-
-    _enqueue(db)
-    assert queue_worker.claim_and_run_next(db=db, crew=BareCrew()) is True
-    assert db[WORK_QUEUE].find_one({})["status"] == "done"
-    assert db[PULL_METRICS].count_documents({}) == 0

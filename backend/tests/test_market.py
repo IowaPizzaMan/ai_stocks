@@ -7,9 +7,79 @@ from db import (
     BREADTH_META,
     MACRO_ANALYSIS_CACHE,
     MARKET_FLOW_EVENTS,
+    MARKET_MOVERS,
+    WORK_QUEUE,
 )
 
 NOW = datetime.now(timezone.utc)
+
+
+def mover_row(ticker, rank, category="actives", date="2026-08-22", **overrides):
+    row = {
+        "date": date, "category": category, "ticker": ticker, "rank": rank,
+        "company": f"{ticker} Inc", "price": 10.0, "change": 0.5,
+        "change_pct": 3.35196, "exchange": "NASDAQ", "volume": None,
+        "source": "fmp", "collected_at": NOW,
+    }
+    row.update(overrides)
+    return row
+
+
+# --- most-actives (specs/028-dashboard-tweaks-batch US6) ----------------------
+
+def test_most_actives_returns_latest_date_ordered_by_rank(client, db):
+    db[MARKET_MOVERS].insert_many([
+        mover_row("ZWQ", rank=1),
+        mover_row("LUCY", rank=0),
+    ])
+
+    r = client.get("/market/most-actives").json()
+    assert r["date"] == "2026-08-22"
+    assert [i["ticker"] for i in r["items"]] == ["LUCY", "ZWQ"]
+
+
+def test_most_actives_only_the_latest_date_is_served(client, db):
+    db[MARKET_MOVERS].insert_many([
+        mover_row("OLD", rank=0, date="2026-08-21"),
+        mover_row("NEW", rank=0, date="2026-08-22"),
+    ])
+
+    r = client.get("/market/most-actives").json()
+    assert [i["ticker"] for i in r["items"]] == ["NEW"]
+
+
+def test_most_actives_limit_is_honoured(client, db):
+    db[MARKET_MOVERS].insert_many([mover_row(f"T{i}", rank=i) for i in range(5)])
+    r = client.get("/market/most-actives?limit=2").json()
+    assert len(r["items"]) == 2
+    assert [i["ticker"] for i in r["items"]] == ["T0", "T1"]
+
+
+def test_most_actives_omits_volume_from_the_response(client, db):
+    """R9 — the provider supplies none; never send a fabricated 0/null column."""
+    db[MARKET_MOVERS].insert_one(mover_row("LUCY", rank=0))
+    r = client.get("/market/most-actives").json()
+    assert "volume" not in r["items"][0]
+
+
+def test_most_actives_empty_collection_returns_empty_list_and_null_date(client, db):
+    r = client.get("/market/most-actives").json()
+    assert r == {"items": [], "as_of": None, "date": None}
+
+
+def test_most_actives_refresh_enqueues_job(client, db):
+    r = client.post("/market/most-actives/refresh").json()
+    assert r["status"] == "enqueued"
+    job = db[WORK_QUEUE].find_one({"job_type": "market_movers_pull"})
+    assert job["status"] == "pending"
+
+
+def test_most_actives_refresh_dedupes_active_job(client, db):
+    first = client.post("/market/most-actives/refresh").json()
+    second = client.post("/market/most-actives/refresh").json()
+    assert second["status"] == "already_queued"
+    assert second["job_id"] == first["job_id"]
+    assert db[WORK_QUEUE].count_documents({"job_type": "market_movers_pull"}) == 1
 
 
 def breadth_row(exchange, date, mcclellan, spy_close=None):

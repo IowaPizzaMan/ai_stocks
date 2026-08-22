@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { AnalysisFeedItem, SectorSummary } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
+import SectorEtfChart from "../components/sectors/SectorEtfChart";
 import SignalBadge from "../components/shared/SignalBadge";
 import { useSectorAnalysis, useSectors } from "../hooks/useSectors";
 import { relativeTime } from "../lib/time";
@@ -16,6 +17,11 @@ const SIGNAL_COLORS = {
   neutral: "#52525b", // zinc-600
   bearish: "#ef4444", // red-500
 };
+
+// 029-company-profile-tweaks (FR-027) — matches the backend's reserved
+// bucket name (backend/routers/sectors.py::UNCLASSIFIED) for tracked stocks
+// whose profile hasn't been fetched yet (or published no sector).
+const UNCLASSIFIED = "Unclassified";
 
 const SIGNAL_RANK = { bullish: 2, neutral: 1, bearish: 0 } as const;
 const CONVICTION_RANK = { high: 2, medium: 1, low: 0 } as const;
@@ -37,52 +43,72 @@ export default function Sectors() {
 function SectorOverview() {
   const { data: sectors, isLoading, isError } = useSectors();
 
-  if (isLoading) return <p className="py-12 text-center text-sm text-zinc-500">loading sectors…</p>;
-  if (isError)
-    return <p className="py-12 text-center text-sm text-red-400">Couldn't reach the API — is the backend running?</p>;
-  if (!sectors || sectors.length === 0)
-    return (
+  // The ETF momentum chart (specs/028-dashboard-tweaks-batch US5) has its own
+  // independent data source and loading/empty/error handling, so it renders
+  // once here regardless of which state the analysis-based rollup below is in.
+  let body: React.ReactNode;
+  if (isLoading) {
+    body = <p className="py-12 text-center text-sm text-zinc-500">loading sectors…</p>;
+  } else if (isError) {
+    body = (
+      <p className="py-12 text-center text-sm text-red-400">
+        Couldn't reach the API — is the backend running?
+      </p>
+    );
+  } else if (!sectors || sectors.length === 0) {
+    body = (
       <div className="py-16 text-center text-zinc-500">
         <p className="mb-1 text-lg text-zinc-400">No sector data yet</p>
         <p className="text-sm">Sectors populate as analyses complete — pull some tickers from the feed first.</p>
       </div>
     );
+  } else {
+    // Unclassified sorts last regardless of its bullish ratio — it's "awaiting
+    // a pull", not a sector to rank among real ones (FR-027).
+    const sorted = [...sectors].sort((a, b) => {
+      const aUnclassified = a.sector === UNCLASSIFIED;
+      const bUnclassified = b.sector === UNCLASSIFIED;
+      if (aUnclassified !== bUnclassified) return aUnclassified ? 1 : -1;
+      return b.bullish_count / b.ticker_count - a.bullish_count / a.ticker_count;
+    });
+    body = (
+      <>
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+          <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+            Signal mix by sector
+          </h2>
+          <p className="mb-4 text-xs text-zinc-500">
+            Share of tickers bullish / neutral / bearish, strongest sector first.
+          </p>
+          <div className="space-y-2">
+            {sorted.map((s) => (
+              <SectorRow key={s.sector} summary={s} />
+            ))}
+          </div>
+          <div className="mt-3 flex gap-4">
+            {(["bullish", "neutral", "bearish"] as const).map((sig) => (
+              <span key={sig} className="flex items-center gap-1.5 text-[11px] capitalize text-zinc-400">
+                <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: SIGNAL_COLORS[sig] }} />
+                {sig}
+              </span>
+            ))}
+          </div>
+        </section>
 
-  const sorted = [...sectors].sort(
-    (a, b) => b.bullish_count / b.ticker_count - a.bullish_count / a.ticker_count,
-  );
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((s) => (
+            <SectorCard key={s.sector} summary={s} />
+          ))}
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-white">Sectors</h1>
-
-      <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Signal mix by sector
-        </h2>
-        <p className="mb-4 text-xs text-zinc-500">
-          Share of tickers bullish / neutral / bearish, strongest sector first.
-        </p>
-        <div className="space-y-2">
-          {sorted.map((s) => (
-            <SectorRow key={s.sector} summary={s} />
-          ))}
-        </div>
-        <div className="mt-3 flex gap-4">
-          {(["bullish", "neutral", "bearish"] as const).map((sig) => (
-            <span key={sig} className="flex items-center gap-1.5 text-[11px] capitalize text-zinc-400">
-              <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: SIGNAL_COLORS[sig] }} />
-              {sig}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {sorted.map((s) => (
-          <SectorCard key={s.sector} summary={s} />
-        ))}
-      </div>
+      <SectorEtfChart />
+      {body}
     </div>
   );
 }
@@ -92,14 +118,24 @@ function SectorRow({ summary }: { summary: SectorSummary }) {
   const segments = (["bullish", "neutral", "bearish"] as const)
     .map((sig) => ({ sig, count: summary[`${sig}_count`] }))
     .filter((seg) => seg.count > 0);
+  const isUnclassified = summary.sector === UNCLASSIFIED;
 
   return (
     <Link
       to={`/sectors/${encodeURIComponent(summary.sector)}`}
+      data-sector-row={summary.sector}
       className="group grid grid-cols-[10rem_1fr_2.5rem] items-center gap-3"
-      title={`${summary.sector}: ${summary.bullish_count} bullish · ${summary.neutral_count} neutral · ${summary.bearish_count} bearish`}
+      title={
+        isUnclassified
+          ? "Tracked stocks awaiting their next analysis pull, which fetches their sector"
+          : `${summary.sector}: ${summary.bullish_count} bullish · ${summary.neutral_count} neutral · ${summary.bearish_count} bearish`
+      }
     >
-      <span className="truncate text-sm text-zinc-300 group-hover:text-white">{summary.sector}</span>
+      <span
+        className={`truncate text-sm group-hover:text-white ${isUnclassified ? "italic text-zinc-500" : "text-zinc-300"}`}
+      >
+        {summary.sector}
+      </span>
       <span className="flex h-4 overflow-hidden rounded">
         {segments.map((seg) => (
           <span
@@ -119,20 +155,30 @@ function SectorRow({ summary }: { summary: SectorSummary }) {
 }
 
 function SectorCard({ summary }: { summary: SectorSummary }) {
+  const isUnclassified = summary.sector === UNCLASSIFIED;
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-zinc-700">
+    <div
+      data-sector-card={summary.sector}
+      className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-zinc-700"
+    >
       <Link to={`/sectors/${encodeURIComponent(summary.sector)}`} className="block">
         <div className="mb-2 flex items-baseline justify-between">
-          <span className="font-medium text-white">{summary.sector}</span>
+          <span className={`font-medium ${isUnclassified ? "italic text-zinc-500" : "text-white"}`}>
+            {summary.sector}
+          </span>
           <span className="text-xs text-zinc-500">{summary.ticker_count} tickers</span>
         </div>
-        <p className="text-xs text-zinc-400">
-          <span className="text-emerald-400">{summary.bullish_count} bullish</span>
-          {" · "}
-          <span className="text-zinc-400">{summary.neutral_count} neutral</span>
-          {" · "}
-          <span className="text-red-400">{summary.bearish_count} bearish</span>
-        </p>
+        {isUnclassified ? (
+          <p className="text-xs text-zinc-500">Awaiting their next analysis pull to fetch a sector.</p>
+        ) : (
+          <p className="text-xs text-zinc-400">
+            <span className="text-emerald-400">{summary.bullish_count} bullish</span>
+            {" · "}
+            <span className="text-zinc-400">{summary.neutral_count} neutral</span>
+            {" · "}
+            <span className="text-red-400">{summary.bearish_count} bearish</span>
+          </p>
+        )}
         {summary.top_ticker && (
           <p className="mt-2 text-xs text-zinc-500">
             top: <span className="font-mono text-zinc-300">{summary.top_ticker}</span>

@@ -101,6 +101,9 @@ def make_crew(valid=True, financials=None):
     crew.get_stock_news = lambda t, db=None, rebuild=False: {
         "articles": [], "timeline": [], "trend": "mixed", "news_count": 0,
         "as_of": None, "stale": False}
+    # 029-company-profile-tweaks — writes company_info/ticker_index as a side
+    # effect; nothing in the analyses document reads its return value.
+    crew.refresh_company_profile = lambda t, mode="delta", db=None: {"ticker": t.upper()}
     return crew
 
 

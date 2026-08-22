@@ -5,8 +5,8 @@
 import { Link } from "react-router-dom";
 import type { EarningsCalendarEntry } from "../../api/types";
 
-export function formatCompact(value: number | null): string {
-  if (value === null || Number.isNaN(value)) return "—";
+export function formatCompact(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
   if (Math.abs(value) >= 1e12) return `$${(value / 1e12).toFixed(1)}T`;
   if (Math.abs(value) >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
   if (Math.abs(value) >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;

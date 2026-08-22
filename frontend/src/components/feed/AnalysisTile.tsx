@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import type { AnalysisFeedItem, Conviction, Signal } from "../../api/types";
 import { useDeleteTicker } from "../../hooks/useAnalysis";
 import { relativeTime } from "../../lib/time";
+import CompanyLogo from "../shared/CompanyLogo";
 import RemoveIcon from "../shared/RemoveIcon";
 import RemoveTickerConfirm from "./RemoveTickerConfirm";
 import TilePreview from "./TilePreview";
@@ -93,8 +94,16 @@ export default function AnalysisTile({ analysis }: { analysis: AnalysisFeedItem 
       onFocus={openPreview}
       onBlur={closePreview}
     >
-      <span className={`max-w-full font-semibold leading-none ${tickerSizeClass}`}>
-        {analysis.ticker}
+      <span className="flex max-w-full items-center gap-1">
+        {/* specs/029-company-profile-tweaks US3 (FR-021a) — small logo chip
+            beside the ticker; a neutral tile beneath keeps it legible on top
+            of the signal-colored fill. */}
+        <span className="rounded-sm bg-zinc-950/40 p-px" aria-hidden="true">
+          <CompanyLogo ticker={analysis.ticker} src={analysis.logo_url} size="sm" />
+        </span>
+        <span className={`truncate font-semibold leading-none ${tickerSizeClass}`}>
+          {analysis.ticker}
+        </span>
       </span>
       <span className="flex gap-1" aria-hidden="true">
         {[1, 2, 3].map((i) => (

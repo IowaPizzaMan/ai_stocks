@@ -92,6 +92,23 @@ def test_successful_job_writes_analysis_and_marks_done(db):
     assert db[ANALYSES].count_documents({"ticker": "AAPL"}) == 1
 
 
+def test_completed_job_writes_no_pull_metrics_and_analysis_is_unaffected(db):
+    """specs/028-dashboard-tweaks-batch US7 (FR-026, FR-026b) — pull-cost
+    diagnostics were removed; this is the regression that matters most: the
+    analysis pipeline itself must be completely unaffected by the removal."""
+    enqueue(db, "AAPL")
+    crew = FakeCrew()
+
+    assert queue_worker.claim_and_run_next(db=db, crew=crew) is True
+
+    assert "pull_metrics" not in db.list_collection_names()
+    job = db[WORK_QUEUE].find_one({"ticker": "AAPL"})
+    assert job["status"] == "done"
+    analysis = db[ANALYSES].find_one({"ticker": "AAPL"})
+    assert analysis["signal"] == "bullish"
+    assert analysis["conviction"] == "high"
+
+
 def test_second_job_for_same_ticker_replaces_analysis(db):
     enqueue(db, "AAPL")
     crew = FakeCrew(result={"ticker": "AAPL", "signal": "bullish", "conviction": "high"})
@@ -167,22 +184,39 @@ def test_fresh_running_job_not_recovered(db):
     assert db[WORK_QUEUE].find_one({"ticker": "BUSY"})["status"] == "running"
 
 
-# --- 027-stocks-news-tab-ai-summary: non-ticker admin-job dispatch ----------
-# First real exercise of the job_type dispatch branch for a job type other
-# than economics_pull (which runs on its own timer, never through work_queue).
+# --- non-ticker admin-job dispatch ------------------------------------------
+# Generic exercise of the job_type dispatch branch for a job type other than
+# economics_pull (which runs on its own timer, never through work_queue).
 
 
 def test_non_ticker_job_type_is_claimed_and_dispatched_to_its_handler(db, monkeypatch):
     db[WORK_QUEUE].insert_one({
-        "job_type": "portfolio_digest", "status": "pending",
+        "job_type": "example_admin_job", "status": "pending",
         "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
     })
     calls = []
-    monkeypatch.setitem(admin_jobs.JOB_HANDLERS, "portfolio_digest", lambda db: calls.append(db) or 3)
+    monkeypatch.setitem(admin_jobs.JOB_HANDLERS, "example_admin_job", lambda db: calls.append(db) or 3)
 
     result = queue_worker.claim_and_run_next(db=db, crew=FakeCrew())
 
     assert result is True
     assert calls == [db]
-    job = db[WORK_QUEUE].find_one({"job_type": "portfolio_digest"})
+    job = db[WORK_QUEUE].find_one({"job_type": "example_admin_job"})
+    assert job["status"] == "done"
+
+
+def test_congress_trades_pull_job_type_is_dispatched(db, monkeypatch):
+    """specs/028-dashboard-tweaks-batch US4."""
+    db[WORK_QUEUE].insert_one({
+        "job_type": "congress_trades_pull", "status": "pending",
+        "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
+    })
+    calls = []
+    monkeypatch.setitem(admin_jobs.JOB_HANDLERS, "congress_trades_pull", lambda db: calls.append(db) or 5)
+
+    result = queue_worker.claim_and_run_next(db=db, crew=FakeCrew())
+
+    assert result is True
+    assert calls == [db]
+    job = db[WORK_QUEUE].find_one({"job_type": "congress_trades_pull"})
     assert job["status"] == "done"

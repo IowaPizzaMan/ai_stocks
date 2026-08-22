@@ -53,3 +53,14 @@ Sort controls: by signal, by conviction, by last analyzed.
 - `useSectorAnalysis`
 - `SignalBadge`, `ConvictionMeter`
 - `react-router-dom`
+
+## Amendments
+
+- **specs/028-dashboard-tweaks-batch US5**: the overview (`/sectors`) gained a
+  `SectorEtfChart` — a percentage-change comparison line chart for 11 fixed sector ETF
+  tickers (XLC/XLY/XLP/XLE/XLF/XLI/XLV/XLB/XLRE/XLK/XLU), independent of the
+  analysis-based rollup above (its own data source, own loading/empty/error states,
+  own Refresh control). Renders once above all four rollup states (loading/error/empty/
+  populated). Window selector (1M/3M/6M/1Y) stored in `?window=`. Backed by
+  `GET/POST /sectors/etf-series`, fed by the agent-runner's `sector_etf_pull` job, which
+  reuses `price_store` unchanged. See `contracts/sector-etf-series-api.md` in that spec.

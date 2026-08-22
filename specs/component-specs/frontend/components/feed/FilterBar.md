@@ -60,3 +60,13 @@ These map to new optional query params on `GET /analysis/feed` and new optional 
 ## Dependencies
 - `react-router-dom` (useSearchParams)
 - `SECTORS`, `SIGNAL_FILTERS`, `CONVICTION_FILTERS` from constants
+
+## Amendments
+
+- **As actually shipped**, `FilterBar` takes no props (reads/writes `useSearchParams`
+  directly) and its controls are: ticker text input (debounced, substring), Pull/Run All
+  (enqueue, not filtering), Signal pills, Conviction pills. No sector dropdown or date-range
+  buttons exist. "Strategy Filters (Phase 2)" above remains undesigned/unbuilt.
+- **specs/028-dashboard-tweaks-batch US3**: added `liked`/`disliked` pills sharing one
+  `sentiment` search param, same toggle pattern as Signal/Conviction (selecting one clears
+  the other; selecting the active one clears it).

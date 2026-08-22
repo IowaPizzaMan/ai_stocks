@@ -2,13 +2,23 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { api } from "../api/client";
-import type { Analysis, FeedResponse } from "../api/types";
+import type { Analysis, FeedResponse, Sentiment } from "../api/types";
 
 export interface FeedFilters {
   ticker?: string; // substring match, server-side (FilterBar search input)
   signal?: string;
   sector?: string;
   conviction?: string;
+  sentiment?: Sentiment; // 028-dashboard-tweaks-batch US3 (FR-009)
+  industry?: string; // 029-company-profile-tweaks US5 (FR-024/FR-025)
+}
+
+export interface TickerRecord {
+  ticker: string;
+  status: string;
+  name?: string;
+  sector?: string;
+  sentiment?: Sentiment | null;
 }
 
 export function useFeed(filters: FeedFilters = {}) {
@@ -42,7 +52,7 @@ export function useTickerRecord(ticker: string) {
     queryKey: ["ticker", ticker.toUpperCase()],
     queryFn: async () => {
       const { data } = await api.get(`/stocks/${ticker}`);
-      return data as { ticker: string; status: string; name?: string; sector?: string };
+      return data as TickerRecord;
     },
     enabled: !!ticker,
     retry: false, // 404 = unknown ticker, don't hammer

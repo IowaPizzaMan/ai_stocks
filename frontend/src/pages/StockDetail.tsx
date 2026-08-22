@@ -3,15 +3,18 @@
 // Charts tab (the default), the always-on TFC grid and Deep Dive block are gone.
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import type { Analysis, ChangesSinceLast } from "../api/types";
+import type { Analysis, ChangesSinceLast, CompanyProfile, OHLCVBar } from "../api/types";
 import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
 import TabBar from "../components/shared/TabBar";
 import ChartsTab from "../components/stock/ChartsTab";
+import CompanyProfileSection from "../components/stock/CompanyProfileSection";
+import EmployeeCountChart from "../components/stock/EmployeeCountChart";
+import PeersSection from "../components/stock/PeersSection";
 import FormattedProse from "../components/stock/FormattedProse";
 import NewsTab from "../components/stock/NewsTab";
 import FullRefreshButton from "../components/stock/FullRefreshButton";
-import PullCostPanel from "../components/stock/PullCostPanel";
+import SentimentButtons from "../components/stock/SentimentButtons";
 import {
   FundamentalsTab,
   InsiderTab,
@@ -19,8 +22,9 @@ import {
   SentimentTab,
   TechnicalsTab,
 } from "../components/stock/tabs";
+import CompanyLogo from "../components/shared/CompanyLogo";
 import { useTickerAnalysis, useTickerRecord } from "../hooks/useAnalysis";
-import { usePullMetrics } from "../hooks/usePullMetrics";
+import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { useStockPriceHistory } from "../hooks/usePriceHistory";
 import { useEnqueueTicker, useQueueStatus } from "../hooks/useQueue";
 import { useAddToWatchlist } from "../hooks/useWatchlist";
@@ -54,7 +58,7 @@ export default function StockDetail() {
   const { data: record } = useTickerRecord(symbol);
   const { data: queue } = useQueueStatus();
   const { data: priceData } = useStockPriceHistory(symbol, PANEL_TIMEFRAMES);
-  const { data: pullMetrics } = usePullMetrics(symbol);
+  const { data: profile, isError: profileError } = useCompanyProfile(symbol);
   const enqueue = useEnqueueTicker();
   const addToWatchlist = useAddToWatchlist();
 
@@ -75,7 +79,9 @@ export default function StockDetail() {
           <Link to="/" className="text-zinc-500 hover:text-zinc-300">
             ←
           </Link>
+          <CompanyLogo ticker={symbol} src={profile?.logo_url} size="lg" />
           <h1 className="text-3xl font-bold text-white">{symbol}</h1>
+          <SentimentButtons ticker={symbol} tracked={!!record} sentiment={record?.sentiment} />
           {record?.name && <span className="text-zinc-400">{record.name}</span>}
           {latest && (
             <>
@@ -126,14 +132,6 @@ export default function StockDetail() {
         </div>
       </div>
 
-      {/* Diagnostic, collapsed to a single line — sits next to the button that
-          produced it so pull cost is answerable where pulls are triggered (024
-          US1, research D10). */}
-      {pullMetrics?.pulls?.[0] && (
-        <div className="mb-4">
-          <PullCostPanel pull={pullMetrics.pulls[0]} />
-        </div>
-      )}
 
       {isLoading && <p className="py-12 text-center text-zinc-500">loading…</p>}
 
@@ -184,7 +182,15 @@ export default function StockDetail() {
         {activeTab !== "charts" &&
           (latest ? (
             <>
-              {activeTab === "overview" && <OverviewTab analysis={latest} />}
+              {activeTab === "overview" && (
+                <OverviewTab
+                  analysis={latest}
+                  ticker={symbol}
+                  profile={profile}
+                  profileError={profileError}
+                  dailyBars={priceData.D}
+                />
+              )}
               {activeTab === "technicals" && <TechnicalsTab technical={latest.sub_reports?.technical} />}
               {activeTab === "fundamentals" && <FundamentalsTab fundamental={latest.sub_reports?.fundamental} ticker={ticker} />}
               {activeTab === "insider" && <InsiderTab insider={latest.sub_reports?.insider} />}
@@ -218,11 +224,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function OverviewTab({ analysis }: { analysis: Analysis }) {
+function OverviewTab({
+  analysis,
+  ticker,
+  profile,
+  profileError,
+  dailyBars,
+}: {
+  analysis: Analysis;
+  ticker: string;
+  profile: CompanyProfile | undefined;
+  profileError: boolean;
+  dailyBars: OHLCVBar[] | undefined;
+}) {
   // Position Management is intentionally not rendered here (spec 021 FR-011);
   // the payload still ships on the analysis for other consumers (spec 015).
   return (
     <div className="space-y-4">
+      {/* specs/029-company-profile-tweaks US2 — topmost section (FR-010) */}
+      <CompanyProfileSection profile={profile} isError={profileError} dailyBars={dailyBars} />
+
       <Section title="Verdict">
         <FormattedProse text={analysis.summary} />
       </Section>
@@ -249,6 +270,9 @@ function OverviewTab({ analysis }: { analysis: Analysis }) {
         </Section>
       )}
 
+      {/* specs/029-company-profile-tweaks US6/US7 */}
+      <PeersSection ticker={ticker} />
+      <EmployeeCountChart ticker={ticker} />
     </div>
   );
 }

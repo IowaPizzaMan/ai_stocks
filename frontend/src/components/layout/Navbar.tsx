@@ -3,10 +3,12 @@ import { NavLink } from "react-router-dom";
 
 const links = [
   { to: "/", label: "Stocks" },
+  { to: "/news", label: "News" },
   { to: "/macro", label: "Macro" },
   { to: "/institutional-flow", label: "Institutional Flow" },
   { to: "/sectors", label: "Sectors" },
   { to: "/earnings", label: "Earnings" },
+  { to: "/congress", label: "Congress" },
 ];
 
 export default function Navbar() {

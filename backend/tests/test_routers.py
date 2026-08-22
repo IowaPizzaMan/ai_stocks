@@ -97,6 +97,117 @@ def test_feed_total_reflects_distinct_tickers_not_run_count(client, db):
     assert r["total"] == 25
 
 
+def test_feed_sentiment_filter_returns_only_tagged_tickers(client, db):
+    """specs/028-dashboard-tweaks-batch US3 FR-009."""
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "sentiment": "liked"})
+    db[TICKER_INDEX].insert_one({"ticker": "MSFT", "status": "active"})
+
+    items = client.get("/analysis/feed?sentiment=liked").json()["items"]
+    assert [i["ticker"] for i in items] == ["AAPL"]
+
+
+def test_feed_sentiment_filter_intersects_with_signal_filter(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW, signal="bullish"))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW, signal="bearish"))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "sentiment": "liked"})
+    db[TICKER_INDEX].insert_one({"ticker": "MSFT", "status": "active", "sentiment": "liked"})
+
+    items = client.get("/analysis/feed?sentiment=liked&signal=bearish").json()["items"]
+    assert [i["ticker"] for i in items] == ["MSFT"]
+
+
+def test_feed_sentiment_filter_empty_tagged_set_returns_nothing_not_everything(client, db):
+    """The one way this filter fails dangerously — an empty tagged set must
+    never silently fall back to the unfiltered feed."""
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
+
+    r = client.get("/analysis/feed?sentiment=liked").json()
+    assert r["items"] == []
+    assert r["total"] == 0
+
+
+def test_feed_sentiment_filter_disliked(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "sentiment": "disliked"})
+    db[TICKER_INDEX].insert_one({"ticker": "MSFT", "status": "active", "sentiment": "liked"})
+
+    items = client.get("/analysis/feed?sentiment=disliked").json()["items"]
+    assert [i["ticker"] for i in items] == ["AAPL"]
+
+
+def test_feed_items_carry_name_and_logo_url_from_ticker_index(client, db):
+    """specs/029-company-profile-tweaks US3 (FR-021a) — one ticker_index
+    query per page, attached to each item; a ticker with no profile yet
+    still returns null fields rather than omitting the keys."""
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW))
+    db[TICKER_INDEX].insert_one({
+        "ticker": "AAPL", "status": "active", "name": "Apple Inc.",
+        "logo_url": "https://images.financialmodelingprep.com/symbol/AAPL.png",
+    })
+    db[TICKER_INDEX].insert_one({"ticker": "MSFT", "status": "active"})
+
+    items = {i["ticker"]: i for i in client.get("/analysis/feed").json()["items"]}
+    assert items["AAPL"]["name"] == "Apple Inc."
+    assert items["AAPL"]["logo_url"] == "https://images.financialmodelingprep.com/symbol/AAPL.png"
+    assert items["MSFT"]["name"] is None
+    assert items["MSFT"]["logo_url"] is None
+
+
+def test_feed_items_query_ticker_index_once_per_page_not_per_item(client, db, monkeypatch):
+    for i in range(5):
+        db[ANALYSES].insert_one(analysis_doc(f"T{i:02d}", NOW - timedelta(hours=i)))
+        db[TICKER_INDEX].insert_one({"ticker": f"T{i:02d}", "status": "active"})
+
+    calls = []
+    real_find = db[TICKER_INDEX].find
+
+    def counting_find(*args, **kwargs):
+        calls.append((args, kwargs))
+        return real_find(*args, **kwargs)
+
+    monkeypatch.setattr(db[TICKER_INDEX], "find", counting_find)
+
+    client.get("/analysis/feed")
+    assert len(calls) == 1  # not one per item
+
+
+def test_feed_industry_filter_narrows(client, db):
+    """specs/029-company-profile-tweaks US5 (FR-024/FR-025)."""
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[ANALYSES].insert_one(analysis_doc("GOOGL", NOW))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "industry": "Consumer Electronics"})
+    db[TICKER_INDEX].insert_one({"ticker": "GOOGL", "status": "active", "industry": "Internet Content & Information"})
+
+    items = client.get("/analysis/feed?industry=Consumer Electronics").json()["items"]
+    assert [i["ticker"] for i in items] == ["AAPL"]
+
+
+def test_feed_industry_filter_no_match_returns_empty_not_unfiltered(client, db):
+    """The 028 invariant, extended to industry: an empty resolved ticker set
+    must yield $in: [] and never be silently skipped."""
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "industry": "Consumer Electronics"})
+
+    r = client.get("/analysis/feed?industry=NoSuchIndustry").json()
+    assert r["items"] == []
+    assert r["total"] == 0
+
+
+def test_feed_industry_filter_combines_with_signal_as_and(client, db):
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW, signal="bullish"))
+    db[ANALYSES].insert_one(analysis_doc("MSFT", NOW, signal="bearish"))
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "industry": "Consumer Electronics"})
+    db[TICKER_INDEX].insert_one({"ticker": "MSFT", "status": "active", "industry": "Consumer Electronics"})
+
+    items = client.get("/analysis/feed?industry=Consumer Electronics&signal=bearish").json()["items"]
+    assert [i["ticker"] for i in items] == ["MSFT"]
+
+
 def test_feed_filters_match_latest_value_per_ticker(client, db):
     db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=1), signal="bearish"))
     db[ANALYSES].replace_one(
@@ -123,12 +234,19 @@ def test_ticker_analysis_unknown_ticker_returns_null(client, db):
 
 
 def test_sector_endpoint_latest_per_ticker(client, db):
-    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=2), signal="bearish", sector="Technology"))
-    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW, signal="bullish", sector="Technology"))
+    """specs/029-company-profile-tweaks (FR-026) — sector is resolved from
+    ticker_index, not analyses.sector."""
+    db[TICKER_INDEX].insert_one({"ticker": "AAPL", "status": "active", "sector": "Technology"})
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW - timedelta(days=2), signal="bearish"))
+    db[ANALYSES].insert_one(analysis_doc("AAPL", NOW, signal="bullish"))
 
     r = client.get("/analysis/sector/Technology").json()
     assert len(r) == 1
     assert r[0]["signal"] == "bullish"
+
+
+def test_sector_endpoint_unknown_sector_returns_empty(client, db):
+    assert client.get("/analysis/sector/NoSuchSector").json() == []
 
 
 # --- queue -------------------------------------------------------------------
@@ -312,89 +430,6 @@ def test_signals_endpoint(client, db):
     assert r["ticker"] == "AAPL"
     assert r["technical"]["overall_technical_signal"] == "bullish"
     assert client.get("/stocks/MSFT/signals").status_code == 404
-
-
-# --- pull metrics (024 US1) ---------------------------------------------------
-
-def pull_doc(ticker, started, total_ms=1000, stages=None, mode="delta", outcome="done"):
-    return {
-        "ticker": ticker, "job_id": "j1", "mode": mode,
-        "started_at": started, "completed_at": started + timedelta(seconds=1),
-        "total_ms": total_ms, "outcome": outcome,
-        "stages": stages if stages is not None else [
-            {"name": "news", "elapsed_ms": 100, "requests": 3, "bytes": 900,
-             "retrieval": "incremental", "outcome": "fetched"},
-            {"name": "price", "elapsed_ms": 500, "requests": 1, "bytes": 4000,
-             "retrieval": "full", "outcome": "fetched"},
-            {"name": "indicators", "elapsed_ms": 20, "requests": 0, "bytes": 0,
-             "retrieval": "stored", "outcome": "stored"},
-        ],
-    }
-
-
-def test_pull_metrics_sorts_stages_most_expensive_first(client, db):
-    """SC-006 — the operator reads the top three without re-sorting them."""
-    db["pull_metrics"].insert_one(pull_doc("AAPL", NOW))
-    r = client.get("/stocks/AAPL/pull-metrics").json()
-
-    names = [s["name"] for s in r["pulls"][0]["stages"]]
-    assert names == ["price", "news", "indicators"]
-
-
-def test_pull_metrics_surfaces_unaccounted_time(client, db):
-    """FR-004 — time the breakdown cannot explain is itself a finding, so it is
-    reported rather than quietly dropped."""
-    db["pull_metrics"].insert_one(pull_doc("AAPL", NOW, total_ms=1000))
-    pull = client.get("/stocks/AAPL/pull-metrics").json()["pulls"][0]
-
-    assert pull["accounted_ms"] == 620          # 500 + 100 + 20
-    assert pull["unaccounted_ms"] == 380
-    assert pull["total_ms"] == 1000
-
-
-def test_pull_metrics_never_reports_negative_unaccounted_time(client, db):
-    """A stage clock that overruns the pull clock is a bug, but it must not
-    surface as a negative number in the UI."""
-    db["pull_metrics"].insert_one(pull_doc("AAPL", NOW, total_ms=10))
-    pull = client.get("/stocks/AAPL/pull-metrics").json()["pulls"][0]
-    assert pull["unaccounted_ms"] == 0
-
-
-def test_pull_metrics_defaults_to_the_latest_pull(client, db):
-    db["pull_metrics"].insert_many([
-        pull_doc("AAPL", NOW - timedelta(hours=2), total_ms=111),
-        pull_doc("AAPL", NOW, total_ms=222),
-    ])
-    r = client.get("/stocks/AAPL/pull-metrics").json()
-    assert len(r["pulls"]) == 1
-    assert r["pulls"][0]["total_ms"] == 222
-
-
-def test_pull_metrics_limit_is_honoured_and_clamped(client, db):
-    db["pull_metrics"].insert_many([
-        pull_doc("AAPL", NOW - timedelta(hours=i)) for i in range(25)
-    ])
-    assert len(client.get("/stocks/AAPL/pull-metrics?limit=5").json()["pulls"]) == 5
-    assert len(client.get("/stocks/AAPL/pull-metrics?limit=999").json()["pulls"]) == 20
-
-
-def test_pull_metrics_reports_mode_and_outcome(client, db):
-    """FR-028 — the operator must be able to tell a full refresh from a delta
-    pull, and a degraded run from a clean one."""
-    db["pull_metrics"].insert_one(
-        pull_doc("AAPL", NOW, mode="full", outcome="degraded"))
-    pull = client.get("/stocks/AAPL/pull-metrics").json()["pulls"][0]
-    assert pull["mode"] == "full"
-    assert pull["outcome"] == "degraded"
-
-
-def test_pull_metrics_404_when_ticker_never_pulled(client, db):
-    assert client.get("/stocks/ZZZZ/pull-metrics").status_code == 404
-
-
-def test_pull_metrics_is_case_insensitive(client, db):
-    db["pull_metrics"].insert_one(pull_doc("AAPL", NOW))
-    assert client.get("/stocks/aapl/pull-metrics").status_code == 200
 
 
 def test_tickers_admin_list_patch_delete(client, db):

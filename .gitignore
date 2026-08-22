@@ -19,6 +19,7 @@ wheels/
 *.egg
 venv/
 .venv/
+.venv-*/
 ENV/
 
 # Node

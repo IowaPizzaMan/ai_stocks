@@ -1,6 +1,11 @@
 export type Signal = "bullish" | "bearish" | "neutral";
 export type Conviction = "high" | "medium" | "low";
 
+// 028-dashboard-tweaks-batch US3 — a per-tracked-ticker user preference,
+// independent of the AI-generated signal/conviction. Mutually exclusive by
+// construction: a stock is liked, disliked, or neither, never both.
+export type Sentiment = "liked" | "disliked";
+
 export interface PositionManagement {
   stair_step_stops: number[];
   trailing_stop_recommendation: string;
@@ -20,6 +25,11 @@ export interface AnalysisFeedItem {
   // Feed flags — absent on analyses written before these existed
   recent_institutional_activity?: "buying" | "selling" | "mixed" | null;
   recent_insider_summary?: string | null; // e.g. "10 buys, 2 sells"
+  // 029-company-profile-tweaks US3 (FR-021a) — joined from ticker_index by
+  // the feed endpoint itself; null until the ticker's next analysis pull
+  // fetches its profile.
+  name?: string | null;
+  logo_url?: string | null;
 }
 
 export interface Analysis extends AnalysisFeedItem {
@@ -452,7 +462,7 @@ export interface RiskPremium extends Freshness {
 export type PullMode = "delta" | "full";
 
 export interface QueueJob {
-  ticker?: string; // absent on non-ticker admin jobs, e.g. job_type "portfolio_digest"
+  ticker?: string; // absent on non-ticker admin jobs, e.g. job_type "sector_etf_pull"
   job_type?: string; // absent = ordinary per-ticker analysis job
   status: string;
   source?: string;
@@ -472,38 +482,6 @@ export interface EnqueueResponse {
   job_id: string;
   status: "enqueued" | "already_queued" | "upgraded_to_full";
   mode?: PullMode;
-}
-
-// 024-delta-data-pulls (US1) — per-stage pull cost
-export type StageRetrieval = "incremental" | "full" | "stored";
-export type StageOutcome = "fetched" | "stored" | "degraded" | "skipped" | "failed";
-
-export interface PullStage {
-  name: string;
-  elapsed_ms: number;
-  requests: number;
-  bytes: number;
-  retrieval: StageRetrieval | null;
-  outcome: StageOutcome | null;
-}
-
-export interface Pull {
-  job_id: string;
-  mode: PullMode;
-  started_at: string;
-  completed_at: string;
-  total_ms: number;
-  outcome: "done" | "failed" | "degraded";
-  /** Server-sorted most-expensive-first, so the client never re-ranks. */
-  stages: PullStage[];
-  accounted_ms: number;
-  /** Wall time the stage breakdown does not explain — surfaced, not hidden. */
-  unaccounted_ms: number;
-}
-
-export interface PullMetrics {
-  ticker: string;
-  pulls: Pull[];
 }
 
 /** spec: specs/025-earnings-page-filters/contracts/earnings-calendar.md.
@@ -671,22 +649,152 @@ export interface WatchlistItem {
   last_analyzed?: string;
 }
 
-// 027-stocks-news-tab-ai-summary — cross-stock AI summary panel on the Stocks
-// page. Contract: specs/027-stocks-news-tab-ai-summary/contracts/portfolio-digest-api.md
-
-export interface PortfolioDigestHighlight {
+// 028-dashboard-tweaks-batch US6 — Top Traded Stocks (FMP most-actives).
+// Contract: specs/028-dashboard-tweaks-batch/contracts/market-movers-api.md
+// No `volume` field — the provider supplies none (R9); never fabricate one.
+export interface MostActive {
   ticker: string;
-  signal: Signal;
-  conviction: Conviction;
-  note: string;
+  company: string | null;
+  price: number | null;
+  change: number | null;
+  change_pct: number | null; // already a percent (3.35 == +3.35%), not a fraction
+  exchange: string | null;
 }
 
-export interface PortfolioDigestResponse {
-  as_of: string | null; // generated_at of the last successful synthesis
-  overview: string | null;
-  highlights: PortfolioDigestHighlight[];
-  stock_count: number;
-  total_tracked_count: number;
-  capped: boolean;
-  stale: boolean; // true when a regeneration attempt failed more recently than the last success
+export interface MostActivesResponse {
+  items: MostActive[];
+  as_of: string | null;
+  date: string | null; // the market session these rows describe
+}
+
+// 028-dashboard-tweaks-batch US5 — sector ETF comparison chart.
+// Contract: specs/028-dashboard-tweaks-batch/contracts/sector-etf-series-api.md
+export type SectorEtfWindow = "1m" | "3m" | "6m" | "1y";
+
+export interface SectorEtfBar {
+  date: string;
+  close: number;
+}
+
+export interface SectorEtfSeries {
+  ticker: string;
+  label: string;
+  bars: SectorEtfBar[];
+  // true when this series has no bars, or its stored history starts after
+  // the window's start — rendered (not dropped), just flagged (FR-021).
+  partial: boolean;
+}
+
+export interface SectorEtfSeriesResponse {
+  window: SectorEtfWindow;
+  series: SectorEtfSeries[];
+  as_of: string;
+}
+
+// 028-dashboard-tweaks-batch US4 — Congress trading disclosures.
+// Contract: specs/028-dashboard-tweaks-batch/contracts/congress-api.md
+export type Chamber = "senate" | "house";
+
+export interface CongressTrade {
+  trade_id: string;
+  chamber: Chamber;
+  person_id: string | null;
+  politician: string;
+  district: string | null;
+  owner: string | null;
+  ticker: string | null; // null for non-equity disclosures — no link (FR-018)
+  asset_description: string | null;
+  asset_type: string | null;
+  transaction_type: string; // provider casing verbatim, e.g. "Purchase" / "Sale"
+  amount_range: string | null; // disclosed bracket, verbatim — never a computed number
+  transaction_date: string;
+  disclosure_date: string;
+  link: string | null;
+}
+
+export interface CongressTradesResponse {
+  items: CongressTrade[];
+  total: number;
+  as_of: string | null;
+}
+
+export interface CongressMostBought {
+  ticker: string;
+  buy_count: number;
+}
+
+// Same shape as CongressTrade — the summary's high_dollar list is just a
+// filtered/sorted subset of full trade rows.
+export type CongressHighDollarTrade = CongressTrade;
+
+export interface CongressSummaryResponse {
+  window_days: number;
+  most_bought: CongressMostBought[];
+  high_dollar: CongressHighDollarTrade[];
+  high_dollar_threshold: string;
+  as_of: string | null;
+}
+
+// 029-company-profile-tweaks — company profile / peers / employee-count.
+// Contract: specs/029-company-profile-tweaks/contracts/company-profile-api.md
+// price/change/change_percentage/volume are deliberately NOT in this type —
+// the backend excludes them from the response (FR-011b); the profile section
+// derives those from price bars instead so it can never disagree with the
+// Charts tab (research R7).
+export interface CompanyProfile {
+  ticker: string;
+  name: string | null;
+  exchange: string | null;
+  exchange_full: string | null;
+  sector: string | null;
+  industry: string | null;
+  country: string | null;
+  currency: string | null;
+  website: string | null;
+  ceo: string | null;
+  full_time_employees: number | null;
+  ipo_date: string | null;
+  description: string | null;
+  logo_url: string | null;
+  market_cap: number | null;
+  beta: number | null;
+  last_dividend: number | null;
+  range_low: number | null;
+  range_high: number | null;
+  average_volume: number | null;
+  is_etf: boolean;
+  is_fund: boolean;
+  is_actively_trading: boolean | null;
+  fetched_at: string | null;
+}
+
+export interface Peer {
+  symbol: string;
+  name: string | null;
+  price: number | null;
+  market_cap: number | null;
+}
+
+export interface PeersResponse {
+  ticker: string;
+  peers: Peer[];
+  fetched_at: string | null;
+}
+
+export interface EmployeeCountRecord {
+  period_of_report: string | null;
+  filing_date: string | null;
+  form_type: string | null;
+  employee_count: number | null;
+  source: string | null;
+}
+
+export interface EmployeeCountResponse {
+  ticker: string;
+  records: EmployeeCountRecord[];
+  fetched_at: string | null;
+}
+
+export interface IndustriesResponse {
+  industries: string[];
 }

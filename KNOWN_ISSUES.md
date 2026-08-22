@@ -229,6 +229,21 @@
 
 ## Fixed
 
+- ~~Analysis documents never got a `sector`, so `/sectors` stayed empty
+  forever~~ — fixed via `specs/029-company-profile-tweaks`. `GET /sectors`
+  (`backend/routers/sectors.py`) rolled up analyses whose `sector` field was
+  set, and `GET /analysis/sector/{sector}` filtered on it too, but
+  `Crew.run()` never set `sector` on the document it returned — none of its
+  sub-agents fetched a company's sector, and nothing carried the registry's
+  copy into the analyses collection. Net effect: the Sectors page's empty
+  state was permanent. Fixed by adding a company-profile fetch
+  (`agent-runner/tools/company_profile.py`, sourced from FMP's `profile`
+  endpoint) to every pull, which denormalizes `sector`/`industry` onto
+  `ticker_index` — the single sector source `GET /sectors`, the feed's
+  sector filter, and `macro_worker.py`'s per-sector sweep all read now.
+  `analyses.sector` itself is no longer read anywhere; a tracked stock
+  without a profile yet groups into a reserved "Unclassified" bucket rather
+  than vanishing, until its next pull fetches one.
 - ~~Empty financials from a temporary FMP condition are cached as settled for
   90 days~~ — fixed 2026-08-15. A fetch where every statement type 402s ("not
   covered on this plan") wrote an all-empty `financials_cache` doc that then

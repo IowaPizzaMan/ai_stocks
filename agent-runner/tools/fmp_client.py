@@ -153,6 +153,11 @@ PROBE_ENDPOINTS: dict[str, str] = {
     "fund_holdings": "etf/holdings?symbol=SPY",
     "transcripts": "earning-call-transcript?symbol=AAPL&year=2025&quarter=1",
     "company_info": "profile?symbol=AAPL",
+    # 029-company-profile-tweaks — peers/employee-count are new families,
+    # unprobed before now; add them so a future plan downgrade is visible in
+    # fmp_entitlements instead of a mystery empty Overview section.
+    "stock_peers": "stock-peers?symbol=AAPL",
+    "employee_count": "historical-employee-count?symbol=AAPL",
 }
 
 

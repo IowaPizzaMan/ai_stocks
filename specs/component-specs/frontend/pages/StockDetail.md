@@ -138,3 +138,15 @@ Store active tab in URL hash (`#ai-summary`) so it survives refresh.
 - `useTickerRecord` (registry status, feeds `TickerStatusBadge`)
 - `TickerStatusBadge`
 - All analysis hooks
+
+## Amendments
+
+- **specs/024-delta-data-pulls**: the header gained a `PullCostPanel` diagnostics
+  section (per-stage pull timing/byte breakdown), later removed — see below.
+- **specs/028-dashboard-tweaks-batch US3**: `SentimentButtons` (thumbs up/down) render
+  immediately after the ticker `<h1>`, before the signal/conviction badges — only when
+  the ticker is tracked (hidden entirely, not disabled, for an untracked ticker; FR-006a).
+- **specs/028-dashboard-tweaks-batch US7**: `PullCostPanel` and `usePullMetrics` removed
+  entirely — the header no longer shows a "Pull cost" section, and the underlying
+  `pull_metrics` collection/writer/endpoint are gone. Pulls themselves are unaffected
+  (FR-026b); this was diagnostic-only instrumentation with no downstream consumer.

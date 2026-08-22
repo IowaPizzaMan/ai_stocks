@@ -59,6 +59,40 @@ test("shows the analysis summary", () => {
   expect(screen.getByText("A distinctive summary sentence.")).toBeDefined();
 });
 
+// --- specs/029-company-profile-tweaks US3 (FR-020/FR-021/FR-021a/FR-023) ---
+
+test("shows the full summary text, not truncated", () => {
+  const longSummary = "Sentence one. ".repeat(40).trim();
+  renderPreview(analysis({ summary: longSummary }));
+  const p = screen.getByText((_, el) => el?.textContent === longSummary);
+  expect(p.className).not.toContain("line-clamp");
+});
+
+test("shows the company logo and name beside the ticker", () => {
+  const { container } = renderPreview(
+    analysis({
+      name: "Apple Inc.",
+      logo_url: "https://images.financialmodelingprep.com/symbol/AAPL.png",
+    }),
+  );
+  expect(screen.getByText("Apple Inc.")).toBeDefined();
+  expect(container.querySelector("img")?.getAttribute("src")).toBe(
+    "https://images.financialmodelingprep.com/symbol/AAPL.png",
+  );
+});
+
+test("shows 'no summary available' when the stock has no completed analysis", () => {
+  renderPreview(analysis({ summary: "" }));
+  expect(screen.getByText(/no summary available/i)).toBeDefined();
+});
+
+test("stays within a bounded, scrollable card even with a very long summary", () => {
+  const { container } = renderPreview(analysis({ summary: "word ".repeat(500) }));
+  const card = container.querySelector('[role="tooltip"]');
+  expect(card?.className).toContain("overflow-y-auto");
+  expect(card?.className).toContain("max-h-");
+});
+
 test("clicking the watchlist button adds the ticker without navigating (stopPropagation to the tile)", async () => {
   const onWrapperClick = vi.fn();
   const { getByRole } = renderPreview(analysis({ ticker: "NVDA" }), onWrapperClick);

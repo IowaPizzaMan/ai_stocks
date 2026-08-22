@@ -1,0 +1,36 @@
+[
+  {
+    "symbol": "AVGO",
+    "senateId": "B001236",
+    "disclosureDate": "2026-08-20",
+    "transactionDate": "2025-04-08",
+    "firstName": "John",
+    "lastName": "Boozman",
+    "office": "John Boozman",
+    "district": "AR",
+    "owner": "Joint",
+    "assetDescription": "Broadcom Inc",
+    "assetType": "Stock",
+    "type": "Purchase",
+    "amount": "$1,001 - $15,000",
+    "comment": "",
+    "link": "https://efdsearch.senate.gov/search/view/ptr/f727289a-4d72-4c90-a3ea-63d5bcd23398/"
+  },
+  {
+    "symbol": "ORCL",
+    "senateId": "B001236",
+    "disclosureDate": "2026-08-20",
+    "transactionDate": "2025-04-16",
+    "firstName": "John",
+    "lastName": "Boozman",
+    "office": "John Boozman",
+    "district": "AR",
+    "owner": "Joint",
+    "assetDescription": "Oracle Corp",
+    "assetType": "Stock",
+    "type": "Purchase",
+    "amount": "$1,001 - $15,000",
+    "comment": "",
+    "link": "https://efdsearch.senate.gov/search/view/ptr/f727289a-4d72-4c90-a3ea-63d5bcd23398/"
+  }
+]

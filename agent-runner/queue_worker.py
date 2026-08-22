@@ -15,7 +15,6 @@ from logging_config import get_logger
 from tools.admin_jobs import JOB_DATASETS, JOB_HANDLERS, STALE_MINUTES
 from tools.db import (
     ANALYSES,
-    PULL_METRICS,
     WORK_QUEUE,
     ensure_indexes,
     get_db,
@@ -111,36 +110,6 @@ def _run_admin_job(db, job) -> bool:
     return True
 
 
-def _write_pull_metrics(db, job, crew, outcome: str) -> None:
-    """Persists the pull-cost breakdown for this job (024 US1, FR-001..FR-004).
-
-    A crew that reports nothing (a stub, or a run that raised before finishing
-    prefetch) simply writes nothing — measurement is diagnostic and must never
-    become a precondition for running an analysis.
-    """
-    pull = getattr(crew, "last_pull", None)
-    if not pull:
-        return
-    db[PULL_METRICS].insert_one({
-        "ticker": job["ticker"],
-        "job_id": str(job["_id"]),
-        "mode": pull.get("mode", "delta"),
-        "started_at": pull.get("started_at"),
-        "completed_at": pull.get("completed_at"),
-        "total_ms": pull.get("total_ms", 0),
-        "outcome": outcome,
-        "stages": pull.get("stages", []),
-    })
-
-
-def _record_pull_metrics(db, job, crew, outcome: str) -> None:
-    """FR-005 — a failure in measurement must not cost us the analysis."""
-    try:
-        _write_pull_metrics(db, job, crew, outcome)
-    except Exception:
-        logger.exception("failed to write pull metrics for %s", job.get("ticker"))
-
-
 def claim_and_run_next(db=None, crew=None) -> bool:
     """Claim the oldest pending job and run it to completion.
     Returns False when the queue is empty (caller sleeps), True otherwise."""
@@ -177,7 +146,6 @@ def claim_and_run_next(db=None, crew=None) -> bool:
             {"_id": job["_id"]},
             {"$set": {"status": "done", "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
-        _record_pull_metrics(db, job, crew, "done")
         logger.info("%s analysis done (mode=%s signal=%s conviction=%s)",
                     ticker, mode, result.get("signal"), result.get("conviction"))
     except TickerDelistedError as exc:
@@ -188,7 +156,6 @@ def claim_and_run_next(db=None, crew=None) -> bool:
             {"$set": {"status": "failed", "delisted": True, "error": str(exc),
                       "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
-        _record_pull_metrics(db, job, crew, "failed")
     except Exception as exc:
         logger.exception("%s job failed", ticker)
         db[WORK_QUEUE].update_one(
@@ -196,6 +163,5 @@ def claim_and_run_next(db=None, crew=None) -> bool:
             {"$set": {"status": "failed", "delisted": False, "error": str(exc),
                       "completed_at": _utcnow(), "updated_at": _utcnow()}},
         )
-        _record_pull_metrics(db, job, crew, "failed")
 
     return True

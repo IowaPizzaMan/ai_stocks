@@ -20,12 +20,12 @@ export function useQueueStatus() {
         // a batch just drained — pull in whatever analyses it produced
         queryClient.invalidateQueries({ queryKey: ["feed"] });
         queryClient.invalidateQueries({ queryKey: ["analysis"] });
-        // 024: the pull-cost breakdown lands with the analysis, and this is the
-        // only refresh signal it gets (the panel itself never polls).
-        queryClient.invalidateQueries({ queryKey: ["pull-metrics"] });
         queryClient.invalidateQueries({ queryKey: ["price"] });
-        // 027: the portfolio_digest admin job has no other refresh signal either.
-        queryClient.invalidateQueries({ queryKey: ["portfolio-digest"] });
+        // 028-dashboard-tweaks-batch: the admin jobs this batch adds have no
+        // other refresh signal — none of them poll on their own.
+        queryClient.invalidateQueries({ queryKey: ["most-actives"] });
+        queryClient.invalidateQueries({ queryKey: ["sector-etf-series"] });
+        queryClient.invalidateQueries({ queryKey: ["congress"] });
       }
       return busy ? 5000 : false;
     },

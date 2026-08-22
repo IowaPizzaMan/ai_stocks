@@ -105,3 +105,24 @@ export function Stocks() {
 ## Dependencies
 - `useFeed`, `FilterBar`, `AnalysisTile`, `SkeletonTile`, `groupBySignal`
 - `react-router-dom` (useSearchParams)
+
+## Amendments
+
+- **specs/027-stocks-news-tab-ai-summary**: added a tab bar (`grid` default / `news`),
+  a bounded page-local scroll layout, and a `PortfolioDigestPanel` rendered beside the grid
+  as a second column on the `grid` tab. `Load more` replaced scroll-triggered infinite
+  fetch. See that spec for the full design.
+- **specs/028-dashboard-tweaks-batch**: `PortfolioDigestPanel`'s ticker links fixed
+  (`/stock/` not `/stocks/`, US1) and its highlights now narrow with the active filter
+  (US2). Filters gained a `sentiment` dimension (`liked`/`disliked`, US3). A
+  `MostActivesPanel` (Top Traded Stocks, FMP most-actives) renders below the tile grid,
+  inside the grid column — not beside the digest panel (US6).
+- **specs/029-company-profile-tweaks**: the tab bar is gone — News moved to its own
+  top-level route (`pages/News.tsx`, `/news`, main nav) rather than a tab nested in this
+  page (US1). `PortfolioDigestPanel` and its second-column layout are removed entirely
+  (US3, FR-018/FR-019) — the grid is this page's only content, at full width; a stale
+  `#news` URL fragment is now just an ignored hash, not a broken tab. Filters gained an
+  `industry` dimension (US5, FR-024/FR-025), sourced from `GET /stocks/industries` and
+  combined with every other active filter. `AnalysisTile`/`TilePreview` render a company
+  logo (`CompanyLogo`) beside the ticker, and `TilePreview` shows the full AI summary
+  rather than a 3-line clamp (US3, FR-020/FR-021/FR-021a).

@@ -52,3 +52,11 @@ useEffect(() => {
 - `react-router-dom` (useNavigate, useLocation, Link)
 - `useQueue` hook
 - `searchStocks` API function
+
+## Amendments
+
+- **As actually shipped**, the nav bar is a plain link row (`{ to, label }[]` mapped to
+  `NavLink`) — no global search dropdown, queue indicator, or Admin link exist in the real
+  component; those describe an earlier, unimplemented design. Current links: Stocks (`/`),
+  Macro, Institutional Flow, Sectors, Earnings.
+- **specs/028-dashboard-tweaks-batch US4**: added `{ to: "/congress", label: "Congress" }`.

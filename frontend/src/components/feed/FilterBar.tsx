@@ -3,9 +3,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useEnqueueAll, useEnqueueTicker, useQueueStatus } from "../../hooks/useQueue";
+import { useIndustries } from "../../hooks/useIndustries";
 
 const SIGNALS = ["bullish", "bearish", "neutral"];
 const CONVICTIONS = ["high", "medium", "low"];
+// 028-dashboard-tweaks-batch US3 (FR-009) — share one "sentiment" search
+// param, same toggle pattern as signal/conviction: selecting one over the
+// other replaces it; selecting the active one clears it.
+const SENTIMENTS = ["liked", "disliked"];
 
 export default function FilterBar() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,14 +22,17 @@ export default function FilterBar() {
   const enqueue = useEnqueueTicker();
   const enqueueAll = useEnqueueAll();
   const { data: queue } = useQueueStatus();
+  const { data: industries } = useIndustries();
 
   const busyCount = (queue?.pending_count ?? 0) + (queue?.running_count ?? 0);
 
   useEffect(() => {
     // Guarded so this never fires a no-op navigation on mount — react-router's
     // setSearchParams navigates via a hash-less relative URL, which would
-    // otherwise silently clear any URL hash present (e.g. the Stocks page's
-    // #news tab anchor, specs/027) even when the ticker filter didn't change.
+    // otherwise silently clear any URL hash present even when the ticker
+    // filter didn't change. The Stocks page dropped its own hash tabs in
+    // specs/029-company-profile-tweaks, but this guard is correct regardless
+    // of what set the hash (a bookmark, browser back/forward, etc.).
     const current = searchParams.get("ticker") ?? "";
     if (debouncedSearch === current) return;
     setSearchParams(
@@ -128,6 +136,47 @@ export default function FilterBar() {
             {c} conv.
           </button>
         ))}
+
+        <span className="mx-2 hidden h-5 w-px bg-zinc-800 sm:block" />
+
+        {SENTIMENTS.map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilter("sentiment", s)}
+            className={`rounded-full border px-2.5 py-1 text-xs capitalize transition-colors ${
+              searchParams.get("sentiment") === s
+                ? "border-sky-500 bg-sky-500/10 text-sky-300"
+                : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
+
+        {/* 029-company-profile-tweaks US5 (FR-024/FR-025) — open-ended, so a
+            <select> rather than a pill row (research R13); the control is
+            hidden entirely rather than offered empty when no ticker has a
+            profile industry yet. */}
+        {industries && industries.length > 0 && (
+          <select
+            value={searchParams.get("industry") ?? ""}
+            onChange={(e) => {
+              const next = new URLSearchParams(searchParams);
+              if (e.target.value) next.set("industry", e.target.value);
+              else next.delete("industry");
+              setSearchParams(next, { replace: true });
+            }}
+            aria-label="Filter feed by industry"
+            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-400 focus:border-sky-500 focus:outline-none"
+          >
+            <option value="">All industries</option>
+            {industries.map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   );

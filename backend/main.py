@@ -9,12 +9,12 @@ from db import ensure_indexes, get_db
 from logging_config import get_logger
 from routers import (
     analysis,
+    congress,
     earnings,
     institutional_flow,
     logs,
     macro,
     market,
-    portfolio,
     price,
     queue,
     sectors,
@@ -60,7 +60,7 @@ app.include_router(queue.router)
 app.include_router(earnings.router)
 app.include_router(institutional_flow.router)
 app.include_router(logs.router)
-app.include_router(portfolio.router)
+app.include_router(congress.router)
 
 
 @app.get("/health")
