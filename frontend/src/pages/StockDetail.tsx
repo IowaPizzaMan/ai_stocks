@@ -75,14 +75,14 @@ export default function StockDetail() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Link to="/" className="text-zinc-500 hover:text-zinc-300">
             ←
           </Link>
           <CompanyLogo ticker={symbol} src={profile?.logo_url} size="lg" />
-          <h1 className="text-3xl font-bold text-white">{symbol}</h1>
+          <h1 className="truncate text-3xl font-bold text-white">{symbol}</h1>
           <SentimentButtons ticker={symbol} tracked={!!record} sentiment={record?.sentiment} />
-          {record?.name && <span className="text-zinc-400">{record.name}</span>}
+          {record?.name && <span className="truncate text-zinc-400">{record.name}</span>}
           {latest && (
             <>
               <SignalBadge signal={latest.signal} />

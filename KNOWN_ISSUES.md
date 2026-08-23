@@ -45,12 +45,44 @@
   `backend.fmp.fmp_get`, so that call site now counts. Remaining fix is
   mechanical: route `earnings_data.py::_fmp_get` through `backend.fmp.fmp_get`
   too.
+- **No Ollama call anywhere passes a timeout — a hung model hangs the caller
+  indefinitely.** `agent-runner/llm.py` builds its client as
+  `ollama.Client(host=settings.ollama_url)` (`llm.py:24-31`) and calls
+  `client.chat(...)` (`llm.py:34-60`, `:63-76`) without a `timeout` kwarg on
+  either the constructor or the call. Grep confirms no `timeout=` on any Ollama
+  path in the repo. Retries (`retries: int = 1`, so 2 attempts) only cover
+  `JSONDecodeError`, not a stall — if Ollama accepts the connection and then
+  never finishes generating, the worker blocks forever with no ceiling. Today
+  that costs a stuck crew run; it becomes user-visible the moment an HTTP
+  request handler calls the model (e.g. the chat endpoint in
+  `specs/031-semantic-layer-chat/`), where it would hang the request until the
+  client gives up. Found 2026-08-23 while planning 031. Fix is mechanical: pass
+  an explicit timeout and treat expiry as the existing `LLMError` degrade path.
+
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
   measured one session early for what was actually an after-close print.
 
 ## Design limitations (accepted for now)
+
+- **MongoDB runs with no authentication, and port 27017 is published to the
+  host.** `docker-compose.yml` starts mongo as `mongod --quiet` with no `--auth`
+  and no `MONGO_INITDB_ROOT_USERNAME`/`PASSWORD`, mounts no init script, and
+  publishes `27017:27017`. Every connection string in the repo is
+  credential-free (`.env`, `.env.example`, both compose service blocks, both
+  `settings.py` defaults). Anything that can reach the host's port 27017 has
+  full read/write on `stockai` — including drop. Consistent with the
+  local-first, single-user posture in constitution Principle V, and fine while
+  the stack is bound to a trusted machine; it stops being fine the moment the
+  host is on an untrusted network or the port is forwarded. The practical
+  consequence today is that **no database-level read-only role exists**, so any
+  feature promising "read-only" enforcement (e.g. the chat query guard in
+  `specs/031-semantic-layer-chat/`) can only enforce it in application code —
+  a validator bug is a hole, with nothing behind it. Found 2026-08-23 while
+  planning 031. Fixing it is a breaking change: enable `--auth`, add an init
+  script creating an app user plus a `read`-role user, then update `MONGO_URI`
+  in `.env`, both compose blocks, and both `settings.py` defaults.
 
 - **A stock split silently invalidates stored price history until someone
   presses Full Refresh.** As of `specs/024-delta-data-pulls`, delta retrieval is
@@ -165,18 +197,6 @@
   fund lists are short hardcoded substrings in
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
-- **App shell causes horizontal page scroll at phone widths (~390px).** The
-  fixed-width Watchlist sidebar never collapses, and `<main>` (a `flex-1`
-  child in `App.tsx`) has no `min-w-0`, so it can't shrink below its content's
-  intrinsic width — `FilterBar`'s ticker/search `<input>`s hit their default
-  browser min-content width before `flex-wrap` gets a chance to wrap them,
-  forcing the whole page wider than the viewport. Found 2026-08-15 while
-  verifying `specs/019-feed-checkerboard-grid/`'s responsive reflow — the new
-  tile grid itself reflows correctly (its own content never exceeds its
-  container); the overflow originates in `App.tsx`/`FilterBar.tsx`, both
-  pre-existing and out of scope for that feature. Fix belongs in a mobile
-  nav/sidebar pattern plus `min-w-0` on `<main>` and width constraints on
-  `FilterBar`'s inputs.
 ## Unbuilt / unfinished features
 
 - **Admin page was never scaffolded into a route.** Spec exists
@@ -229,6 +249,18 @@
 
 ## Fixed
 
+- ~~App shell causes horizontal page scroll at phone widths (~390px)~~ — fixed
+  via `specs/030-stock-page-overflow/`. The fixed-width Watchlist `<aside>`
+  (`w-56 shrink-0` in `Sidebar.tsx`) never collapsed, and `<main>` (a `flex-1`
+  child in `App.tsx`) had no `min-w-0`, so it couldn't shrink below its
+  content's intrinsic width, forcing the whole page wider than the viewport.
+  Fixed by adding `min-w-0` to `<main>` and hiding the sidebar below the `md`
+  breakpoint (`hidden md:block`) instead of letting it force width at phone
+  sizes; `StockDetail.tsx`'s ticker/company-name header also got `min-w-0` +
+  `truncate` so an unusually long company name can't do the same thing
+  locally. `FilterBar`'s inputs (the other contributor named when this was
+  originally found) already carry explicit `w-*` widths and `flex-wrap` by
+  the time of this fix, so no separate change was needed there.
 - ~~Analysis documents never got a `sector`, so `/sectors` stayed empty
   forever~~ — fixed via `specs/029-company-profile-tweaks`. `GET /sectors`
   (`backend/routers/sectors.py`) rolled up analyses whose `sector` field was

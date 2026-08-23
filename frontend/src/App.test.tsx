@@ -16,6 +16,22 @@ test("renders navbar and feed placeholder", () => {
   expect(screen.getByText("Analysis Feed")).toBeDefined();
 });
 
+// specs/030-stock-page-overflow — <main> is a flex child; without min-w-0 it
+// can't shrink below its content's intrinsic width, which forces page-level
+// horizontal scroll at narrow viewports (research.md #1).
+test("main content area allows shrinking below its content's intrinsic width", () => {
+  const { container } = render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  const main = container.querySelector("main");
+  expect(main?.className).toContain("min-w-0");
+  expect(main?.className).toContain("flex-1");
+});
+
 // specs/028-dashboard-tweaks-batch US1 (FR-001) — before this route existed,
 // an unmatched path (e.g. the digest panel's old /stocks/<ticker> link) rendered
 // a structurally empty <main> with no error, which is what made the blank-page

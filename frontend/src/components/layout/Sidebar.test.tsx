@@ -31,6 +31,18 @@ function renderSidebar(items: WatchlistItem[]) {
   );
 }
 
+// specs/030-stock-page-overflow — the sidebar is fixed-width (w-56) and must
+// not force page-level horizontal scroll below the md breakpoint, where it's
+// hidden instead of shrinking (research.md #2).
+test("is hidden below the md breakpoint instead of forcing page width", () => {
+  const { container } = renderSidebar([]);
+  const aside = container.querySelector("aside");
+  expect(aside?.className).toContain("hidden");
+  expect(aside?.className).toContain("md:block");
+  expect(aside?.className).toContain("w-56");
+  expect(aside?.className).toContain("shrink-0");
+});
+
 test("the remove control is hidden until its row is hovered or focused", async () => {
   renderSidebar([watchlistItem({ ticker: "AAPL" }), watchlistItem({ ticker: "MSFT" })]);
   const aaplRemove = await screen.findByRole("button", { name: /remove aapl from watchlist/i });

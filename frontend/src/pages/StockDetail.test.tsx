@@ -231,6 +231,17 @@ test("AI Summary omits the changes section on a first-ever analysis", async () =
   expect(screen.queryByText(/what changed since the last analysis/i)).toBeNull();
 });
 
+// --- specs/030-stock-page-overflow: header doesn't force horizontal overflow ---
+
+test("the ticker and company name truncate instead of forcing the header wider than its container", async () => {
+  renderPage();
+  const name = await screen.findByText("Apple");
+  expect(name.className).toContain("truncate");
+  const ticker = screen.getByText("AAPL", { selector: "h1" });
+  expect(ticker.className).toContain("truncate");
+  expect(ticker.parentElement?.className).toContain("min-w-0");
+});
+
 // --- tab bar ----------------------------------------------------------------
 
 test("the tab bar lists Charts first and includes News", async () => {

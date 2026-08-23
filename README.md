@@ -28,9 +28,9 @@ docker compose up -d --build
 
 # GPU server:
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build --no-attach mongodb
-
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --no-attach mongodb
 # First run: pull the model into the ollama container
-docker compose exec ollama ollama pull qwen2.5:14b
+docker compose exec ollama ollama pull qwen3:14b
 ```
 
 - UI: http://localhost:5173

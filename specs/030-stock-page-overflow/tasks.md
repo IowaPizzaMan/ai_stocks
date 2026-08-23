@@ -34,7 +34,7 @@ Web app structure already in place (`backend/`, `frontend/`). This feature touch
 
 **Purpose**: Establish a clean baseline before making changes
 
-- [ ] T001 Run `cd frontend && npm run test && npm run typecheck` to confirm both pass
+- [X] T001 Run `cd frontend && npm run test && npm run typecheck` to confirm both pass
       before any changes, so later failures can be attributed to this feature's edits
 
 ---
@@ -47,18 +47,18 @@ itself stops forcing page width.
 
 **⚠️ CRITICAL**: No user story work can be verified until this phase is complete
 
-- [ ] T002 [P] In `frontend/src/App.tsx`, add `min-w-0` to the `<main>` element's
+- [X] T002 [P] In `frontend/src/App.tsx`, add `min-w-0` to the `<main>` element's
       className (currently `"flex-1 p-6"` at App.tsx:21) so the main content area can
       shrink to fit the viewport instead of being forced wide by its content's intrinsic
       width (research.md §1)
-- [ ] T003 [P] In `frontend/src/components/layout/Sidebar.tsx`, add a responsive hide
+- [X] T003 [P] In `frontend/src/components/layout/Sidebar.tsx`, add a responsive hide
       class (`hidden md:block`) to the `<aside>` element's className (currently
       `"w-56 shrink-0 border-r border-zinc-800 p-4 text-sm text-zinc-400"` at
       Sidebar.tsx:77) so the fixed-width Watchlist sidebar no longer forces page width
       below the `md` (768px) breakpoint (research.md §2)
-- [ ] T004 [P] Update `frontend/src/App.test.tsx` to assert the `<main>` element carries
+- [X] T004 [P] Update `frontend/src/App.test.tsx` to assert the `<main>` element carries
       `min-w-0` alongside `flex-1` (depends on T002)
-- [ ] T005 [P] Update `frontend/src/components/layout/Sidebar.test.tsx` to assert the
+- [X] T005 [P] Update `frontend/src/components/layout/Sidebar.test.tsx` to assert the
       `<aside>` element carries the `hidden md:block` responsive-hide class alongside its
       existing classes (depends on T003)
 
@@ -78,12 +78,12 @@ no horizontal scrollbar and no content is clipped or pushed off the right edge.
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] In `frontend/src/pages/StockDetail.tsx`, add `min-w-0` and `truncate` (or
+- [X] T006 [US1] In `frontend/src/pages/StockDetail.tsx`, add `min-w-0` and `truncate` (or
       `break-words`) to the ticker `<h1>{symbol}</h1>` and the `record?.name` span inside
       the header's `flex items-center gap-4` container (StockDetail.tsx:78-85), so a long
       company name wraps/truncates instead of forcing the header row wider than the
       viewport (research.md §3)
-- [ ] T007 [US1] Update `frontend/src/pages/StockDetail.test.tsx` to assert the ticker and
+- [X] T007 [US1] Update `frontend/src/pages/StockDetail.test.tsx` to assert the ticker and
       company-name header elements carry `min-w-0` and `truncate` (or `break-words`)
       classes (depends on T006)
 
@@ -135,10 +135,10 @@ passes.
 
 **Purpose**: Final validation and closing the loop on the known-issue record
 
-- [ ] T013 [P] Run `cd frontend && npm run test` and confirm the full suite passes,
+- [X] T013 [P] Run `cd frontend && npm run test` and confirm the full suite passes,
       including the assertions added in T004, T005, and T007
-- [ ] T014 [P] Run `cd frontend && npm run typecheck` and confirm no type errors
-- [ ] T015 Update `KNOWN_ISSUES.md`: move the "App shell causes horizontal page scroll at
+- [X] T014 [P] Run `cd frontend && npm run typecheck` and confirm no type errors
+- [X] T015 Update `KNOWN_ISSUES.md`: move the "App shell causes horizontal page scroll at
       phone widths (~390px)" bullet (currently under "Design limitations (accepted for
       now)") into the "Fixed" section, following the existing `~~struck-through~~ — fixed
       via specs/030-stock-page-overflow/...` format used by the other entries there

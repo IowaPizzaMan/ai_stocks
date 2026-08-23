@@ -74,7 +74,7 @@ export default function Sidebar() {
   const { data, isLoading } = useWatchlist();
 
   return (
-    <aside className="w-56 shrink-0 border-r border-zinc-800 p-4 text-sm text-zinc-400">
+    <aside className="hidden w-56 shrink-0 border-r border-zinc-800 p-4 text-sm text-zinc-400 md:block">
       <p className="mb-3 font-medium text-zinc-300">Watchlist</p>
       {isLoading && <p className="text-xs text-zinc-600">loading…</p>}
       {!isLoading && (data?.items.length ?? 0) === 0 && (

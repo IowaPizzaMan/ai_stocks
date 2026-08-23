@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     mongo_uri: str = "mongodb://localhost:27017"
     mongo_db: str = "stockai"
     ollama_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen2.5:14b"
+    ollama_model: str = "qwen3:14b"
 
     fmp_api_key: str = ""
     finnhub_api_key: str = ""
