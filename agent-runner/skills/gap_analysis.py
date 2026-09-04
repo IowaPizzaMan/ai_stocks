@@ -185,6 +185,12 @@ def run(ticker: str, data, market_trend: str | None = None,
             "strong_close": bool(day_range > 0 and (close - low) / day_range >= PEG_STRONG_CLOSE),
             "filled": filled,
             "days_to_fill": days_to_fill,
+            # 032-weekly-strategy-picks: the pre-gap extreme — the level price
+            # must reclaim to "fill" the gap (§8). A down gap's reversal/long
+            # entry level is the prior bar's low; an up gap's short entry
+            # level is the prior bar's high. Both already computed above as
+            # prev_low/prev_high; only newly *returned* here.
+            "reversal_level": round(float(prev_low if direction == "down" else prev_high), 2),
             "_i": i, "_gap_date": gap_date,
         }
         gap["score"] = _score_gap(gap, market_trend)

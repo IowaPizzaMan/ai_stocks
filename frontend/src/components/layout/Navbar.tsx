@@ -9,6 +9,7 @@ const links = [
   { to: "/sectors", label: "Sectors" },
   { to: "/earnings", label: "Earnings" },
   { to: "/congress", label: "Congress" },
+  { to: "/chat", label: "Chat" },
 ];
 
 export default function Navbar() {

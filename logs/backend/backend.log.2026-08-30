@@ -1,0 +1,133 @@
+2026-08-30 18:26:57,744 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-30 18:29:59,863 backend.semantic.chat WARNING chat answer interpretation failed, using fallback: model call failed: timed out
+2026-08-30 18:33:31,013 backend.llm WARNING Ollama call failed (attempt 1/2): timed out
+2026-08-30 18:34:01,044 backend.llm WARNING Ollama call failed (attempt 2/2): timed out
+2026-08-30 18:34:01,045 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: timed out
+2026-08-30 14:31:55,057 backend.semantic.chat WARNING conversation persistence failed: mongo write failed
+2026-08-30 14:31:55,084 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:31:55,148 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:31:55,148 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:31:55,148 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:31:55,148 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:31:55,148 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:31:55,148 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:31:55,854 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:31:55,854 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:31:55,854 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:31:55,855 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:31:56,041 backend.semantic.conversations WARNING conversation title generation failed, using fallback: model call failed: ollama unreachable
+2026-08-30 14:31:56,152 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:31:56,171 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-30 14:31:56,183 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-30 14:31:56,184 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-30 14:35:17,415 backend.semantic.chat WARNING conversation persistence failed: mongo write failed
+2026-08-30 14:35:17,420 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:35:17,438 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:35:17,439 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:35:17,439 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:35:17,439 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:35:17,439 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:35:17,439 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:40:19,187 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:19,322 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:19,334 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:19,345 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:40:19,380 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:40:19,393 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:19,405 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:40:19,418 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:40:19,430 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:40:19,453 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:40:19,591 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:40:52,452 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:52,457 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:52,459 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:52,585 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:40:52,587 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:40:52,590 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:40:52,593 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:40:52,600 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:40:52,603 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:40:52,607 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:40:52,758 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:41:21,666 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:21,670 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:21,674 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:21,676 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:41:21,678 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:41:21,681 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:21,682 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:41:21,686 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:41:21,688 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:41:21,692 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:41:21,842 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:41:30,783 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:30,786 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:30,791 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:30,793 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:41:30,797 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:41:30,799 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:41:30,804 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:41:30,807 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:41:30,811 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:41:30,818 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:41:31,018 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:41:31,124 backend.semantic.chat WARNING conversation persistence failed: mongo write failed
+2026-08-30 14:41:31,142 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:41:31,156 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:41:31,156 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:41:31,156 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:41:31,156 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:41:31,156 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:41:31,156 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:41:31,325 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:41:31,325 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:41:31,325 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:41:31,327 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:41:31,464 backend.semantic.conversations WARNING conversation title generation failed, using fallback: model call failed: ollama unreachable
+2026-08-30 14:41:31,577 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:41:31,597 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-30 14:41:31,609 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-30 14:41:31,610 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-30 14:42:10,402 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:10,405 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:10,407 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:10,410 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:42:10,412 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:42:10,415 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:10,417 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:42:10,420 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:42:10,422 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:42:10,426 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:42:10,583 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:42:54,993 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:54,997 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:55,002 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:55,006 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['interest rates', 'monetary policy'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=2
+2026-08-30 14:42:55,009 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=['export controls', 'interest rates', 'monetary policy', 'semiconductors'] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tags'] candidates=7
+2026-08-30 14:42:55,014 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=12
+2026-08-30 14:42:55,017 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:42:55,021 backend.semantic.news_rank INFO news_rank mode=semantic ticker=NVDA matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'tickers'] candidates=6
+2026-08-30 14:42:55,025 backend.semantic.news_rank INFO news_rank mode=semantic ticker=MSFT matched_tags=[] thin_ticker=True filter_keys=['tickers'] candidates=1
+2026-08-30 14:42:55,032 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: ollama down
+2026-08-30 14:42:55,251 backend.semantic.news_rank INFO news_rank mode=semantic ticker=None matched_tags=[] thin_ticker=False filter_keys=['embedding', 'embedding_model', 'published_at'] candidates=1512
+2026-08-30 14:42:55,357 backend.semantic.chat WARNING conversation persistence failed: mongo write failed
+2026-08-30 14:42:55,364 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:42:55,377 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:42:55,377 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:42:55,377 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:42:55,377 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:42:55,377 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:42:55,377 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:42:55,538 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-30 14:42:55,539 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-30 14:42:55,539 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-30 14:42:55,539 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-30 14:42:55,655 backend.semantic.conversations WARNING conversation title generation failed, using fallback: model call failed: ollama unreachable
+2026-08-30 14:42:55,767 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:42:55,787 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-30 14:42:55,802 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-30 14:42:55,804 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-30 19:53:23,820 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-30 20:09:01,519 backend.semantic.chat WARNING semantic news rank unavailable — keyword fallback: embedding call failed: model "nomic-embed-text" not found, try pulling it first (status code: 404)
+2026-08-30 20:49:44,390 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: timed out

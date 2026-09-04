@@ -16,11 +16,17 @@
 // fragment now, which is how FR-004 is satisfied for free. The Portfolio
 // Summary panel and its two-column layout are gone entirely (FR-018/FR-019);
 // the grid is the page's only content, at full width.
+//
+// specs/037-stocks-conviction-and-activity US1 (contracts/feed-ordering.md):
+// tiles within each signal group are ordered by conviction descending, then
+// ticker ascending — a total order the server already applies, so
+// groupBySignal() (lib/groupFeed.ts) must not re-sort. "Load more" only ever
+// appends tiles that sort at-or-after the last one shown.
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import ActivityFeed from "../components/feed/ActivityFeed";
 import AnalysisTile from "../components/feed/AnalysisTile";
 import FilterBar from "../components/feed/FilterBar";
-import MostActivesPanel from "../components/feed/MostActivesPanel";
 import SkeletonTile from "../components/feed/SkeletonTile";
 import { groupBySignal } from "../lib/groupFeed";
 import { useFeed } from "../hooks/useAnalysis";
@@ -71,6 +77,12 @@ export default function Stocks() {
       {/* The only scrollable region on the page. */}
       <div data-scroll-region="true" className="min-h-0 flex-1 overflow-y-auto pt-4">
         <div data-grid-column="true" className="min-w-0 space-y-4 pb-4">
+          {/* specs/037-stocks-conviction-and-activity US3 (FR-015-FR-022) —
+              lives inside the page's own scrollable region, not the fixed
+              header, so the bounded viewport-relative layout is preserved;
+              independent of the board's own loading/error state below. */}
+          <ActivityFeed />
+
           {isLoading && (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
               {Array.from({ length: SKELETON_BOARD_SIZE }).map((_, i) => (
@@ -121,9 +133,6 @@ export default function Stocks() {
               </button>
             </div>
           )}
-
-          {/* spec 028 US6 contract §Frontend. */}
-          <MostActivesPanel />
         </div>
       </div>
     </div>

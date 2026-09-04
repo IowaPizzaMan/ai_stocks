@@ -68,8 +68,17 @@ result is a valid state, not an error" (`backend/routers/market.py:113-114`).
 | Code | When |
 |---|---|
 | `422` | `question` empty, >2000 chars, or `history` malformed |
-| `503` | Ollama unreachable or timed out — `{"detail": "chat model unavailable"}` |
 | `500` | Unexpected; caught by the global handler in `backend/main.py:44-49` |
+
+**Implementation refinement (not in the original contract draft)**: Ollama being
+unreachable or timing out does **not** return `503`. It returns `200` with
+`degraded: true`, `note: "model_unavailable"`, and a plain-language `answer`
+saying the model is temporarily unavailable — matching this codebase's
+established convention that a provider failure degrades gracefully rather
+than erroring (`backend/routers/market.py`: "Always 200 — an empty result is
+a valid state, not an error"). A hard `503` would have been the one endpoint
+in the app that breaks that pattern for no real benefit to a single-user,
+local-first deployment.
 
 **A rejected query is not a 500.** If the model emits a disallowed stage, the guard rejects it
 and the endpoint returns `200` with `note: "query_rejected"` and an `answer` saying the question

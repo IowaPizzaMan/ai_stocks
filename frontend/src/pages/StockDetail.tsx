@@ -1,6 +1,10 @@
 // Spec: specs/component-specs/frontend/pages/StockDetail.md
 // Reorganized by specs/021-stock-page-redesign: all chart content lives in the
 // Charts tab (the default), the always-on TFC grid and Deep Dive block are gone.
+//
+// specs/037-stocks-conviction-and-activity: OverviewTab renders
+// ConvictionRationale (US2, the rule trace behind the conviction meter) and
+// ChangeHistory (US5, this stock's dated signal/conviction change trail).
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Analysis, ChangesSinceLast, CompanyProfile, OHLCVBar } from "../api/types";
@@ -8,7 +12,9 @@ import ConvictionMeter from "../components/shared/ConvictionMeter";
 import SignalBadge from "../components/shared/SignalBadge";
 import TabBar from "../components/shared/TabBar";
 import ChartsTab from "../components/stock/ChartsTab";
+import ChangeHistory from "../components/stock/ChangeHistory";
 import CompanyProfileSection from "../components/stock/CompanyProfileSection";
+import ConvictionRationale from "../components/stock/ConvictionRationale";
 import EmployeeCountChart from "../components/stock/EmployeeCountChart";
 import PeersSection from "../components/stock/PeersSection";
 import FormattedProse from "../components/stock/FormattedProse";
@@ -248,6 +254,12 @@ function OverviewTab({
         <FormattedProse text={analysis.summary} />
       </Section>
 
+      {/* specs/037-stocks-conviction-and-activity US2 (FR-010) — the rule
+          trace behind the conviction meter above, so "high" is auditable. */}
+      <Section title="Why this rating">
+        <ConvictionRationale detail={analysis.conviction_detail} />
+      </Section>
+
       {analysis.key_trends.length > 0 && (
         <Section title="Key Trends">
           <ul className="space-y-1.5 text-sm text-zinc-300">
@@ -269,6 +281,13 @@ function OverviewTab({
           </ul>
         </Section>
       )}
+
+      {/* specs/037-stocks-conviction-and-activity US5 (FR-027-FR-030) — a
+          dated trail of this stock's signal/conviction changes, each with a
+          rule-derived reason. */}
+      <Section title="Change history">
+        <ChangeHistory ticker={ticker} />
+      </Section>
 
       {/* specs/029-company-profile-tweaks US6/US7 */}
       <PeersSection ticker={ticker} />

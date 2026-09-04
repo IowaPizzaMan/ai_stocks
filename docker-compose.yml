@@ -24,6 +24,12 @@ services:
       - ollama_models:/root/.ollama
     # GPU passthrough lives in docker-compose.gpu.yml (target server):
     #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+    #
+    # Models are pulled once into the ollama_models volume, not baked in:
+    #   docker compose exec ollama ollama pull qwen3:14b            # chat / tagging (031/035)
+    #   docker compose exec ollama ollama pull nomic-embed-text     # embeddings (036 — settings.ollama_embed_model)
+    # nomic-embed-text is ~275 MB and runs resident alongside qwen3:14b
+    # (036 research.md R1). See specs/036-news-semantic-search/quickstart.md.
 
   backend:
     build: ./backend
@@ -39,6 +45,8 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      ollama:
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s

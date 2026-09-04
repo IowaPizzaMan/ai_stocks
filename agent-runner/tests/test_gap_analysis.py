@@ -140,6 +140,26 @@ def test_peg_score_without_optional_context():
     assert out["peg"]["priority"] == "watch"
 
 
+def test_reversal_level_up_gap_is_prior_bar_high():
+    # 032-weekly-strategy-picks: up gap's short-entry level is the pre-gap high
+    df = add_day(flat_days(40), 104.5, 106.0, 104.2, 105.9, 3_000_000)
+    out = gap_analysis.run("AAPL", df)
+    gap = out["latest_gap"]
+    assert gap["direction"] == "up"
+    assert gap["reversal_level"] == pytest.approx(101.0)  # flat_days' High = price + 1.0
+
+
+def test_reversal_level_down_gap_is_prior_bar_low():
+    # 032-weekly-strategy-picks: down gap's long-entry level is the pre-gap low
+    df = flat_days(40)
+    df = add_day(df, 101.0, 101.5, 99.0, 99.2, 1_000_000)   # black day, Low = 99.0
+    df = add_day(df, 96.5, 97.0, 96.0, 96.8, 400_000)       # gap down
+    out = gap_analysis.run("AAPL", df, market_trend="up")
+    gap = out["latest_gap"]
+    assert gap["direction"] == "down"
+    assert gap["reversal_level"] == pytest.approx(99.0)
+
+
 def test_accepts_price_history_dict():
     df = add_day(flat_days(40), 104.5, 106.0, 104.2, 105.9, 3_000_000)
     data = {"daily": df.reset_index().rename(columns={"index": "Date"}).to_dict(orient="records")}

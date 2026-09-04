@@ -1,20 +1,25 @@
 """FastAPI entry point. Spec: specs/SPEC.md 'Backend: FastAPI'."""
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+import llm
 from db import ensure_indexes, get_db
 from logging_config import get_logger
 from routers import (
     analysis,
+    chat,
     congress,
     earnings,
+    events,
     institutional_flow,
     logs,
     macro,
     market,
+    news,
     price,
     queue,
     sectors,
@@ -28,6 +33,11 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_indexes(get_db())
+    # Fire-and-forget: a slow/unreachable Ollama must never delay backend
+    # startup (research.md R2 — pre-warm is an optimization, not a
+    # dependency; the model loads lazily on the first real question if this
+    # doesn't complete in time).
+    threading.Thread(target=llm.prewarm, daemon=True).start()
     yield
 
 
@@ -50,6 +60,7 @@ async def log_unhandled_exception(request: Request, exc: Exception) -> JSONRespo
 
 
 app.include_router(analysis.router)
+app.include_router(chat.router)
 app.include_router(price.router)
 app.include_router(stocks.router)
 app.include_router(macro.router)
@@ -61,6 +72,8 @@ app.include_router(earnings.router)
 app.include_router(institutional_flow.router)
 app.include_router(logs.router)
 app.include_router(congress.router)
+app.include_router(news.router)
+app.include_router(events.router)
 
 
 @app.get("/health")

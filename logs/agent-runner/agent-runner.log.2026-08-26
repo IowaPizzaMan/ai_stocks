@@ -1,0 +1,11 @@
+2026-08-26 22:43:51,993 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-26 22:43:52,009 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-26 22:45:20,637 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (0 dataroma, 6 13F)
+2026-08-26 22:45:20,644 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-26 22:45:20,646 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-26 22:47:54,124 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -4.7, divergence none
+2026-08-26 22:47:54,131 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-26 22:47:56,538 agent-runner.economics_worker INFO economics refresh complete — 159 records written
+2026-08-26 22:47:56,553 agent-runner.queue_worker INFO claimed job 6a8f6c8af36e2872cdc2a589 for IREN (mode=delta)
+2026-08-26 22:47:57,521 agent-runner.tools.financials INFO earnings section unavailable for IREN: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=IREN&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-26 22:50:09,100 agent-runner.queue_worker INFO IREN analysis done (mode=delta signal=neutral conviction=high)

@@ -73,6 +73,30 @@ def test_track_fmp_call_increments(db):
     assert dbmod.track_fmp_call(db=db) == 3
 
 
+def test_stock_events_constant_pinned():
+    """037-stocks-conviction-and-activity. Mirrored verbatim in
+    backend/tests/test_db_constants.py::test_stock_events_constant_pinned —
+    same cross-service consistency check as STRATEGY_SIGNALS elsewhere in
+    that file (constitution Principle VI)."""
+    assert dbmod.STOCK_EVENTS == "stock_events"
+
+
+def test_stock_events_indexes_match_the_documented_set(db):
+    """Mirrored verbatim in
+    backend/tests/test_stock_events_contract.py::test_declared_indexes_match_the_documented_set."""
+    dbmod.ensure_indexes(db=db)
+    declared = {
+        tuple(tuple(pair) for pair in spec["key"])
+        for name, spec in db[dbmod.STOCK_EVENTS].index_information().items()
+        if name != "_id_"
+    }
+    assert declared == {
+        (("occurred_at", -1),),
+        (("ticker", 1), ("occurred_at", -1)),
+        (("ticker", 1), ("event_type", 1)),
+    }
+
+
 def test_ensure_indexes_idempotent(db):
     dbmod.ensure_indexes(db=db)
     dbmod.ensure_indexes(db=db)

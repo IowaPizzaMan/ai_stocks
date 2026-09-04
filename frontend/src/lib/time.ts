@@ -13,6 +13,14 @@ export function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+/** "9/4" — the compact numeric date the activity feed uses (spec 037: "AVB
+ * was added on 9/4"), distinct from formatDate's "Aug 2, 2026" long form. */
+export function formatMonthDay(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 /** "Aug 2, 2026" — for showing an absolute "data as of" date next to a relative one. */
 export function formatDate(iso: string): string | null {
   const d = new Date(iso);

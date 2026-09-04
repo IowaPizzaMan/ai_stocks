@@ -30,12 +30,100 @@ export interface AnalysisFeedItem {
   // fetches its profile.
   name?: string | null;
   logo_url?: string | null;
+  // 037-stocks-conviction-and-activity — absent on analyses written before
+  // this feature (conviction was still an LLM judgement then); the feed's
+  // sort key and the detail page's rationale both key off these.
+  conviction_rank?: number;
+  conviction_detail?: ConvictionDetail;
 }
 
 export interface Analysis extends AnalysisFeedItem {
   sub_reports: SubReports;
   // 021 — absent on analyses written before this feature / on first-ever pulls
   changes_since_last?: ChangesSinceLast | null;
+}
+
+// --- 037-stocks-conviction-and-activity --------------------------------------
+// Contract: specs/037-stocks-conviction-and-activity/contracts/conviction-rules.md
+// The deterministic rule trace behind `conviction` — never LLM prose.
+
+export type StrategyCall = "buy" | "not-buy" | "no-call";
+
+export interface StrategyCallDetail {
+  call: StrategyCall;
+  why: string;
+}
+
+export interface ZScoreQuartileStatus {
+  value: number | null;
+  p25: number | null;
+  in_bottom_quartile: boolean | null; // null = insufficient sample, not "no"
+  sample: number;
+}
+
+export interface ConvictionDetail {
+  level: Conviction;
+  rank: number;
+  computed_at: string;
+  conditions: {
+    strategies: {
+      pass: boolean;
+      calls: {
+        the_strat: StrategyCallDetail;
+        accumulation: StrategyCallDetail;
+        gap_analysis: StrategyCallDetail;
+      };
+    };
+    zscore: {
+      pass: boolean;
+      daily: ZScoreQuartileStatus;
+      weekly: ZScoreQuartileStatus;
+    };
+    revenue: {
+      pass: boolean;
+      growth_yoy: number | null;
+      change_qoq: number | null;
+      yoy_growing: boolean;
+      qoq_declining: boolean;
+    };
+  };
+  blockers: string[]; // empty iff level === "high"
+  caveats: string[]; // market_flow timing context — never affects `level`
+  missing_inputs: string[];
+}
+
+// --- 037-stocks-conviction-and-activity: activity feed + change history -----
+// Contract: specs/037-stocks-conviction-and-activity/contracts/stock-events-api.md
+
+export interface StockEventChange {
+  from: string;
+  to: string;
+  changed: true;
+}
+
+export interface StockEvent {
+  ticker: string;
+  event_type: "added" | "updated";
+  occurred_at: string;
+  changed: boolean;
+  changes: { signal?: StockEventChange; conviction?: StockEventChange } | null;
+  reason: string | null;
+  // `source` is internal provenance — never exposed by the API.
+}
+
+export interface StockEventsResponse {
+  items: StockEvent[];
+  total: number; // capped at `window`
+  page: number;
+  page_size: number;
+  window: number; // always 100 (FR-019)
+}
+
+export interface TickerChangeHistoryResponse {
+  ticker: string;
+  items: StockEvent[]; // "added" + changed "updated" only (FR-029)
+  total: number;
+  limit: number;
 }
 
 export interface SubReports {
@@ -127,6 +215,41 @@ export interface MarketNewsResponse {
   articles: MarketNewsArticle[]; // <= 20, newest first
   as_of: string | null;
   stale: boolean; // true when the cached copy could not be refreshed
+}
+
+// --- 035-chat-and-news-upgrade -----------------------------------------------
+// The mixed general/stock/FMP-article stream (/news). Deliberately NOT named
+// NewsArticle (that's the per-ticker sentiment sub-report above) or
+// MarketNewsArticle (that's the older, stock-latest-only /market/news feed,
+// which this supersedes on the News tab — see contracts/news-api.md).
+
+export type NewsSourceType = "general" | "stock" | "fmp_article";
+
+export interface NewsFeedArticle {
+  url: string;
+  source_type: NewsSourceType;
+  title: string;
+  published_at: string | null;
+  published_date: string | null;
+  publisher: string | null;
+  site: string | null;
+  author: string | null;
+  body_html: string | null;
+  body_text: string | null;
+  image_url: string | null;
+  tickers: string[];
+}
+
+export interface NewsFeedResponse {
+  articles: NewsFeedArticle[];
+  total: number;
+  as_of: string | null;
+}
+
+export interface NewsFeedFilters {
+  sourceType?: NewsSourceType;
+  ticker?: string;
+  limit?: number;
 }
 
 export interface ChangesSinceLast {
@@ -797,4 +920,125 @@ export interface EmployeeCountResponse {
 
 export interface IndustriesResponse {
   industries: string[];
+}
+
+// specs/031-semantic-layer-chat — chat is stateless server-side (no history
+// persistence); the client replays the conversation each turn.
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatCriterion {
+  label: string;
+  field: string;
+  op: string;
+  value: string | number | boolean;
+}
+
+export interface ChatRequest {
+  question: string;
+  history?: ChatTurn[];
+  // specs/035-chat-and-news-upgrade US5 — omitted/null starts a new
+  // conversation; present, appends to an existing one.
+  conversation_id?: string | null;
+}
+
+// --- 035-chat-and-news-upgrade US5 (chat history) + US3 (news citations) ---
+// Contract: specs/035-chat-and-news-upgrade/contracts/chat-history-api.md
+
+export interface ChatCitation {
+  title: string;
+  url: string;
+  published_date: string | null;
+  publisher: string | null;
+}
+
+export interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: ConversationMessage[];
+}
+
+export interface GeneratedQuery {
+  collection: string;
+  pipeline: Record<string, unknown>[];
+}
+
+// specs/032-weekly-strategy-picks — "per my trading strategies, what should
+// I buy/short this week and at what price". Additive to ChatResponse: null
+// for every ordinary screener question, populated only when the chat
+// recognized a strategy-picks question. Contract:
+// specs/032-weekly-strategy-picks/contracts/strategy-picks-api.md.
+export type StrategyPicksDirection = "buy" | "short";
+export type StrategyKey = "the_strat" | "gap_analysis";
+
+export interface StrategyCandidate {
+  ticker: string;
+  entry_price: number;
+  basis: string;
+}
+
+export interface StrategyList {
+  strategy: StrategyKey;
+  strategy_label: string;
+  candidates: StrategyCandidate[];
+  note: string | null; // e.g. "no candidates currently qualify this week"
+}
+
+export interface ExcludedByMarketFlow {
+  ticker: string;
+  entry_price: number;
+  basis: string;
+  strategy: StrategyKey;
+  reason: string;
+}
+
+export interface StrategyPicks {
+  direction: StrategyPicksDirection;
+  count_requested: number;
+  week_of: string;
+  market_condition_note: string | null;
+  market_condition_unavailable: boolean;
+  lists: StrategyList[];
+  excluded_by_market_flow: ExcludedByMarketFlow[];
+  // specs/033-strategy-picks-filters — additive; null/false when the
+  // question named no extra condition (liked/disliked, sector, financial
+  // trend, etc.). No rendering change: Chat.tsx surfaces the disclosure
+  // through the narrated `answer` text instead.
+  condition_requested: string | null;
+  condition_applied: boolean;
+  condition_note: string | null;
+}
+
+export interface ChatResponse {
+  answer: string;
+  criteria: ChatCriterion[];
+  match_count: number;
+  rows: Record<string, unknown>[];
+  generated_query: GeneratedQuery | null;
+  excluded_for_missing_data: number;
+  signals_as_of: string | null;
+  degraded: boolean;
+  note: string | null;
+  strategy_picks: StrategyPicks | null;
+  citations: ChatCitation[];
+  conversation_id: string | null;
+  conversation_title: string | null;
 }

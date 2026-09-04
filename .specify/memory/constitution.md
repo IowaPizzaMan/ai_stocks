@@ -1,14 +1,18 @@
 <!--
 Sync Impact Report
-Version change: 1.0.0 → 1.0.1 (clarification, no semantic change)
-Modified principles: n/a
-Modified sections:
-  - Development Workflow & Quality Gates: the "ruff MUST pass" gate was previously
-    aspirational — ruff was not actually installed or configured anywhere in the repo.
-    Clarified that ruff is a pinned dependency in both services' requirements.txt, governed
-    by a shared repo-root pyproject.toml, with the exact commands to run it. No change to
-    what was already required, only to make the requirement concretely enforceable
-    (specs/016-dedupe-analysis-feed surfaced the gap).
+Version change: 1.0.1 → 1.1.0 (existing guidance materially expanded)
+Modified principles:
+  - VI. Consistency Across Layers: extended to cover the semantic layer. The principle
+    previously governed only backend/ ↔ agent-runner/ agreement on shared concepts. It now
+    also governs the third view of that same data — the schema the chat AI is shown in
+    backend/semantic/schema.py. A collection can be written correctly and read correctly
+    while the model is told about a field that isn't there (queries match nothing) or not
+    told about one that is (the field is invisible to chat); neither failure raises, both
+    surface days later as a bad chat answer. specs/031-semantic-layer-chat already built
+    the mirrored field-vocabulary test for `screener` to close exactly this gap, and
+    specs/035-chat-and-news-upgrade needed the same construction again for `news_articles`
+    — promoting the pattern from per-feature convention to a stated requirement.
+Modified sections: none beyond Principle VI
 Added sections: none
 Removed sections: none
 Deferred/TODO items: none
@@ -94,9 +98,28 @@ consistent even though they ship as separate Docker images with separate depende
 same contract. Divergence between the two services' understanding of shared data is a bug,
 not an acceptable seam.
 
+This extends to the **semantic layer** — the description of a collection the chat AI is
+shown in `backend/semantic/schema.py`. That schema is a third view of the same data,
+alongside the writer's and the reader's, and it MUST agree with what is actually written.
+Concretely, any collection the chat AI can query (`query_guard.READABLE_COLLECTIONS`)
+MUST have a field-vocabulary contract test mirrored verbatim in both services — one
+asserting the writer produces exactly that set of fields, one asserting the schema
+describes exactly that set — as `screener` does today via
+`backend/tests/test_screener_contract.py` and `agent-runner/tests/test_screener.py`.
+Admitting a collection to `READABLE_COLLECTIONS` without that mirrored test is incomplete,
+and every field in the schema MUST carry a type and a description written well enough for
+the model to use the field correctly.
+
 **Rationale**: The two services can't share a Python package by design (Principle V), so
 consistency has to be actively maintained rather than enforced by the compiler/import
 system — this principle exists so that tradeoff doesn't quietly rot into data corruption.
+The semantic-layer extension covers a failure mode the original wording missed: a
+collection can be written correctly *and* read correctly while the model is told about a
+field that doesn't exist (queries silently match nothing) or not told about one that does
+(the field is invisible to chat). Neither raises an exception. Both surface days later as
+a bad chat answer, which is the hardest kind of bug to trace back to its cause — and the
+LLM cannot be trusted to notice the discrepancy itself, since inventing a plausible field
+is exactly what Principle III assumes it will do.
 
 ## Technology Stack Constraints
 
@@ -155,4 +178,4 @@ budget discipline, scope discipline, cross-layer consistency). This project is e
 evolve — principles that stop fitting reality should be amended openly rather than quietly
 ignored.
 
-**Version**: 1.0.1 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-15
+**Version**: 1.1.0 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-25

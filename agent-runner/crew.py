@@ -7,6 +7,11 @@ decoupled from per-ticker runs — it's computed independently by macro_worker.p
 per sector and surfaced on its own UI page, not woven into a ticker's
 sub-reports or verdict (specs/020-surface-macro-ui). Agents call Ollama
 directly with structured output (see llm.py) — no CrewAI tool-calling.
+
+specs/037-stocks-conviction-and-activity: conviction is computed by the
+deterministic skills/conviction.py rule engine and OVERWRITES whatever
+portfolio_strategist's synthesis carries, right after that agent runs —
+see the conviction_detail block in run() below.
 """
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -25,7 +30,7 @@ from agents import (
     technical_analyst,
 )
 from logging_config import get_logger
-from skills import accumulation, gap_analysis, market_flow, the_strat
+from skills import accumulation, conviction, gap_analysis, market_flow, the_strat
 from tools import breadth as breadth_tool
 from tools import company_profile as company_profile_tool
 from tools import financials as financials_tool
@@ -35,6 +40,7 @@ from tools import news as news_tool
 from tools import metrics
 from tools import price as price_tool
 from tools import price_store
+from tools import screener as screener_tool
 from tools import sentiment as sentiment_tool
 from tools import superinvestor as superinvestor_tool
 from tools.db import get_db, get_latest_analysis
@@ -223,6 +229,15 @@ class Crew:
         data = self._prefetch(ticker, parallel_prefetch, recorder=recorder, mode=mode)
         price_history = data["price"]
 
+        # 031-semantic-layer-chat — recompute this ticker's screener signals now
+        # that price/financials/profile are all fresh, so chat never lags this
+        # run by a cycle (research.md R11). Best-effort like superinvestor
+        # below: a screener hiccup must never sink the analysis run.
+        try:
+            screener_tool.refresh_one(ticker, db=self.db)
+        except Exception as exc:
+            logger.info("screener refresh unavailable for %s: %s", ticker, exc)
+
         # 2. deterministic skills
         strat_out = the_strat.run(ticker, price_history)
         gap_out = gap_analysis.run(
@@ -300,6 +315,24 @@ class Crew:
         recent_lows = [float(r["Low"]) for r in price_history["daily"][-3:] if pd.notna(r.get("Low"))]
         synthesis = portfolio_strategist.run(ticker, sub_reports, recent_lows=recent_lows,
                                              client=self.client)
+
+        # 037-stocks-conviction-and-activity — conviction is a deterministic
+        # rule-engine skill (Constitution Principle III), not an LLM judgement:
+        # OVERWRITE whatever portfolio_strategist's synthesis carries (it no
+        # longer even asks the model for one — see agents/portfolio_strategist.py)
+        # with the rule-derived rating. market_flow informs the rationale's
+        # caveats only, never the level (FR-006b) — see contracts/conviction-rules.md.
+        conviction_detail = conviction.run(ticker, {
+            "the_strat": strat_out,
+            "accumulation": accumulation_out,
+            "gap_analysis": gap_out,
+            "price_history": price_history,
+            "financials": data["financials"],
+            "market_flow": flow_out,
+        })
+        synthesis["conviction"] = conviction_detail["level"]
+        synthesis["conviction_rank"] = conviction_detail["rank"]
+        synthesis["conviction_detail"] = conviction_detail
 
         # Read the prior analysis before this run's document replaces it, so the
         # "what changed" note compares against what the user last saw (FR-025).

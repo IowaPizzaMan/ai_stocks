@@ -22,6 +22,16 @@ function bucketFor(signal: AnalysisFeedItem["signal"]): FeedGroupSignal {
  * Groups feed items by signal for the checkerboard grid. Pure and stateless —
  * called with the full flattened item list on every render, so pages merging
  * in via infinite scroll land in their correct group automatically.
+ *
+ * specs/037-stocks-conviction-and-activity (contracts/feed-ordering.md): each
+ * bucket's items are left in the order the server returned them —
+ * conviction descending, then ticker ascending, a *total* order over the
+ * whole feed (analyses has a unique index on ticker). A signal-group subset
+ * of a total order is itself ordered, so grouping never needs to re-sort.
+ * Previously this re-sorted each bucket by timestamp descending; that would
+ * now undo the server's order on every render and make "Load more" reflow
+ * already-rendered tiles (FR-003) — do not reintroduce a client-side sort
+ * here.
  */
 export function groupBySignal(items: AnalysisFeedItem[]): GroupedFeed {
   const buckets = new Map<FeedGroupSignal, AnalysisFeedItem[]>();
@@ -35,8 +45,6 @@ export function groupBySignal(items: AnalysisFeedItem[]): GroupedFeed {
 
   return GROUP_ORDER.filter((signal) => buckets.has(signal)).map((signal) => ({
     signal,
-    items: [...buckets.get(signal)!].sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-    ),
+    items: buckets.get(signal)!,
   }));
 }

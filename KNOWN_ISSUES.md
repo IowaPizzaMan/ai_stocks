@@ -6,6 +6,43 @@
 
 ## Open bugs
 
+- **The strategy-picks intent model sometimes misreads the literal phrase
+  "per my strategy"/"per my strategies" as itself naming a specific,
+  unrecognized strategy.** Observed live against `qwen3:14b` while
+  validating specs/033-strategy-picks-filters' quickstart scenarios: `"per
+  my strategies, give me liked stocks in the consumer staples sector to buy
+  this week"` and `"...per my strategy"` both returned `named_strategy:
+  "unrecognized"` with `unrecognized_strategy_text: "per my strategies"` /
+  `"my strategy"`, producing "I don't recognize... as one of your trading
+  strategies" instead of a picks answer — even though this is the exact
+  canonical trigger phrase `_build_intent_system_prompt()`'s own docstring
+  and 032's original examples use. Rephrasing without "per my strategy(ies)"
+  (e.g. "what should I buy this week using liked stocks...") works
+  correctly and exercises the rest of the pipeline (condition extraction,
+  AND'd filtering, narration) exactly as documented. This is 032-era
+  `named_strategy` classification logic (`backend/semantic/strategy_picks.py`),
+  unmodified by 033 — a prompt-wording fix (e.g. explicitly instructing the
+  model that "per my strategy/strategies" alone is never itself an
+  unrecognized-strategy mention) belongs to a future pass on that logic.
+- **`screener.sector` stores yfinance's taxonomy, not GICS, so a plausible
+  GICS-style condition phrase can silently zero-match instead of being
+  flagged ambiguous.** `semantic/schema.py` describes `sector` as
+  "GICS-style... e.g. \"Technology\"", but live data uses yfinance's actual
+  values — `"Consumer Defensive"` (not GICS's "Consumer Staples"),
+  `"Consumer Cyclical"` (not "Consumer Discretionary"), `"Financial
+  Services"` (not "Financials"). Observed live while validating
+  specs/033-strategy-picks-filters: `condition_filter.translate_conditions()`
+  mapped "in the consumer staples sector" to `{"sector": "Consumer
+  Staples"}` — a *reasonable* interpretation of the question, syntactically
+  valid, `query_guard`-approved — that matches zero documents against the
+  real data, so the response reports a legitimate-looking empty result
+  (FR-006 shape) rather than FR-008's disclosed-interpretation or FR-007's
+  couldn't-be-applied shape, because the pipeline executes successfully.
+  Same risk applies to the free-form chat flow (`chat.py`) for any sector
+  phrased in GICS terms. Fix belongs in `schema.py`'s field description
+  (list the actual yfinance sector strings verbatim, or normalize on write
+  in `agent-runner/tools/company_profile.py`/`screener.py`), not in this
+  feature's condition-translation code.
 - **`analyst-estimates` FMP call is malformed — every earnings snapshot loses
   forward estimates.** `get_earnings_data` requests
   `analyst-estimates?symbol=X&limit=4`, which the stable API rejects with 400
@@ -45,24 +82,26 @@
   `backend.fmp.fmp_get`, so that call site now counts. Remaining fix is
   mechanical: route `earnings_data.py::_fmp_get` through `backend.fmp.fmp_get`
   too.
-- **No Ollama call anywhere passes a timeout — a hung model hangs the caller
-  indefinitely.** `agent-runner/llm.py` builds its client as
-  `ollama.Client(host=settings.ollama_url)` (`llm.py:24-31`) and calls
-  `client.chat(...)` (`llm.py:34-60`, `:63-76`) without a `timeout` kwarg on
-  either the constructor or the call. Grep confirms no `timeout=` on any Ollama
-  path in the repo. Retries (`retries: int = 1`, so 2 attempts) only cover
-  `JSONDecodeError`, not a stall — if Ollama accepts the connection and then
-  never finishes generating, the worker blocks forever with no ceiling. Today
-  that costs a stuck crew run; it becomes user-visible the moment an HTTP
-  request handler calls the model (e.g. the chat endpoint in
-  `specs/031-semantic-layer-chat/`), where it would hang the request until the
-  client gives up. Found 2026-08-23 while planning 031. Fix is mechanical: pass
-  an explicit timeout and treat expiry as the existing `LLMError` degrade path.
+- **`agent-runner/llm.py` still passes no timeout to Ollama — a hung model
+  hangs the worker indefinitely.** Its client is built as
+  `ollama.Client(host=settings.ollama_url)` (`llm.py:24-31`) with no `timeout`
+  on the constructor or on `client.chat(...)` (`llm.py:34-60`, `:63-76`).
+  Retries (`retries: int = 1`) only cover `JSONDecodeError`, not a stall.
+  **Partially addressed 2026-08-23** by `specs/031-semantic-layer-chat`:
+  `backend/llm.py` (a new, separate module for the chat feature — the two
+  services share no package per constitution Principle V) does pass an
+  explicit `timeout` on its client (`settings.chat_ollama_timeout_seconds`,
+  default 30s) and wraps failures in `LLMError`. `agent-runner/llm.py` itself
+  is unchanged and still has this gap for every existing crew/agent call path.
+  Fix there is the same mechanical shape: pass an explicit timeout, treat
+  expiry as the existing `LLMError` degrade path.
 
 - **bmo/amc inference trusts yfinance timestamps.** `_reaction_move` classifies
   a report as before-open when the timestamp's hour is < 12. When Yahoo doesn't
   know the time it can report midnight → misclassified as bmo → the move is
   measured one session early for what was actually an after-close print.
+
+- **`agent-runner/tests/test_economics.py::test_calendar_pull_keeps_only_us_high_or_medium_impact` and `::test_calendar_pull_upserts_on_date_and_event` fail on `main` independent of this feature.** Observed while running the full agent-runner suite validating specs/037-stocks-conviction-and-activity: `pull_economic_calendar()` writes 0 documents to `economic_calendar_events` where the tests expect 1-2, on an unmodified `economics.py`/`test_economics.py` (confirmed via `git diff` — neither file appears in this feature's changes). Pre-existing breakage in the working tree at the start of this feature, not a regression introduced here; needs its own investigation.
 
 ## Design limitations (accepted for now)
 
@@ -77,12 +116,44 @@
   the stack is bound to a trusted machine; it stops being fine the moment the
   host is on an untrusted network or the port is forwarded. The practical
   consequence today is that **no database-level read-only role exists**, so any
-  feature promising "read-only" enforcement (e.g. the chat query guard in
-  `specs/031-semantic-layer-chat/`) can only enforce it in application code —
-  a validator bug is a hole, with nothing behind it. Found 2026-08-23 while
-  planning 031. Fixing it is a breaking change: enable `--auth`, add an init
-  script creating an app user plus a `read`-role user, then update `MONGO_URI`
-  in `.env`, both compose blocks, and both `settings.py` defaults.
+  feature promising "read-only" enforcement can only enforce it in
+  application code — a validator bug is a hole, with nothing behind it. Found
+  2026-08-23 while planning `specs/031-semantic-layer-chat`, whose chat
+  feature is exactly this case: `backend/semantic/query_guard.py` enforces a
+  read-only **allowlist** (stage names, collection target, `$limit` cap) in
+  Python before any generated query reaches MongoDB, and that allowlist is
+  the *only* real enforcement — there is no database-level permission behind
+  it, by design, until this issue is fixed. Fixing it is a breaking change:
+  enable `--auth`, add an init script creating an app user plus a `read`-role
+  user, then update `MONGO_URI` in `.env`, both compose blocks, and both
+  `settings.py` defaults.
+
+- **Semantic news search (`specs/036-news-semantic-search`) ships with
+  uncalibrated thresholds and two accepted precision gaps.** Found while
+  implementing 036:
+  - `news_tag_match_threshold` (0.72), `news_rank_half_life_days` (14) and the
+    newly added `news_rank_min_similarity` (0.25) are starting values, not yet
+    tuned against a real `nomic-embed-text` golden set (spec task T041, and
+    SC-001/SC-008 baselines, still outstanding — needs the live model + a
+    labelled question set). A wrong `min_similarity` degrades gracefully (too
+    high → more "no relevant news found"; too low → weak citations creep back
+    in); a wrong tag threshold just widens/narrows the prefilter pool.
+  - `min_similarity` itself is a spec addition (FR-006a) made during
+    implementation: without a floor, the FR-006 recency-window fallback always
+    returns the N most-recent articles at ~0 similarity for an off-topic
+    question, contradicting US1 AS3. The floor is applied only on the scored
+    path, not the thin-ticker recency fallback.
+  - Ticker-reason mode hard-filters to the ticker's own articles (spec Edge
+    Case "move driven by market-wide news with no ticker tag"), so a selloff
+    caused purely by a macro event that no ticker-tagged article covers may
+    not be explained — accepted, ranking the whole archive with the ticker as
+    a soft signal was rejected for precision.
+  - The paced enrichment backfill (`news_pull.enrich_pending`) stops for the
+    run on the first `LLMError` (Ollama down / embed model missing) and
+    resumes next job run. A permanently-missing `nomic-embed-text` model
+    therefore leaves the whole archive un-enriched with only a WARNING in the
+    worker log and `dataset_meta.news_enrich.remaining` staying flat — there
+    is no louder health signal yet.
 
 - **A stock split silently invalidates stored price history until someone
   presses Full Refresh.** As of `specs/024-delta-data-pulls`, delta retrieval is
@@ -197,6 +268,25 @@
   fund lists are short hardcoded substrings in
   `agents/institutional_flow_scanner.py`; an unlisted index vehicle scores
   like an active manager.
+- **Strategy-picks follow-ups need a strategy keyword in the same turn to be
+  recognized.** `backend/semantic/strategy_picks.py::looks_like_strategy_picks()`
+  is a cheap substring pre-filter (`"strateg"`, `"the strat"`, `"gap analysis"`,
+  `"market flow"`) that gates whether the extra intent-detection Ollama call
+  even runs, added so an ordinary screener question doesn't pay for it
+  (specs/032-weekly-strategy-picks, protecting 031's SC-001 latency target). A
+  follow-up like "why did you pick that one?" or "what about a smaller list?"
+  with none of those substrings falls through to the ordinary free-form
+  screener flow instead of being recognized as a strategy-picks follow-up,
+  even though `detect()` itself *would* have classified it correctly given the
+  chance (it's given conversation history). Only follow-ups that restate a
+  strategy-ish word (as the spec's own examples do, e.g. "just show me the Gap
+  Analysis ones") are covered by US3 today.
+- **Short-picks responses run close to the ≤15s warm budget.** Measured live
+  against production data (75 tracked tickers, 15 tracked in the tightest
+  path): buy picks ~11.2s, short picks ~14.1s — both currently within budget,
+  but short is close enough to the ceiling that it's worth re-measuring after
+  the next round of ticker-universe growth (plan.md's 15x projection) or if
+  the narration prompt grows. No action needed yet.
 ## Unbuilt / unfinished features
 
 - **Admin page was never scaffolded into a route.** Spec exists
@@ -212,6 +302,25 @@
   remain reachable — the first from the new table's Queue button, the second
   with no current UI consumer either. Reviving the scan UI, or removing the
   dead endpoints outright, is an open decision for a future feature.
+
+## Local dev environment
+
+- **This machine's Windows Application Control policy blocks pandas'
+  compiled `.pyd` extensions from loading inside any pip-installed venv** —
+  `backend/.venv`, `agent-runner/.venv`, and a fresh venv created elsewhere
+  all reproduce it identically: `ImportError: DLL load failed while
+  importing conversion: An Application Control policy has blocked this
+  file` (from `pandas._libs.tslibs.conversion`). This blocks `pytest` from
+  collecting any backend test file (`tests/conftest.py`'s `import main`
+  pulls in pandas-dependent routers like `earnings`/`price` eagerly) and any
+  agent-runner test that imports pandas directly (`test_strategy_signals.py`,
+  `test_gap_analysis.py`). System-installed Python (not a venv) is
+  unaffected, and — confirmed while validating specs/033-strategy-picks-filters
+  — the actual Docker images are unaffected (`docker build ./backend &&
+  docker run -v ./tests:/app/tests ... python -m pytest tests/` ran all 366
+  backend tests clean). This is a host-venv-only restriction, not a code or
+  deployment-target issue; if it recurs, build+run inside Docker instead of
+  the host venv.
 
 ## Upstream / API-tier constraints (facts, not fixable in code)
 
@@ -249,6 +358,51 @@
 
 ## Fixed
 
+- ~~Every ticker chip in the market-news panel was a dead link~~ — fixed via
+  `specs/035-chat-and-news-upgrade`. `MarketNewsPanel.tsx:89` linked to
+  `/stocks/${a.ticker}` (plural), but `App.tsx:27` registers the route as
+  `/stock/:ticker` (singular) — clicking a ticker chip on the old News tab
+  landed on NotFound instead of the stock page. Found by inspection while
+  planning 035 (research.md R5), not by a failing test: the link was a plain
+  string, so nothing type-checked it against the router's route table. Fixed
+  as part of 035's `NewsFeed` component, which supersedes `MarketNewsPanel`
+  entirely and uses the correct singular route; the same care was taken for
+  the ticker links 035 adds to chat answers (`semantic/linkify.py`).
+- ~~`semantic/chat.py` validated which collection to query, then ignored
+  it~~ — fixed via `specs/035-chat-and-news-upgrade` US3. `answer_question()`
+  derived `collection` from the model's output and validated the pipeline
+  against it, but then executed with `db[SCREENER]` hardcoded. Harmless while
+  `query_guard.READABLE_COLLECTIONS` admitted only `screener`; found while
+  planning 035 (research.md R2), which admits `news_articles` and would have
+  made this a live, silent-wrong-answer bug (a news question's pipeline
+  running against `screener` and returning nothing, reading as "no results"
+  rather than as a bug). Fixed by executing against the validated `collection`
+  variable instead of the hardcoded constant, with a regression test
+  (`test_news_question_executes_against_news_articles_not_screener`) that
+  seeds both collections with the same ticker to prove the response's rows
+  come from the collection the model actually chose.
+- ~~A completed news backfill silently reverted to "incomplete" on its very
+  next check, re-entering 20-page backfill mode forever~~ — found and fixed
+  live during `specs/035-chat-and-news-upgrade` T060 quickstart validation
+  (not caught by unit tests, which mocked FMP responses and never happened to
+  exercise this exact interaction). `tools/news_pull.py::_pull_feed()`'s
+  steady-state check (one page, once backfill is done) reused the same
+  `for/else` logic as backfill mode: if that single page happened to come
+  back full (`len(rows) == PAGE_SIZE`) without reaching the 30-day cutoff —
+  which general-market and FMP-article "latest" feeds do on essentially every
+  check, since they always have ≥100 recent items available — the `else`
+  clause unconditionally set `backfill_complete = False` again. Confirmed
+  live: `news_general`/`news_fmp_article` checkpoints oscillated back to
+  `backfill_complete: false, next_page: 1` after every run despite having
+  legitimately finished backfilling on run 1, while `news_stock` (which
+  genuinely needed more than one run to finish) was correctly still
+  incomplete — the two cases were indistinguishable under the old logic.
+  Fixed by capturing `was_already_complete` before the loop and only letting
+  the no-stopping-signal path revoke completeness when the run was actually
+  in backfill mode (`pages_this_run != 1`); a steady-state run that saw a
+  full page now correctly stays complete. Regression tests:
+  `test_steady_state_check_with_a_full_page_does_not_revoke_completeness` and
+  `test_backfill_mode_still_correctly_stays_incomplete_when_the_page_cap_is_exhausted`.
 - ~~App shell causes horizontal page scroll at phone widths (~390px)~~ — fixed
   via `specs/030-stock-page-overflow/`. The fixed-width Watchlist `<aside>`
   (`w-56 shrink-0` in `Sidebar.tsx`) never collapsed, and `<main>` (a `flex-1`

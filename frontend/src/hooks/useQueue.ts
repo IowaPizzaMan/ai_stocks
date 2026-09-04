@@ -26,6 +26,8 @@ export function useQueueStatus() {
         queryClient.invalidateQueries({ queryKey: ["most-actives"] });
         queryClient.invalidateQueries({ queryKey: ["sector-etf-series"] });
         queryClient.invalidateQueries({ queryKey: ["congress"] });
+        // 035-chat-and-news-upgrade — market_news_pull has no other refresh signal.
+        queryClient.invalidateQueries({ queryKey: ["news"] });
       }
       return busy ? 5000 : false;
     },

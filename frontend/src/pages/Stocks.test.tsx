@@ -93,9 +93,22 @@ function mockApi({
     if (url === "/market/breadth") return { data: null };
     if (url === "/stocks/industries") return { data: { industries: [] } };
     if (url === "/queue") return { data: { pending: [], running: [], pending_count: 0, running_count: 0 } };
+    // 037-stocks-conviction-and-activity — ActivityFeed's own query; not
+    // under test on this page's existing suite, so a quiet empty response.
+    if (url === "/events") return { data: { items: [], total: 0, page: 1, page_size: 20, window: 100 } };
     throw new Error(`unexpected GET ${url}`);
   });
 }
+
+// specs/035-chat-and-news-upgrade US6 (FR-023) — Top Traded Stocks moved to
+// the main sidebar exclusively; it must no longer render on the Stocks page.
+test("the Stocks page no longer renders Top Traded Stocks content", async () => {
+  mockApi({ items: [feedItem({ ticker: "AAA" })] });
+  renderStocks();
+
+  await waitFor(() => expect(screen.getByText("AAA")).toBeTruthy());
+  expect(screen.queryByText("Top Traded Stocks")).toBeNull();
+});
 
 function renderStocks(initialEntries: string[] = ["/"]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -143,6 +156,54 @@ test("renders tiles grouped under labeled dividers in bullish, neutral, bearish 
     "neutral",
     "bearish",
   ]);
+});
+
+// 037-stocks-conviction-and-activity (contracts/feed-ordering.md #10-11):
+// board ordering is now conviction-desc-then-ticker-asc, delivered by the
+// server; the client renders whatever order it's given, verbatim.
+function tileTickerOrder(): string[] {
+  return screen
+    .getAllByRole("button", { name: /—/ })
+    .map((el) => el.getAttribute("aria-label")?.split(" —")[0] ?? "")
+    .filter(Boolean);
+}
+
+test("renders a mixed-conviction Bullish group high, then medium, then low, A-Z within each level", async () => {
+  // Already in the server's contract order (conviction desc, ticker asc) —
+  // the page must not re-sort this.
+  mockApi({
+    items: [
+      feedItem({ ticker: "AVB", signal: "bullish", conviction: "high" }),
+      feedItem({ ticker: "MSFT", signal: "bullish", conviction: "high" }),
+      feedItem({ ticker: "GOOG", signal: "bullish", conviction: "medium" }),
+      feedItem({ ticker: "AAPL", signal: "bullish", conviction: "low" }),
+    ],
+  });
+
+  renderStocks();
+
+  await waitFor(() => expect(screen.getByText("AVB")).toBeDefined());
+  expect(tileTickerOrder()).toEqual(["AVB", "MSFT", "GOOG", "AAPL"]);
+});
+
+test("clicking Load more never repositions an already-rendered tile", async () => {
+  mockApi({
+    items: [
+      feedItem({ ticker: "AVB", signal: "bullish", conviction: "high" }),
+      feedItem({ ticker: "MSFT", signal: "bullish", conviction: "high" }),
+      feedItem({ ticker: "GOOG", signal: "bullish", conviction: "medium" }),
+    ],
+    total: 3,
+    pageSize: 2, // forces a second page without needing 60 fixtures
+  });
+
+  renderStocks();
+
+  await waitFor(() => expect(tileTickerOrder()).toEqual(["AVB", "MSFT"]));
+  const loadMore = await screen.findByRole("button", { name: /load more/i });
+  fireEvent.click(loadMore);
+
+  await waitFor(() => expect(tileTickerOrder()).toEqual(["AVB", "MSFT", "GOOG"]));
 });
 
 test("shows a board of skeleton tiles during initial load, then swaps to real tiles", async () => {

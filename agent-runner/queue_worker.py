@@ -12,13 +12,16 @@ from pymongo import ReturnDocument
 
 from crew import Crew, TickerDelistedError
 from logging_config import get_logger
+from skills import conviction
 from tools.admin_jobs import JOB_DATASETS, JOB_HANDLERS, STALE_MINUTES
 from tools.db import (
     ANALYSES,
     WORK_QUEUE,
     ensure_indexes,
     get_db,
+    get_latest_analysis,
     mark_ticker_removed,
+    record_event,
     sanitize_floats,
     write_db,
     write_dataset_meta,
@@ -139,9 +142,28 @@ def claim_and_run_next(db=None, crew=None) -> bool:
     try:
         # earnings-scanner jobs opt in to parallel prefetch (user picked them
         # from a ranked list and is waiting on the result)
+        # 037-stocks-conviction-and-activity — read the prior document before
+        # this run's write replaces it, mirroring crew.py's own
+        # get_latest_analysis() call: cheap, indexed, single-doc, and it's
+        # the only way to get the OLD conviction_detail (changes_since_last
+        # only carries the old/new level strings, not the rule trace behind
+        # them) for describe_transition()'s rule-derived reason (FR-028).
+        previous = get_latest_analysis(ticker, db=db)
         result = crew.run(ticker, parallel_prefetch=bool(job.get("parallel_prefetch")), mode=mode)
         result = sanitize_floats(result)
         write_db(ANALYSES, result, upsert_key="ticker", db=db)
+
+        diff = result.get("changes_since_last")
+        changed = bool(diff and (diff["signal"]["changed"] or diff["conviction"]["changed"]))
+        changes = None
+        reason = None
+        if changed:
+            changes = {k: diff[k] for k in ("signal", "conviction") if diff[k]["changed"]}
+            if diff["conviction"]["changed"]:
+                reason = conviction.describe_transition(
+                    (previous or {}).get("conviction_detail"), result.get("conviction_detail"))
+        record_event(ticker, "updated", changed=changed, changes=changes, reason=reason, db=db)
+
         db[WORK_QUEUE].update_one(
             {"_id": job["_id"]},
             {"$set": {"status": "done", "completed_at": _utcnow(), "updated_at": _utcnow()}},

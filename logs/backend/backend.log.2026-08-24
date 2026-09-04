@@ -1,0 +1,2 @@
+2026-08-24 01:04:38,879 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-24 01:51:15,848 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: timed out

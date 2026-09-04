@@ -1,0 +1,83 @@
+{
+  "_comment": "specs/036-news-semantic-search T023 — a small seeded corpus for the semantic-news integration tests. Each article carries `topic_weights`; the test builds a unit vector from them in a fixed 8-topic space (TOPIC_INDEX in test_chat_news_semantic.py) and stores it as `embedding` with `embedding_model == settings.ollama_embed_model`. `published_days_ago` is turned into `published_at` relative to a fixed `now`. This is a recorded fixture — no live nomic-embed-text call.",
+  "topics": ["chips", "monetary", "oil", "retail", "ai", "autos", "misc", "pad"],
+  "articles": [
+    {"url": "https://ex/chips-export-1", "title": "US tightens semiconductor export controls on China",
+     "body_text": "Washington broadened curbs on advanced chip shipments and manufacturing gear.",
+     "source_type": "general", "publisher": "Reuters", "published_days_ago": 2,
+     "tickers": ["NVDA"], "tags": ["semiconductors", "export controls"],
+     "topic_weights": {"chips": 1.0}},
+
+    {"url": "https://ex/chips-export-2", "title": "Chip makers weigh AI-accelerator sales hit from new controls",
+     "body_text": "The tighter export regime lands squarely on data-center GPU demand.",
+     "source_type": "fmp_article", "publisher": "FMP", "published_days_ago": 5,
+     "tickers": ["NVDA"], "tags": ["semiconductors", "export controls"],
+     "topic_weights": {"chips": 0.8, "ai": 0.6}},
+
+    {"url": "https://ex/chips-old", "title": "Foundry capacity additions slowed last quarter",
+     "body_text": "Equipment lead times and export paperwork weighed on new fab starts.",
+     "source_type": "general", "publisher": "Reuters", "published_days_ago": 40,
+     "tickers": ["AMD"], "tags": ["semiconductors"],
+     "topic_weights": {"chips": 1.0}},
+
+    {"url": "https://ex/retail-mentions-chip", "title": "Retail hiring holds up even as one chip plant delays a shift",
+     "body_text": "Store payrolls rose; a single semiconductor plant pushed back a hiring wave.",
+     "source_type": "general", "publisher": "AP", "published_days_ago": 3,
+     "tickers": ["WMT"], "tags": ["consumer spending"],
+     "topic_weights": {"retail": 0.98, "chips": 0.2}},
+
+    {"url": "https://ex/retail-1", "title": "Consumer spending cooled in August",
+     "body_text": "Discretionary categories softened as households pulled back.",
+     "source_type": "general", "publisher": "AP", "published_days_ago": 4,
+     "tickers": ["WMT"], "tags": ["consumer spending", "retail"],
+     "topic_weights": {"retail": 1.0}},
+
+    {"url": "https://ex/monetary-1", "title": "Fed officials signal openness to rate cuts",
+     "body_text": "Several policymakers said disinflation progress could justify easing.",
+     "source_type": "general", "publisher": "Bloomberg", "published_days_ago": 2,
+     "tickers": [], "tags": ["monetary policy"],
+     "topic_weights": {"monetary": 1.0}},
+
+    {"url": "https://ex/monetary-2", "title": "Markets price a higher chance of a cut this quarter",
+     "body_text": "Futures now imply a near-even shot at a reduction in the policy rate.",
+     "source_type": "general", "publisher": "Bloomberg", "published_days_ago": 6,
+     "tickers": [], "tags": ["monetary policy", "interest rates"],
+     "topic_weights": {"monetary": 0.9, "pad": 0.4359}},
+
+    {"url": "https://ex/oil-1", "title": "Crude climbs on supply worries",
+     "body_text": "Brent rose as traders weighed potential export disruptions.",
+     "source_type": "general", "publisher": "Reuters", "published_days_ago": 3,
+     "tickers": ["XOM"], "tags": ["oil prices", "energy"],
+     "topic_weights": {"oil": 1.0}},
+
+    {"url": "https://ex/ai-1", "title": "Cloud providers expand AI capacity",
+     "body_text": "Hyperscalers detailed new data-center build-outs for model training.",
+     "source_type": "general", "publisher": "CNBC", "published_days_ago": 1,
+     "tickers": ["MSFT"], "tags": ["artificial intelligence"],
+     "topic_weights": {"ai": 1.0}},
+
+    {"url": "https://ex/nvda-routine-launch", "title": "NVIDIA unveils a new workstation GPU",
+     "body_text": "The card targets 3D designers and is unrelated to policy news.",
+     "source_type": "stock", "publisher": "PR", "published_days_ago": 2,
+     "tickers": ["NVDA"], "tags": ["product launch"],
+     "topic_weights": {"ai": 0.7, "misc": 0.714}},
+
+    {"url": "https://ex/nvda-routine-dividend", "title": "NVIDIA declares quarterly dividend",
+     "body_text": "The board approved the regular cash dividend, payable next month.",
+     "source_type": "stock", "publisher": "PR", "published_days_ago": 2,
+     "tickers": ["NVDA"], "tags": ["dividends"],
+     "topic_weights": {"misc": 1.0}},
+
+    {"url": "https://ex/nvda-explainer-1", "title": "Why NVIDIA stock fell today: export-rule shock",
+     "body_text": "Shares dropped after the new controls hit the outlook for China GPU revenue.",
+     "source_type": "stock", "publisher": "MarketWatch", "published_days_ago": 0,
+     "tickers": ["NVDA"], "tags": ["semiconductors", "export controls"],
+     "topic_weights": {"chips": 0.95, "misc": 0.3122}},
+
+    {"url": "https://ex/nvda-explainer-2", "title": "NVIDIA selloff tied to China revenue exposure",
+     "body_text": "Analysts flagged the share of data-center sales now at regulatory risk.",
+     "source_type": "stock", "publisher": "Barrons", "published_days_ago": 0,
+     "tickers": ["NVDA"], "tags": ["semiconductors"],
+     "topic_weights": {"chips": 0.9, "misc": 0.4359}}
+  ]
+}

@@ -1,6 +1,8 @@
 import { Route, Routes } from "react-router-dom";
+import Breadcrumbs from "./components/layout/Breadcrumbs";
 import Navbar from "./components/layout/Navbar";
 import Sidebar from "./components/layout/Sidebar";
+import Chat from "./pages/Chat";
 import Congress from "./pages/Congress";
 import EarningsScan from "./pages/EarningsScan";
 import InstitutionalFlow from "./pages/InstitutionalFlow";
@@ -19,6 +21,7 @@ export default function App() {
       <div className="flex">
         <Sidebar />
         <main className="min-w-0 flex-1 p-6">
+          <Breadcrumbs />
           <Routes>
             <Route path="/" element={<Stocks />} />
             <Route path="/news" element={<News />} />
@@ -29,6 +32,7 @@ export default function App() {
             <Route path="/earnings" element={<EarningsScan />} />
             <Route path="/institutional-flow" element={<InstitutionalFlow />} />
             <Route path="/congress" element={<Congress />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

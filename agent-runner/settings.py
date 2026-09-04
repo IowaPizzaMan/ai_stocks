@@ -24,5 +24,14 @@ class Settings(BaseSettings):
     breadth_refresh_hour_utc: int = 21  # NYMO/NAMO + divergence sweep, after US close
     economics_refresh_hour_utc: int = 22  # treasury/calendar/indicators/risk-premium pull
 
+    # 036-news-semantic-search — per-article enrichment tunables
+    # (data-model.md §6). `ollama_embed_model` / `news_embed_max_chars` mirror
+    # backend/settings.py (shared by build_embed_text, hand-copied per
+    # constitution V). `news_enrich_batch_per_run` paces the archive backfill
+    # (research.md R7) and is agent-runner-only.
+    ollama_embed_model: str = "nomic-embed-text"  # FR-013 swap point
+    news_embed_max_chars: int = 2000  # R10 head-truncation before embedding
+    news_enrich_batch_per_run: int = 200  # R7 backfill pacing
+
 
 settings = Settings()

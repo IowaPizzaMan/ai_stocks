@@ -37,7 +37,12 @@ def test_feed_pagination_and_projection(client, db):
     r = client.get("/analysis/feed").json()
     assert r["total"] == 25
     assert len(r["items"]) == 20
-    assert r["items"][0]["ticker"] == "T00"  # newest first
+    # 037-stocks-conviction-and-activity: sort is (conviction_rank desc, ticker
+    # asc) now, not recency — every doc here shares the same conviction, so
+    # this is really exercising the ticker-ascending tie-break (T00 sorts
+    # first alphabetically among T00-T24). See test_analysis_feed_ordering.py
+    # for dedicated conviction-ordering coverage.
+    assert r["items"][0]["ticker"] == "T00"
     assert "sub_reports" not in r["items"][0]
 
     page2 = client.get("/analysis/feed?page=2").json()

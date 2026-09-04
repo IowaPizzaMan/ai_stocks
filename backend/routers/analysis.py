@@ -1,4 +1,9 @@
-"""Spec: specs/component-specs/backend/routers/analysis.md"""
+"""Spec: specs/component-specs/backend/routers/analysis.md
+
+specs/037-stocks-conviction-and-activity (contracts/feed-ordering.md): the
+feed's sort is (conviction_rank desc, ticker asc), not recency — see
+get_feed() below.
+"""
 import re
 from datetime import datetime
 from typing import Literal
@@ -88,9 +93,17 @@ def get_feed(
     # sub_reports are far too large for the feed — project them out
     projection = {"_id": 0, "sub_reports": 0}
     total = db[ANALYSES].count_documents(filter)
+    # 037-stocks-conviction-and-activity (contracts/feed-ordering.md) —
+    # conviction descending, then ticker ascending. `analyses` carries a
+    # unique index on `ticker`, so this is a *total* order: any client-side
+    # signal-group subset of it is already conviction-then-A→Z, and skip/
+    # limit paging over it means "Load more" strictly appends (no reflow of
+    # already-rendered tiles). Sorting the string `conviction` directly would
+    # be wrong (alphabetical: high < low < medium) — conviction_rank exists
+    # precisely to avoid that.
     items = list(
         db[ANALYSES].find(filter, projection)
-        .sort("timestamp", -1)
+        .sort([("conviction_rank", -1), ("ticker", 1)])
         .skip((page - 1) * page_size)
         .limit(page_size)
     )

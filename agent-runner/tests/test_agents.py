@@ -123,7 +123,6 @@ def test_fundamental_handles_empty_payload():
 
 STRAT_LLM = {
     "signal": "bullish",
-    "conviction": "high",
     "summary": "High-conviction long setup.",
     "key_trends": ["Accumulation 4/5", "TFC aligned"],
     "flags": [],
@@ -143,6 +142,10 @@ def test_strategist_builds_stop_ladder_and_verdict():
     assert out["signal"] == "bullish"
     assert out["position_management"]["stair_step_stops"] == [189.05, 187.35, 185.85]
     assert out["position_management"]["position_sizing"] == "full position"
+    # 037-stocks-conviction-and-activity — conviction is no longer this
+    # agent's job; it must not appear in its output even if the model tries
+    # to supply one anyway (skills/conviction.py owns the rating now).
+    assert "conviction" not in out
 
     prompt = client.calls[0]["messages"][-1]["content"]
     assert "BUY_MORE" in prompt

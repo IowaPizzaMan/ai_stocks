@@ -1,0 +1,5 @@
+2026-09-03 18:02:50,801 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-09-03 18:05:20,887 agent-runner.queue_worker INFO claimed job 6a99b6dadce198e2f34cfe8d for CIEN (mode=delta)
+2026-09-03 18:05:26,008 agent-runner.tools.financials INFO earnings section unavailable for CIEN: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CIEN&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-09-03 18:08:26,047 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-09-03 18:11:08,714 agent-runner.queue_worker INFO CIEN analysis done (mode=delta signal=bullish conviction=high)

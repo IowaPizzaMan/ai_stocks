@@ -1,0 +1,24 @@
+2026-08-27 02:31:09,851 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-27 02:31:39,899 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b1e for AAPL (mode=delta)
+2026-08-27 02:31:41,796 agent-runner.tools.financials INFO earnings section unavailable for AAPL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=AAPL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:36:42,089 agent-runner.queue_worker INFO AAPL analysis done (mode=delta signal=bullish conviction=high)
+2026-08-27 02:36:42,092 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b1f for MSFT (mode=delta)
+2026-08-27 02:36:43,822 agent-runner.tools.financials INFO earnings section unavailable for MSFT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MSFT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:39:06,495 agent-runner.queue_worker INFO MSFT analysis done (mode=delta signal=bullish conviction=high)
+2026-08-27 02:39:06,497 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b20 for NVDA (mode=delta)
+2026-08-27 02:39:08,654 agent-runner.tools.financials INFO earnings section unavailable for NVDA: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NVDA&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:41:26,953 agent-runner.queue_worker INFO NVDA analysis done (mode=delta signal=bullish conviction=high)
+2026-08-27 02:41:26,955 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b21 for GOOGL (mode=delta)
+2026-08-27 02:41:28,446 agent-runner.tools.financials INFO earnings section unavailable for GOOGL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=GOOGL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:43:39,570 agent-runner.queue_worker INFO GOOGL analysis done (mode=delta signal=bullish conviction=high)
+2026-08-27 02:43:39,572 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b22 for INTC (mode=delta)
+2026-08-27 02:43:40,902 agent-runner.tools.financials INFO earnings section unavailable for INTC: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=INTC&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:46:20,121 agent-runner.queue_worker INFO INTC analysis done (mode=delta signal=bearish conviction=high)
+2026-08-27 02:46:20,123 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b23 for ADBE (mode=delta)
+2026-08-27 02:46:21,132 agent-runner.tools.financials INFO earnings section unavailable for ADBE: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=ADBE&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:48:46,129 agent-runner.queue_worker INFO ADBE analysis done (mode=delta signal=bullish conviction=high)
+2026-08-27 02:48:46,131 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b24 for QBTS (mode=delta)
+2026-08-27 02:48:47,704 agent-runner.tools.financials INFO earnings section unavailable for QBTS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=QBTS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-27 02:51:16,901 agent-runner.queue_worker INFO QBTS analysis done (mode=delta signal=bearish conviction=high)
+2026-08-27 02:51:16,904 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b25 for CARR (mode=delta)
+2026-08-27 02:51:18,761 agent-runner.tools.financials INFO earnings section unavailable for CARR: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CARR&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s

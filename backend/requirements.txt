@@ -7,6 +7,15 @@ pydantic-settings>=2.4,<3.0
 # price endpoint for charts (cached in Mongo, 1h TTL) — FMP-sourced
 pandas>=2.2
 
+# chat (specs/031-semantic-layer-chat) — local LLM client, mirrors agent-runner/llm.py
+ollama>=0.4
+
+# 036-news-semantic-search — cosine ranking math in semantic/news_rank.py.
+# Already installed transitively via pandas; listed explicitly so a future
+# pandas that drops the dependency doesn't silently break the ranker (plan.md
+# "Primary Dependencies").
+numpy>=1.26
+
 # earnings calendar (Finnhub + Nasdaq screener) + FMP price/earnings fetch
 requests>=2.32
 

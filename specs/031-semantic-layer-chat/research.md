@@ -153,10 +153,18 @@ spec's Assumptions):
 | `price_history` docs | ~8,340 | fine |
 | `price_history` size | ~1.0 GB | fine on local disk |
 | Total data size | ~1.3 GB | fits comfortably in RAM/WiredTiger cache |
-| **`screener` collection** | ~8,340 docs × ~2 KB ≈ **17 MB** | trivial; fully indexable |
+| **`screener` collection** | measured (not estimated) — see below | trivial; fully indexable |
 | Largest single document | ~121 KB (unchanged — depth-driven, not count-driven) | 0.75% of the 16 MB BSON cap |
 
-**Why chat stays fast at 15x**: a chat query touches only `screener` (~17 MB, indexed), never
+**Measured, not estimated** (via `scripts/seed_15x_screener.py` against a real MongoDB instance,
+in a throwaway `stockai_scale_test` database — never touches production data): 8,340 synthetic
+documents with realistic field-value distributions came to **5.12 MB data / 0.77 MB indexes**,
+smaller than this section's original ~17 MB estimate (which assumed ~2 KB/doc; actual average
+is ~644 bytes/doc). A flagship-style 4-predicate `$match` against the full 8,340-document
+collection returned in **3.6 ms**. Both numbers make the original "trivial" conclusion more true
+than initially estimated, not less.
+
+**Why chat stays fast at 15x**: a chat query touches only `screener` (~6 MB total, indexed), never
 `price_history` (~1 GB). The expensive full-universe scan happens once per refresh cycle in
 `agent-runner`, not once per question.
 

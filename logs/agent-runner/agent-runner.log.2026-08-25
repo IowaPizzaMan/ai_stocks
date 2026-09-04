@@ -1,0 +1,1097 @@
+2026-08-25 10:41:23,893 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-25 11:41:09,019 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 11:41:09,028 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:41:09,029 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:41:09,030 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 11:41:09,031 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:41:09,032 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:41:09,034 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 11:41:09,067 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 11:41:09,068 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:41:09,068 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:41:09,069 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:41:09,069 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:41:09,070 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:41:09,071 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 11:41:09,073 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:41:09,073 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:41:09,079 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 11:41:09,080 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:41:09,081 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:41:09,082 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:41:09,087 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:41:09,088 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:41:09,089 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:41:09,089 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:41:09,090 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:41:09,093 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:41:09,093 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:41:09,093 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:41:09,125 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 11:41:09,128 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 11:41:09,128 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 11:41:09,188 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 11:41:09,372 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 11:41:09,391 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 11:41:09,394 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 11:41:09,395 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:41:09,396 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:41:09,396 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 11:41:09,397 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:41:09,397 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 11:41:09,399 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 11:41:09,399 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 11:41:09,400 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 11:41:09,400 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 11:41:09,413 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 11:41:09,418 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:41:09,419 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:41:09,420 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:41:09,421 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:41:09,423 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:41:09,424 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:41:09,424 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:41:09,424 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:41:09,425 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:41:09,426 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 11:41:09,428 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:41:09,428 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:41:09,434 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 11:41:09,434 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 11:41:09,434 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 11:41:09,434 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 11:41:09,434 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 11:41:09,435 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 11:41:09,435 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 11:41:09,436 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:41:09,437 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:41:09,437 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:41:09,438 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:41:09,438 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:41:09,438 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:41:09,438 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:41:09,438 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:41:09,439 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:41:09,440 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:41:09,440 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:41:09,440 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:41:09,441 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:41:09,441 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:41:09,441 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:41:09,441 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:41:09,444 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 11:41:09,447 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 11:41:09,450 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 11:41:09,456 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:41:09,457 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 11:41:09,459 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:41:09,512 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:41:09,512 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:41:09,514 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:41:09,514 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:41:09,515 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 11:41:09,516 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 11:41:09,516 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 11:41:09,517 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,518 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 11:41:09,519 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,520 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:41:09,520 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 11:41:09,521 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,522 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:41:09,522 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:41:09,523 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 11:41:09,524 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:41:09,524 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 11:41:09,527 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:41:09,528 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,528 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,529 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,530 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,530 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,530 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:41:09,531 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,532 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,532 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:41:09,532 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:41:09,533 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:41:09,534 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 11:41:09,534 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,535 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,535 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:41:09,535 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,536 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:41:09,537 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:41:09,538 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 11:41:09,539 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 11:41:09,540 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 11:46:21,684 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 11:46:21,693 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:46:21,694 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:46:21,695 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 11:46:21,697 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:46:21,698 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:46:21,700 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 11:46:21,733 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 11:46:21,735 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:46:21,735 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:46:21,735 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:46:21,736 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:46:21,737 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:46:21,737 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 11:46:21,740 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:46:21,740 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:46:21,748 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 11:46:21,749 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:46:21,751 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:46:21,752 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:46:21,758 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:46:21,759 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:46:21,759 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:46:21,760 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:46:21,761 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:46:21,764 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:46:21,765 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:46:21,765 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:46:21,800 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 11:46:21,803 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 11:46:21,803 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 11:46:21,860 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 11:46:22,051 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 11:46:22,069 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 11:46:22,073 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 11:46:22,074 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:46:22,075 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:46:22,075 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 11:46:22,076 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:46:22,076 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 11:46:22,078 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 11:46:22,078 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 11:46:22,079 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 11:46:22,079 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 11:46:22,093 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 11:46:22,098 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:46:22,099 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:46:22,100 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:46:22,101 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:46:22,102 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:46:22,102 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:46:22,103 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:46:22,103 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:46:22,104 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:46:22,104 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 11:46:22,106 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:46:22,106 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:46:22,113 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 11:46:22,113 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 11:46:22,113 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 11:46:22,113 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 11:46:22,114 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 11:46:22,114 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 11:46:22,114 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 11:46:22,115 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:46:22,116 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:46:22,117 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:46:22,117 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:46:22,117 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:46:22,117 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:46:22,117 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:46:22,118 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:46:22,118 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:46:22,119 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:46:22,120 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:46:22,124 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 11:46:22,126 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 11:46:22,129 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 11:46:22,136 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:46:22,137 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 11:46:22,138 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:46:22,192 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:46:22,192 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:46:22,193 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:46:22,194 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:46:22,195 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 11:46:22,195 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 11:46:22,196 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 11:46:22,197 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,197 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 11:46:22,198 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,199 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:46:22,200 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 11:46:22,200 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,201 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:46:22,202 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:46:22,203 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 11:46:22,204 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:46:22,204 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 11:46:22,205 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:46:22,206 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,207 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,208 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,208 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,208 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,209 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:46:22,210 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,210 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,210 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:46:22,211 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:46:22,211 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:46:22,212 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 11:46:22,213 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,213 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,213 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:46:22,214 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,215 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:46:22,215 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:46:22,217 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 11:46:22,218 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 11:46:22,218 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 11:50:31,340 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-25 11:50:31,342 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-25 11:50:31,344 agent-runner.tools.news_pull WARNING general: news fetch failed (network down) — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-25 11:50:31,354 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-25 11:50:31,355 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 1 next run
+2026-08-25 11:51:40,407 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 11:51:40,415 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:51:40,417 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:51:40,418 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 11:51:40,419 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:51:40,420 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 11:51:40,423 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 11:51:40,457 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 11:51:40,459 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:51:40,459 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:51:40,459 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:51:40,460 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:51:40,461 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:51:40,461 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 11:51:40,464 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 11:51:40,464 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 11:51:40,470 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 11:51:40,471 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:51:40,473 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:51:40,474 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:51:40,479 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 11:51:40,480 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:51:40,481 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:51:40,481 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:51:40,482 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:51:40,485 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 11:51:40,485 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 11:51:40,486 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 11:51:40,519 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 11:51:40,522 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 11:51:40,522 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 11:51:40,581 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 11:51:40,778 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 11:51:40,794 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 11:51:40,797 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 11:51:40,797 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:51:40,798 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:51:40,799 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 11:51:40,800 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 11:51:40,800 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 11:51:40,801 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 11:51:40,802 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 11:51:40,803 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 11:51:40,803 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 11:51:40,816 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 11:51:40,822 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:51:40,823 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:51:40,824 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:51:40,825 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 11:51:40,827 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:51:40,827 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:51:40,828 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:51:40,828 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:51:40,829 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:51:40,829 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 11:51:40,831 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 11:51:40,832 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 11:51:40,838 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 11:51:40,838 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 11:51:40,838 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 11:51:40,838 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 11:51:40,838 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 11:51:40,839 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 11:51:40,839 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 11:51:40,840 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:51:40,841 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:51:40,841 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:51:40,842 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:51:40,842 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:51:40,842 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:51:40,842 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:51:40,842 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:51:40,843 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 11:51:40,845 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 11:51:40,846 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 11:51:40,849 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 11:51:40,851 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 11:51:40,854 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 11:51:40,860 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:51:40,861 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 11:51:40,862 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 11:51:40,912 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:51:40,912 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:51:40,914 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 11:51:40,914 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 11:51:40,915 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 11:51:40,916 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 11:51:40,916 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 11:51:40,917 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,918 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 11:51:40,918 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,919 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:51:40,920 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 11:51:40,920 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,922 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:51:40,922 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:51:40,923 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 11:51:40,924 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:51:40,924 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 11:51:40,926 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 11:51:40,927 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,927 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,928 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,929 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,929 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,929 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:51:40,930 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,931 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,931 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 11:51:40,931 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 11:51:40,932 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:51:40,933 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 11:51:40,933 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,934 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,934 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 11:51:40,935 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,935 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 11:51:40,936 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 11:51:40,938 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 11:51:40,938 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 11:51:40,938 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 12:02:24,081 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 12:02:24,089 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:02:24,091 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:02:24,091 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 12:02:24,093 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:02:24,094 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:02:24,096 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 12:02:24,127 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 12:02:24,128 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:02:24,129 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:02:24,129 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:02:24,129 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:02:24,131 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:02:24,131 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 12:02:24,133 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:02:24,134 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:02:24,139 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 12:02:24,140 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:02:24,141 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:02:24,143 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:02:24,148 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:02:24,149 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:02:24,149 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:02:24,149 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:02:24,151 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:02:24,154 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:02:24,154 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:02:24,154 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:02:24,186 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 12:02:24,189 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 12:02:24,189 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 12:02:24,246 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 12:02:24,431 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 12:02:24,447 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 12:02:24,450 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 12:02:24,450 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:02:24,451 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:02:24,452 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 12:02:24,453 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:02:24,453 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 12:02:24,454 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 12:02:24,455 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 12:02:24,455 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 12:02:24,456 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 12:02:24,468 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 12:02:24,473 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:02:24,474 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:02:24,475 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:02:24,476 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:02:24,478 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:02:24,478 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:02:24,479 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:02:24,479 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:02:24,480 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:02:24,480 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 12:02:24,482 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:02:24,483 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:02:24,488 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 12:02:24,488 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 12:02:24,489 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 12:02:24,489 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 12:02:24,489 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 12:02:24,489 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 12:02:24,489 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 12:02:24,491 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:02:24,492 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:02:24,492 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:02:24,492 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:02:24,492 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:02:24,493 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:02:24,493 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:02:24,493 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:02:24,494 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:02:24,495 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:02:24,495 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:02:24,495 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:02:24,495 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:02:24,496 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:02:24,496 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:02:24,496 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:02:24,499 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 12:02:24,502 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 12:02:24,504 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 12:02:24,510 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:02:24,511 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 12:02:24,512 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:02:24,561 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:02:24,561 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:02:24,563 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:02:24,563 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:02:24,564 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 12:02:24,564 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 12:02:24,565 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 12:02:24,566 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,566 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 12:02:24,567 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,568 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:02:24,569 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 12:02:24,569 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,570 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:02:24,571 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:02:24,571 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 12:02:24,572 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:02:24,572 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 12:02:24,575 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:02:24,575 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,576 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,577 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,577 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,577 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,578 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:02:24,579 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,579 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,579 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:02:24,580 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:02:24,580 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:02:24,581 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 12:02:24,582 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,582 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,582 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:02:24,583 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,584 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:02:24,584 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:02:24,586 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 12:02:24,587 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 12:02:24,587 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 12:20:27,223 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-25 12:21:42,742 agent-runner.queue_worker INFO admin job 6a8d88ad5901eeae4bb0ecae done (job_type=market_news_pull, record_count=3542)
+2026-08-25 12:22:49,985 agent-runner.queue_worker INFO admin job 6a8d890d3375434a7ebefa0d done (job_type=market_news_pull, record_count=1799)
+2026-08-25 12:26:40,839 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-25 12:26:40,841 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-25 12:26:40,844 agent-runner.tools.news_pull WARNING general: news fetch failed (network down) — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-25 12:26:40,856 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-25 12:26:40,856 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 1 next run
+2026-08-25 12:27:14,713 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-25 12:27:46,534 agent-runner.queue_worker INFO admin job 6a8d8a34c76a32cc21942c3c done (job_type=market_news_pull, record_count=300)
+2026-08-25 12:29:23,260 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 12:29:23,269 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:29:23,271 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:29:23,271 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 12:29:23,273 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:29:23,274 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:29:23,276 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 12:29:23,310 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 12:29:23,311 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:29:23,311 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:29:23,312 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:29:23,312 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:29:23,314 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:29:23,314 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 12:29:23,316 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:29:23,316 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:29:23,322 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 12:29:23,323 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:29:23,324 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:29:23,326 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:29:23,330 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:29:23,331 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:29:23,332 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:29:23,332 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:29:23,333 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:29:23,336 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:29:23,336 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:29:23,336 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:29:23,368 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 12:29:23,371 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 12:29:23,371 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 12:29:23,431 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 12:29:23,625 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 12:29:23,644 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 12:29:23,647 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 12:29:23,648 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:29:23,650 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:29:23,650 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 12:29:23,651 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:29:23,651 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 12:29:23,653 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 12:29:23,653 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 12:29:23,654 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 12:29:23,654 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 12:29:23,667 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 12:29:23,672 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:29:23,673 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:29:23,674 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:29:23,676 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:29:23,677 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:29:23,678 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:29:23,678 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:29:23,678 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:29:23,679 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:29:23,680 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 12:29:23,682 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:29:23,682 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:29:23,688 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 12:29:23,689 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 12:29:23,689 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 12:29:23,689 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 12:29:23,689 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 12:29:23,689 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 12:29:23,690 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 12:29:23,691 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:29:23,692 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:29:23,692 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:29:23,692 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:29:23,692 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:29:23,693 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:29:23,693 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:29:23,693 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:29:23,694 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:29:23,695 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:29:23,695 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:29:23,695 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:29:23,695 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:29:23,696 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:29:23,696 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:29:23,696 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:29:23,700 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 12:29:23,702 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 12:29:23,705 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 12:29:23,710 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:29:23,712 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 12:29:23,713 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:29:23,764 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:29:23,764 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:29:23,767 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:29:23,767 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:29:23,768 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 12:29:23,769 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 12:29:23,769 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 12:29:23,770 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 12:29:23,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,772 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:29:23,773 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 12:29:23,773 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,775 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:29:23,775 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:29:23,776 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 12:29:23,777 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:29:23,777 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 12:29:23,779 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:29:23,780 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,781 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,782 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,782 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,782 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,783 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:29:23,784 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,784 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,784 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:29:23,785 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:29:23,786 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:29:23,786 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 12:29:23,787 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,787 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,788 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:29:23,788 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,789 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:29:23,789 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:29:23,791 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 12:29:23,792 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 12:29:23,792 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 12:31:03,026 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-25 12:31:03,034 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:31:03,036 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:31:03,037 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-25 12:31:03,038 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:31:03,040 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-25 12:31:03,042 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-25 12:31:03,074 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-25 12:31:03,075 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:31:03,076 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:31:03,076 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:31:03,076 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:31:03,078 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:31:03,078 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "/app/tests/test_breadth_worker.py", line 47, in boom
+RuntimeError: yahoo down
+2026-08-25 12:31:03,080 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-25 12:31:03,080 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-25 12:31:03,086 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-25 12:31:03,087 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:31:03,089 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:31:03,090 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:31:03,095 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-25 12:31:03,096 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:31:03,097 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:31:03,097 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:31:03,098 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:31:03,101 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-25 12:31:03,102 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-25 12:31:03,102 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-25 12:31:03,134 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-25 12:31:03,137 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-25 12:31:03,138 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-25 12:31:03,195 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-25 12:31:03,382 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-25 12:31:03,399 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-25 12:31:03,402 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-25 12:31:03,403 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:31:03,404 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:31:03,404 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-25 12:31:03,405 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-25 12:31:03,406 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-25 12:31:03,407 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-25 12:31:03,407 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-25 12:31:03,408 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-25 12:31:03,409 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_earnings_scanner.py", line 181, in broken_run
+RuntimeError: universe fetch died
+2026-08-25 12:31:03,422 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_economics.py", line 202, in fake_fmp_get
+requests.exceptions.ConnectionError: boom
+2026-08-25 12:31:03,428 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:31:03,429 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:31:03,430 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:31:03,431 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/tools/economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "/app/tests/test_economics.py", line 258, in always_fails
+requests.exceptions.ConnectionError: provider down
+2026-08-25 12:31:03,433 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:31:03,433 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:31:03,433 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:31:03,434 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:31:03,435 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:31:03,435 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "/app/tests/test_economics_worker.py", line 46, in boom
+RuntimeError: fmp down
+2026-08-25 12:31:03,437 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-25 12:31:03,438 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-25 12:31:03,444 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-25 12:31:03,444 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-25 12:31:03,444 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-25 12:31:03,445 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-25 12:31:03,445 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-25 12:31:03,445 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-25 12:31:03,445 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-25 12:31:03,447 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:31:03,448 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:31:03,448 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:31:03,448 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:31:03,449 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:31:03,449 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:31:03,449 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:31:03,449 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:31:03,450 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-25 12:31:03,451 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-25 12:31:03,451 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-25 12:31:03,452 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-25 12:31:03,452 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-25 12:31:03,452 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-25 12:31:03,452 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-25 12:31:03,452 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-25 12:31:03,456 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-25 12:31:03,458 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-25 12:31:03,461 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-25 12:31:03,468 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:31:03,469 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-25 12:31:03,470 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-25 12:31:03,522 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:31:03,522 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:31:03,524 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-25 12:31:03,524 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-25 12:31:03,525 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-25 12:31:03,525 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-25 12:31:03,526 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-25 12:31:03,527 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,528 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-25 12:31:03,528 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,529 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:31:03,530 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-25 12:31:03,530 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,532 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:31:03,532 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:31:03,533 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-25 12:31:03,534 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:31:03,534 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "/workspace/agent-runner/institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_institutional_flow.py", line 160, in boom
+RuntimeError: playwright exploded
+2026-08-25 12:31:03,536 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-25 12:31:03,537 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,538 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,539 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,539 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,539 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,540 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:31:03,541 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,541 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,541 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-25 12:31:03,542 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-25 12:31:03,543 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:31:03,543 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-25 12:31:03,544 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,544 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,544 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-25 12:31:03,545 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,546 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-25 12:31:03,546 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-25 12:31:03,548 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-25 12:31:03,549 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-25 12:31:03,549 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-25 12:33:23,145 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)

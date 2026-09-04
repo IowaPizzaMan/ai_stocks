@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from crew import Crew, TickerDelistedError, _earnings_dates, _price_summary
+from skills import accumulation, conviction, gap_analysis, market_flow, the_strat
 
 
 def make_history(rows=120, seed=11):
@@ -137,6 +138,70 @@ def test_run_produces_full_analyses_document():
     # recommender, strategist — macro no longer runs per ticker, and the news
     # agent short-circuits without articles rather than calling the model
     assert len(crew.client.calls) == 7
+
+
+# --- 037-stocks-conviction-and-activity: conviction is a rule engine, not an
+# LLM judgement (research R10 naming-hazard regression + Rule 5 integration) ---
+
+def test_conviction_matches_a_direct_conviction_run_on_the_same_inputs():
+    """The document's conviction/conviction_rank/conviction_detail must agree
+    with what skills/conviction.py::run() computes from the exact same
+    deterministic inputs crew.py feeds it — proving crew.py's wiring doesn't
+    silently diverge from the skill (contracts/conviction-rules.md Rule 5)."""
+    crew = make_crew()
+    history = crew.get_price_history("AAPL")
+    doc = crew.run("AAPL")
+
+    breadth = crew.get_market_breadth()
+    earnings_dates = _earnings_dates(crew.get_earnings_data("AAPL"))
+    strat_out = the_strat.run("AAPL", history)
+    gap_out = gap_analysis.run("AAPL", history, earnings_dates=earnings_dates,
+                               nymo=breadth["nymo"]["current"])
+    peg_score = gap_out["peg"]["peg_score"] if gap_out.get("peg") else None
+    accumulation_out = accumulation.run("AAPL", history, gap_score=peg_score)
+    flow_out = market_flow.run("AAPL", {"breadth": breadth, "gap": gap_out})
+    financials = crew.get_financials("AAPL")
+
+    expected = conviction.run("AAPL", {
+        "the_strat": strat_out, "accumulation": accumulation_out, "gap_analysis": gap_out,
+        "price_history": history, "financials": financials, "market_flow": flow_out,
+    })
+
+    assert doc["conviction"] == expected["level"]
+    assert doc["conviction_rank"] == expected["rank"]
+    assert doc["conviction_detail"]["conditions"] == expected["conditions"]
+    assert doc["conviction_detail"]["blockers"] == expected["blockers"]
+
+
+def test_conviction_rank_matches_the_documented_mapping():
+    doc = make_crew().run("AAPL")
+    assert doc["conviction_rank"] == {"high": 3, "medium": 2, "low": 1}[doc["conviction"]]
+
+
+def test_market_flow_conviction_field_is_untouched_and_independent():
+    """skills/market_flow.py returns its OWN `conviction` key (timing
+    confidence: low/medium/high/max) inside sub_reports.recommendation — a
+    different value from the board rating with the same name (research R10).
+    It must survive unmolested and use a vocabulary ("max") the board rating
+    never does, proving the two are not silently the same field."""
+    doc = make_crew().run("AAPL")
+    market_flow_conviction = doc["sub_reports"]["recommendation"]["conviction"]
+    assert market_flow_conviction in ("low", "medium", "high", "max")
+    assert doc["conviction"] in ("high", "medium", "low")  # board vocabulary, no "max"
+    # The board rating came from conviction_detail, never from this field:
+    assert doc["conviction"] == doc["conviction_detail"]["level"]
+
+
+def test_portfolio_strategist_llm_no_longer_supplies_conviction():
+    """SchemaFakeLLM only emits fields present in the SCHEMA passed to it —
+    since portfolio_strategist.SCHEMA no longer declares `conviction`, the
+    strategist's own stub response carries none, and the document's rating
+    still resolves correctly from the deterministic skill alone."""
+    from agents import portfolio_strategist
+    assert "conviction" not in portfolio_strategist.SCHEMA["properties"]
+    assert "conviction" not in portfolio_strategist.SCHEMA["required"]
+    doc = make_crew().run("AAPL")
+    assert doc["conviction"] in ("high", "medium", "low")
 
 
 def test_invalid_ticker_with_no_financials_raises_delisted():

@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "../../api/client";
-import type { WatchlistItem } from "../../api/types";
+import type { MostActive, WatchlistItem } from "../../api/types";
 import Sidebar from "./Sidebar";
 
 vi.mock("../../api/client", () => ({
@@ -19,9 +19,18 @@ function watchlistItem(overrides: Partial<WatchlistItem> = {}): WatchlistItem {
   return { ticker: "AAPL", status: "active", ...overrides };
 }
 
-function renderSidebar(items: WatchlistItem[]) {
+function mostActive(overrides: Partial<MostActive> = {}): MostActive {
+  return { ticker: "LUCY", company: "Innovative Eyewear", price: 1.85, change: 0.06, change_pct: 3.35, exchange: "NASDAQ", ...overrides };
+}
+
+function renderSidebar(items: WatchlistItem[], topTraded: MostActive[] = []) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  vi.mocked(api.get).mockResolvedValue({ data: { items, count: items.length } });
+  vi.mocked(api.get).mockImplementation((url: string) => {
+    if (url === "/watchlist") return Promise.resolve({ data: { items, count: items.length } });
+    if (url === "/market/most-actives") return Promise.resolve({ data: { items: topTraded, as_of: null, date: null } });
+    if (url === "/queue") return Promise.resolve({ data: { pending: [], running: [], pending_count: 0, running_count: 0 } });
+    return Promise.resolve({ data: {} });
+  });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
@@ -34,11 +43,16 @@ function renderSidebar(items: WatchlistItem[]) {
 // specs/030-stock-page-overflow — the sidebar is fixed-width (w-56) and must
 // not force page-level horizontal scroll below the md breakpoint, where it's
 // hidden instead of shrinking (research.md #2).
+//
+// specs/035-chat-and-news-upgrade US6 (research.md R10) — display switched
+// from md:block to md:flex (flex-col) so Watchlist and Top Traded Stocks can
+// each get their own min-h-0/overflow-y-auto scroll region within the
+// sidebar's now-viewport-pinned height, instead of one growing block.
 test("is hidden below the md breakpoint instead of forcing page width", () => {
   const { container } = renderSidebar([]);
   const aside = container.querySelector("aside");
   expect(aside?.className).toContain("hidden");
-  expect(aside?.className).toContain("md:block");
+  expect(aside?.className).toContain("md:flex");
   expect(aside?.className).toContain("w-56");
   expect(aside?.className).toContain("shrink-0");
 });
@@ -124,6 +138,37 @@ test("Enter/click on a keyboard-focused remove control removes the ticker", asyn
   fireEvent.click(removeButton); // jsdom doesn't synthesize native Enter->click activation
 
   await waitFor(() => expect(api.delete).toHaveBeenCalledWith("/watchlist/AAPL"));
+});
+
+// --- specs/035-chat-and-news-upgrade US6 (FR-021, FR-022, FR-023) ----------
+
+test("renders a Top Traded Stocks section alongside Watchlist", async () => {
+  renderSidebar([watchlistItem({ ticker: "AAPL" })], [mostActive({ ticker: "LUCY" })]);
+
+  expect(await screen.findByText("Watchlist")).toBeTruthy();
+  expect(await screen.findByText("Top Traded Stocks")).toBeTruthy();
+  expect(await screen.findByText("LUCY")).toBeTruthy();
+});
+
+test("Watchlist and Top Traded Stocks are distinct, independently scrollable containers", async () => {
+  const { container } = renderSidebar(
+    [watchlistItem({ ticker: "AAPL" })], [mostActive({ ticker: "LUCY" })],
+  );
+  await screen.findByText("LUCY");
+
+  const scrollRegions = Array.from(container.querySelectorAll("ul")).filter(
+    (el) => el.className.includes("overflow-y-auto"),
+  );
+  // One scroll region per list — not one shared region for both.
+  expect(scrollRegions.length).toBe(2);
+  expect(scrollRegions[0]).not.toBe(scrollRegions[1]);
+});
+
+test("an empty Top Traded Stocks list shows an empty-state message", async () => {
+  renderSidebar([watchlistItem({ ticker: "AAPL" })], []);
+
+  expect(await screen.findByText("Top Traded Stocks")).toBeTruthy();
+  await waitFor(() => expect(screen.getByText(/no top traded stocks/i)).toBeTruthy());
 });
 
 test("removing a ticker that's already gone (404) resolves quietly, no error shown", async () => {

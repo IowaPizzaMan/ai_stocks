@@ -1,0 +1,1 @@
+2026-09-03 18:03:21,118 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out

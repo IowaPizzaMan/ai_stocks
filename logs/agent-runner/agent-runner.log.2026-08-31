@@ -1,0 +1,56 @@
+2026-08-31 12:55:49,342 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-31 12:57:03,788 agent-runner.macro_worker INFO macro worker: refreshed 1/1 due sectors
+2026-08-31 12:57:03,805 agent-runner.queue_worker WARNING reset 2 stale running job(s) to pending
+2026-08-31 12:57:03,806 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b53 for MU (mode=delta)
+2026-08-31 12:57:05,469 agent-runner.tools.financials INFO earnings section unavailable for MU: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MU&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 12:57:06,231 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (402 Client Error: Payment Required for url: https://financialmodelingprep.com/stable/sp500-constituent?apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s); using scrape fallback
+2026-08-31 12:59:08,342 agent-runner.tools.breadth WARNING FMP constituents failed for nasdaq100 (402 Client Error: Payment Required for url: https://financialmodelingprep.com/stable/nasdaq-constituent?apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s); using scrape fallback
+2026-08-31 12:59:33,224 agent-runner.tools.insider INFO MU: insider transactions unavailable (503 Server Error: Service Unavailable for url: https://finnhub.io/api/v1/stock/insider-transactions?symbol=MU&from=2026-08-20&to=2026-08-31&token=d3cskthr01qmnfgf48ngd3cskthr01qmnfgf48o0) — serving stored
+2026-08-31 13:01:52,202 agent-runner.queue_worker INFO MU analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:01:52,204 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b73 for NFLX (mode=delta)
+2026-08-31 13:01:53,170 agent-runner.tools.financials INFO earnings section unavailable for NFLX: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NFLX&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:03:44,874 agent-runner.queue_worker INFO NFLX analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:03:44,877 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b74 for HOOD (mode=delta)
+2026-08-31 13:03:46,212 agent-runner.tools.financials INFO earnings section unavailable for HOOD: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=HOOD&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:05:47,137 agent-runner.queue_worker INFO HOOD analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:05:47,139 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b75 for ORCL (mode=delta)
+2026-08-31 13:05:48,757 agent-runner.tools.financials INFO earnings section unavailable for ORCL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=ORCL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:08:06,229 agent-runner.queue_worker INFO ORCL analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-31 13:08:06,232 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b76 for DIS (mode=delta)
+2026-08-31 13:08:08,046 agent-runner.tools.financials INFO earnings section unavailable for DIS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DIS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:10:20,298 agent-runner.queue_worker INFO DIS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:10:20,300 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b77 for AXON (mode=delta)
+2026-08-31 13:10:22,414 agent-runner.tools.financials INFO earnings section unavailable for AXON: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=AXON&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:12:38,279 agent-runner.queue_worker INFO AXON analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:12:38,580 agent-runner.queue_worker INFO admin job 6a94767709bc22b7a87f0f1f done (job_type=market_movers_pull, record_count=50)
+2026-08-31 13:12:38,582 agent-runner.queue_worker INFO claimed job 6a94983768ac2a90327796fe for COP (mode=delta)
+2026-08-31 13:12:41,864 agent-runner.tools.financials INFO earnings section unavailable for COP: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=COP&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:14:49,723 agent-runner.queue_worker INFO COP analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:14:49,725 agent-runner.queue_worker INFO claimed job 6a94999768ac2a90327796ff for CRM (mode=delta)
+2026-08-31 13:14:52,690 agent-runner.tools.financials INFO earnings section unavailable for CRM: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CRM&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:17:16,442 agent-runner.queue_worker INFO CRM analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:17:16,444 agent-runner.queue_worker INFO claimed job 6a9499c168ac2a9032779700 for HPQ (mode=delta)
+2026-08-31 13:17:19,676 agent-runner.tools.financials INFO earnings section unavailable for HPQ: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=HPQ&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:19:32,776 agent-runner.queue_worker INFO HPQ analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:19:32,779 agent-runner.queue_worker INFO claimed job 6a9499e468ac2a9032779701 for DG (mode=delta)
+2026-08-31 13:19:35,420 agent-runner.tools.financials INFO earnings section unavailable for DG: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DG&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:21:44,643 agent-runner.queue_worker INFO DG analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 13:21:45,319 agent-runner.queue_worker INFO admin job 6a949a1668ac2a9032779702 done (job_type=congress_trades_pull, record_count=200)
+2026-08-31 13:21:45,321 agent-runner.queue_worker INFO claimed job 6a9579f95cf7b82bdabd481a for DKS (mode=delta)
+2026-08-31 13:21:48,121 agent-runner.tools.financials INFO earnings section unavailable for DKS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DKS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 13:24:41,167 agent-runner.queue_worker INFO DKS analysis done (mode=delta signal=bearish conviction=high)
+2026-08-31 13:57:12,326 agent-runner.queue_worker INFO admin job 6a95881c5cf7b82bdabd481b done (job_type=congress_trades_pull, record_count=200)
+2026-08-31 15:51:12,601 agent-runner.queue_worker INFO claimed job 6a95a2e95cf7b82bdabd481c for GS (mode=delta)
+2026-08-31 15:51:16,544 agent-runner.tools.financials INFO earnings section unavailable for GS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=GS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 15:53:32,192 agent-runner.queue_worker INFO GS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-31 15:53:32,197 agent-runner.queue_worker INFO claimed job 6a95a33e5cf7b82bdabd481d for BE (mode=delta)
+2026-08-31 15:53:34,844 agent-runner.tools.financials INFO earnings section unavailable for BE: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=BE&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 15:55:58,069 agent-runner.queue_worker INFO BE analysis done (mode=delta signal=bearish conviction=high)
+2026-08-31 16:07:58,106 agent-runner.queue_worker INFO claimed job 6a95a6c35cf7b82bdabd481f for PYPL (mode=delta)
+2026-08-31 16:08:01,811 agent-runner.tools.financials INFO earnings section unavailable for PYPL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PYPL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 16:10:30,089 agent-runner.queue_worker INFO PYPL analysis done (mode=delta signal=neutral conviction=high)
+2026-08-31 19:53:00,602 agent-runner.queue_worker INFO claimed job 6a95db9a5cf7b82bdabd4820 for LOOP (mode=delta)
+2026-08-31 19:53:04,492 agent-runner.tools.financials INFO earnings section unavailable for LOOP: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=LOOP&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-31 19:55:19,785 agent-runner.queue_worker INFO LOOP analysis done (mode=delta signal=bearish conviction=high)
+2026-08-31 21:00:19,946 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-31 21:00:19,954 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -27.6, divergence none

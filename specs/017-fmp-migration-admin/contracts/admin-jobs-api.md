@@ -18,9 +18,11 @@ This file pins the cross-layer vocabulary (constitution VI). Both services dupli
 | `congress_trades_pull` | Pull latest senate & house trading disclosures | `congress_trades` | 15 |
 | `insider_feed_pull` | Pull the latest market-wide insider trades across all tickers | `insider_feed` | 15 |
 | `fund_holdings_pull` | Pull ETF & mutual-fund holdings (replaces the retired Dataroma scraper) | `fund_holdings` | 30 |
-| `market_news_pull` | Pull latest market-wide news articles | `market_news` | 10 |
+| `market_news_pull` | Pull general market news, FMP editorial articles, and stock-specific news (three feeds) into a queryable archive | `news_articles` | 20 |
 
 All rows are user-adopted (gap review finalized 2026-08-15). `superinvestor_pull` does NOT exist — the Dataroma scraper is retired (research D11). The registry constant in code is the runtime truth of "available jobs" and `GET /admin/jobs` serves exactly that list. `economics_pull` writes four collections (see [data-model](../data-model.md)) but reports as one job/dataset for freshness purposes.
+
+`market_news_pull` was implemented by `specs/035-chat-and-news-upgrade` (2026-08-25), which diverged from this row as originally reserved: scope grew from one feed to three (general/FMP-article/stock, `news_articles` not `market_news`), it now backfills 30 days rather than only capturing forward, and `stale_minutes` moved from 10 to 20 to match the added I/O of three sequential paged feeds per run (closer to `congress_trades_pull`'s order of magnitude than a single-call job). See `specs/035-chat-and-news-upgrade/contracts/news-api.md` for the current contract.
 
 `ticker_analysis` (or absent `job_type`) is reserved for the existing per-ticker flow and never appears in the admin registry.
 

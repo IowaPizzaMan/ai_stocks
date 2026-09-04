@@ -1,9 +1,8 @@
-// Market news page — specs/022-market-news-feed (original panel), promoted
-// from a tab nested inside the Stocks page to its own top-level route by
-// specs/029-company-profile-tweaks US1 (FR-002: content/behavior unchanged
-// by the move, only its location did — this file replaces
-// Stocks.market-news.test.tsx, which tested the same panel while it lived
-// inside Stocks.tsx).
+// News page — specs/022-market-news-feed (original panel) promoted to a
+// top-level route by specs/029-company-profile-tweaks US1, then superseded
+// by the mixed general/stock/FMP-article stream in specs/035-chat-and-news-upgrade
+// US2 (FR-005, FR-006): MarketNewsPanel (/market/news, stock-latest only) is
+// replaced by NewsFeed (/news, all three source types interleaved).
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -20,20 +19,39 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const NEWS = {
+const MIXED_NEWS = {
   articles: [
     {
-      ticker: "NBIS",
-      datetime: "2026-08-16 20:13:00",
-      date: "2026-08-16",
-      source: "Seeking Alpha",
-      headline: "Nebius momentum has staying power",
-      url: "https://example.com/nbis",
-      text_excerpt: "…",
+      url: "https://example.com/general",
+      source_type: "general",
+      title: "Ukraine is targeting Russia's retail giants",
+      published_at: "2026-08-25T06:20:17+00:00",
+      published_date: "2026-08-25",
+      publisher: "CNBC",
+      site: "cnbc.com",
+      author: null,
+      body_html: null,
+      body_text: "Ukraine's drone campaign is expanding...",
+      image_url: null,
+      tickers: [],
+    },
+    {
+      url: "https://example.com/fmp-article",
+      source_type: "fmp_article",
+      title: "Extra Space Storage (NYSE:EXR): Analyst Ratings",
+      published_at: "2026-08-24T21:00:21+00:00",
+      published_date: "2026-08-24",
+      publisher: "Tony Dante",
+      site: "Financial Modeling Prep",
+      author: "Tony Dante",
+      body_html: "<ul><li>Most analysts maintain a <strong>Hold</strong> rating</li></ul>",
+      body_text: "Most analysts maintain a Hold rating",
+      image_url: null,
+      tickers: ["EXR"],
     },
   ],
-  as_of: "2026-08-16T20:15:00+00:00",
-  stale: false,
+  total: 2,
+  as_of: "2026-08-25T14:00:00+00:00",
 };
 
 function mockApi({ newsFails = false } = {}) {
@@ -41,8 +59,8 @@ function mockApi({ newsFails = false } = {}) {
   (api.get as ReturnType<typeof vi.fn>).mockImplementation(
     (url: string, config?: { params?: Record<string, unknown> }) => {
       calls.push({ url, params: config?.params });
-      if (url.includes("/market/news")) {
-        return newsFails ? Promise.reject(new Error("boom")) : Promise.resolve({ data: NEWS });
+      if (url === "/news") {
+        return newsFails ? Promise.reject(new Error("boom")) : Promise.resolve({ data: MIXED_NEWS });
       }
       return Promise.resolve({ data: {} });
     },
@@ -61,28 +79,44 @@ function renderNews() {
   );
 }
 
-test("the News page shows the market news panel content", async () => {
+test("the News page shows stories from more than one source type interleaved", async () => {
   mockApi();
   renderNews();
 
-  await waitFor(() => expect(screen.getByText("Nebius momentum has staying power")).toBeTruthy());
+  await waitFor(() =>
+    expect(screen.getByText("Ukraine is targeting Russia's retail giants")).toBeTruthy(),
+  );
+  expect(screen.getByText(/Extra Space Storage/)).toBeTruthy();
+  expect(screen.getByText("Market")).toBeTruthy(); // general's type badge
+  expect(screen.getByText("Analysis")).toBeTruthy(); // fmp_article's type badge
 });
 
-test("the News page requests /market/news with no extra params", async () => {
+test("the News page requests /news with no extra params", async () => {
   const calls = mockApi();
   renderNews();
 
-  await waitFor(() => expect(screen.getByText("Nebius momentum has staying power")).toBeTruthy());
+  await waitFor(() =>
+    expect(screen.getByText("Ukraine is targeting Russia's retail giants")).toBeTruthy(),
+  );
 
-  const newsCalls = calls.filter((c) => c.url.includes("/market/news"));
+  const newsCalls = calls.filter((c) => c.url === "/news");
   expect(newsCalls).toHaveLength(1);
-  expect(newsCalls[0].url).toBe("/market/news");
-  expect(newsCalls[0].params).toBeUndefined();
 });
 
-test("a market news failure shows a graceful message, never an error page", async () => {
+test("a news fetch failure shows a graceful message, never an error page", async () => {
   mockApi({ newsFails: true });
   renderNews();
 
-  await waitFor(() => expect(screen.getByText(/market news is unavailable/i)).toBeTruthy());
+  await waitFor(() => expect(screen.getByText(/news is unavailable/i)).toBeTruthy());
+});
+
+test("an FMP article's HTML formatting renders instead of raw tag text", async () => {
+  mockApi();
+  renderNews();
+
+  await waitFor(() => expect(screen.getByText(/Extra Space Storage/)).toBeTruthy());
+  // The <strong>Hold</strong> should render as an actual <strong> element,
+  // not the literal string "<strong>Hold</strong>" (FR-006a).
+  const hold = screen.getByText("Hold");
+  expect(hold.tagName.toLowerCase()).toBe("strong");
 });

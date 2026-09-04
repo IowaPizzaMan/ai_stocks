@@ -1,0 +1,802 @@
+2026-08-30 18:26:27,356 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-30 18:31:53,933 agent-runner.macro_worker INFO macro worker: refreshed 9/9 due sectors
+2026-08-30 18:31:53,952 agent-runner.queue_worker WARNING reset 1 stale running job(s) to pending
+2026-08-30 18:31:53,953 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b31 for SHOP (mode=delta)
+2026-08-30 18:31:55,918 agent-runner.tools.financials INFO earnings section unavailable for SHOP: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SHOP&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:36:30,455 agent-runner.queue_worker INFO SHOP analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:36:30,457 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b32 for PRG (mode=delta)
+2026-08-30 18:36:32,378 agent-runner.tools.financials INFO earnings section unavailable for PRG: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PRG&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:38:44,920 agent-runner.queue_worker INFO PRG analysis done (mode=delta signal=neutral conviction=low)
+2026-08-30 18:38:44,923 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b33 for CAKE (mode=delta)
+2026-08-30 18:38:46,833 agent-runner.tools.financials INFO earnings section unavailable for CAKE: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CAKE&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:41:12,559 agent-runner.queue_worker INFO CAKE analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:41:12,561 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b34 for CAH (mode=delta)
+2026-08-30 18:41:15,010 agent-runner.tools.financials INFO earnings section unavailable for CAH: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CAH&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:43:32,134 agent-runner.queue_worker INFO CAH analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 18:43:32,137 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b35 for NET (mode=delta)
+2026-08-30 18:43:33,152 agent-runner.tools.financials INFO earnings section unavailable for NET: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NET&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:45:56,566 agent-runner.queue_worker INFO NET analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:45:56,569 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b36 for LLY (mode=delta)
+2026-08-30 18:45:58,013 agent-runner.tools.financials INFO earnings section unavailable for LLY: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=LLY&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:48:07,765 agent-runner.queue_worker INFO LLY analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:48:07,767 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b37 for TOL (mode=delta)
+2026-08-30 18:48:09,581 agent-runner.tools.financials INFO earnings section unavailable for TOL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=TOL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:50:28,098 agent-runner.queue_worker INFO TOL analysis done (mode=delta signal=neutral conviction=low)
+2026-08-30 18:50:28,101 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b38 for DE (mode=delta)
+2026-08-30 18:50:29,838 agent-runner.tools.financials INFO earnings section unavailable for DE: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DE&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:52:42,734 agent-runner.queue_worker INFO DE analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:52:42,737 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b39 for ROST (mode=delta)
+2026-08-30 18:52:44,600 agent-runner.tools.financials INFO earnings section unavailable for ROST: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=ROST&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:54:45,936 agent-runner.queue_worker INFO ROST analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:54:45,938 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b3a for TGT (mode=delta)
+2026-08-30 18:54:46,896 agent-runner.tools.financials INFO earnings section unavailable for TGT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=TGT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:57:00,258 agent-runner.queue_worker INFO TGT analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:57:00,261 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b3b for ADI (mode=delta)
+2026-08-30 18:57:01,854 agent-runner.tools.financials INFO earnings section unavailable for ADI: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=ADI&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 18:59:12,108 agent-runner.queue_worker INFO ADI analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 18:59:12,111 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b3d for WMT (mode=delta)
+2026-08-30 18:59:14,691 agent-runner.tools.financials INFO earnings section unavailable for WMT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=WMT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:01:38,901 agent-runner.queue_worker INFO WMT analysis done (mode=delta signal=bearish conviction=medium)
+2026-08-30 19:01:38,904 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b3e for TJX (mode=delta)
+2026-08-30 19:01:40,690 agent-runner.tools.financials INFO earnings section unavailable for TJX: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=TJX&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:03:40,503 agent-runner.queue_worker INFO TJX analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:03:40,506 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b3f for LOW (mode=delta)
+2026-08-30 19:03:42,138 agent-runner.tools.financials INFO earnings section unavailable for LOW: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=LOW&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:05:58,824 agent-runner.queue_worker INFO LOW analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:05:58,827 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b40 for NTES (mode=delta)
+2026-08-30 19:06:01,838 agent-runner.tools.financials INFO earnings section unavailable for NTES: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NTES&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:08:15,948 agent-runner.queue_worker INFO NTES analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:08:15,951 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b41 for VIK (mode=delta)
+2026-08-30 19:08:17,570 agent-runner.tools.financials INFO earnings section unavailable for VIK: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=VIK&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:10:31,994 agent-runner.queue_worker INFO VIK analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:10:31,996 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b42 for EL (mode=delta)
+2026-08-30 19:10:36,582 agent-runner.tools.financials INFO earnings section unavailable for EL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=EL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:13:07,359 agent-runner.queue_worker INFO EL analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:13:07,361 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b43 for BEKE (mode=delta)
+2026-08-30 19:13:09,428 agent-runner.tools.financials INFO earnings section unavailable for BEKE: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=BEKE&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:15:25,948 agent-runner.queue_worker INFO BEKE analysis done (mode=delta signal=bullish conviction=low)
+2026-08-30 19:15:25,950 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b44 for MATW (mode=delta)
+2026-08-30 19:15:27,812 agent-runner.tools.financials INFO earnings section unavailable for MATW: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MATW&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:17:40,334 agent-runner.queue_worker INFO MATW analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:17:40,337 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b45 for MOS (mode=delta)
+2026-08-30 19:17:42,205 agent-runner.tools.financials INFO earnings section unavailable for MOS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MOS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:19:41,605 agent-runner.queue_worker INFO MOS analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-30 19:19:41,607 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b46 for CBRS (mode=delta)
+2026-08-30 19:19:42,592 agent-runner.tools.financials INFO earnings section unavailable for CBRS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CBRS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:21:27,610 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:21:27,612 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:21:27,612 agent-runner.tools.news_pull WARNING general: news fetch failed (network down) — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:21:27,624 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:21:27,624 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 1 next run
+2026-08-30 19:22:11,693 agent-runner.queue_worker INFO CBRS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:22:11,695 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b47 for SOFI (mode=delta)
+2026-08-30 19:22:14,049 agent-runner.tools.financials INFO earnings section unavailable for SOFI: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SOFI&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:24:32,259 agent-runner.queue_worker INFO SOFI analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:24:32,261 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b48 for HUMA (mode=delta)
+2026-08-30 19:24:33,230 agent-runner.tools.financials INFO earnings section unavailable for HUMA: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=HUMA&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:25:30,516 agent-runner.tools.news_enrich WARNING tag generation failed for None (embedding kept): model down
+2026-08-30 14:25:50,517 agent-runner.tools.news_enrich WARNING tag generation failed for None (embedding kept): model down
+2026-08-30 19:26:29,466 agent-runner.queue_worker INFO HUMA analysis done (mode=delta signal=neutral conviction=low)
+2026-08-30 19:26:29,472 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b49 for CRWV (mode=delta)
+2026-08-30 19:26:31,087 agent-runner.tools.financials INFO earnings section unavailable for CRWV: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CRWV&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:28:01,008 agent-runner.tools.news_pull INFO enriched 3 articles (3 tags upserted), 0 remaining
+2026-08-30 14:28:01,324 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:01,324 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:28:01,325 agent-runner.tools.news_pull INFO enriched 2 articles (2 tags upserted), 0 remaining
+2026-08-30 14:28:01,326 agent-runner.tools.news_pull WARNING general: news fetch failed (network down) — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:28:01,336 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:01,337 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:01,338 agent-runner.tools.news_pull INFO enriched 1 articles (1 tags upserted), 0 remaining
+2026-08-30 14:28:01,340 agent-runner.tools.news_pull INFO enriched 2 articles (2 tags upserted), 3 remaining
+2026-08-30 14:28:01,341 agent-runner.tools.news_pull INFO enriched 1 articles (1 tags upserted), 0 remaining
+2026-08-30 14:28:01,343 agent-runner.tools.news_pull WARNING enrichment stopped after 0 this run — embedding call failed: ollama down
+2026-08-30 14:28:01,343 agent-runner.tools.news_pull INFO enriched 0 articles (0 tags upserted), 1 remaining
+2026-08-30 14:28:01,467 agent-runner.tools.news_enrich WARNING tag generation failed for None (embedding kept): model down
+2026-08-30 14:28:19,962 agent-runner.tools.news_pull INFO enriched 3 articles (3 tags upserted), 0 remaining
+2026-08-30 14:28:20,281 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:20,283 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:28:20,284 agent-runner.tools.news_pull INFO enriched 2 articles (2 tags upserted), 0 remaining
+2026-08-30 14:28:20,284 agent-runner.tools.news_pull WARNING general: news fetch failed (network down) — keeping 0 articles ingested this run, resuming at page 0 next run
+2026-08-30 14:28:20,293 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 100 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:20,293 agent-runner.tools.news_pull WARNING general: FMP budget spent mid-pull — keeping 0 articles ingested this run, resuming at page 1 next run
+2026-08-30 14:28:20,294 agent-runner.tools.news_pull INFO enriched 1 articles (1 tags upserted), 0 remaining
+2026-08-30 14:28:20,297 agent-runner.tools.news_pull INFO enriched 2 articles (2 tags upserted), 3 remaining
+2026-08-30 14:28:20,298 agent-runner.tools.news_pull INFO enriched 1 articles (1 tags upserted), 0 remaining
+2026-08-30 14:28:20,298 agent-runner.tools.news_pull WARNING enrichment stopped after 0 this run — embedding call failed: ollama down
+2026-08-30 14:28:20,298 agent-runner.tools.news_pull INFO enriched 0 articles (0 tags upserted), 1 remaining
+2026-08-30 14:28:20,307 agent-runner.tools.news_enrich WARNING tag generation failed for None (embedding kept): model down
+2026-08-30 19:29:05,981 agent-runner.queue_worker INFO CRWV analysis done (mode=delta signal=neutral conviction=high)
+2026-08-30 19:29:05,983 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4a for XLY (mode=delta)
+2026-08-30 19:29:07,764 agent-runner.tools.financials INFO earnings section unavailable for XLY: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=XLY&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:30:57,132 agent-runner.queue_worker INFO XLY analysis done (mode=delta signal=bearish conviction=medium)
+2026-08-30 19:30:57,135 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4b for BERY (mode=delta)
+2026-08-30 19:30:58,477 agent-runner.tools.financials INFO earnings section unavailable for BERY: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=BERY&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:31:49,316 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-30 14:31:49,322 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:31:49,322 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:31:49,322 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-30 14:31:49,329 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:31:49,329 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:31:49,329 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-30 14:31:49,360 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-30 14:31:49,361 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:31:49,361 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:31:49,362 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:31:49,362 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:31:49,363 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:31:49,363 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-30 14:31:49,364 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:31:49,364 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:31:49,369 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-30 14:31:49,369 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:31:49,374 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:31:49,375 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:31:49,380 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:31:49,381 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:31:49,381 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:31:49,381 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:31:49,382 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:31:49,385 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:31:49,385 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:31:49,385 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:31:49,404 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-30 14:31:49,406 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-30 14:31:49,406 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-30 14:31:49,461 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-30 14:31:49,644 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-30 14:31:49,661 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:31:49,664 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-30 14:31:49,665 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:31:49,666 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:31:49,666 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-30 14:31:49,667 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:31:49,667 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-30 14:31:49,669 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-30 14:31:49,670 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-30 14:31:49,670 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-30 14:31:49,670 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 181, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-30 14:31:49,683 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 202, in fake_fmp_get
+    raise requests.exceptions.ConnectionError("boom")
+requests.exceptions.ConnectionError: boom
+2026-08-30 14:31:49,686 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:31:49,686 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:31:49,686 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:31:49,686 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:31:49,688 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:31:49,688 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:31:49,688 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:31:49,688 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:31:49,689 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:31:49,690 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics_worker.py", line 46, in boom
+    raise RuntimeError("fmp down")
+RuntimeError: fmp down
+2026-08-30 14:31:49,690 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:31:49,690 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-30 14:31:49,697 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-30 14:31:49,699 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:31:49,699 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:31:49,700 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:31:49,701 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:31:49,702 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:31:49,705 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-30 14:31:49,708 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-30 14:31:49,710 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-30 14:31:49,716 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:31:49,717 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-30 14:31:49,718 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:31:49,760 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:31:49,760 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:31:49,768 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:31:49,769 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:31:49,769 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-30 14:31:49,770 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-30 14:31:49,771 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,775 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:31:49,775 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:31:49,777 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-30 14:31:49,777 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:31:49,777 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-30 14:31:49,777 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:31:49,779 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,779 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,779 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,779 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,781 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,781 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:31:49,781 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,781 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,781 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:31:49,781 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:31:49,783 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:31:49,783 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-30 14:31:49,783 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,783 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,783 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:31:49,785 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,785 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:31:49,786 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:31:49,787 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-30 14:31:49,789 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-30 14:31:49,789 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-30 19:32:41,102 agent-runner.queue_worker INFO BERY analysis done (mode=delta signal=bearish conviction=medium)
+2026-08-30 19:32:41,105 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4c for CLF (mode=delta)
+2026-08-30 19:32:42,920 agent-runner.tools.financials INFO earnings section unavailable for CLF: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CLF&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:35:10,561 agent-runner.queue_worker INFO CLF analysis done (mode=delta signal=neutral conviction=low)
+2026-08-30 19:35:10,563 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4d for JPM (mode=delta)
+2026-08-30 19:35:13,069 agent-runner.tools.financials INFO earnings section unavailable for JPM: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=JPM&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:37:56,663 agent-runner.queue_worker INFO JPM analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-30 19:37:56,665 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4e for INTU (mode=delta)
+2026-08-30 19:37:58,605 agent-runner.tools.financials INFO earnings section unavailable for INTU: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=INTU&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:40:24,087 agent-runner.queue_worker INFO INTU analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:40:24,090 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b4f for MRNA (mode=delta)
+2026-08-30 19:40:25,673 agent-runner.tools.financials INFO earnings section unavailable for MRNA: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MRNA&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:41:39,038 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-30 14:41:39,047 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:41:39,048 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:41:39,048 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-30 14:41:39,050 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:41:39,051 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:41:39,051 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-30 14:41:39,083 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:41:39,083 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:41:39,083 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:41:39,099 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:41:39,113 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:41:39,113 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:41:39,113 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:41:39,133 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-30 14:41:39,134 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-30 14:41:39,134 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-30 14:41:39,182 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-30 14:41:39,370 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-30 14:41:39,385 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:41:39,385 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-30 14:41:39,385 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-30 14:41:39,385 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-30 14:41:39,385 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-30 14:41:39,385 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 181, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-30 14:41:39,408 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 202, in fake_fmp_get
+    raise requests.exceptions.ConnectionError("boom")
+requests.exceptions.ConnectionError: boom
+2026-08-30 14:41:39,411 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:41:39,411 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:41:39,411 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:41:39,411 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:41:39,414 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:41:39,414 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:41:39,414 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:41:39,414 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:41:39,415 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:41:39,415 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics_worker.py", line 46, in boom
+    raise RuntimeError("fmp down")
+RuntimeError: fmp down
+2026-08-30 14:41:39,416 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:41:39,416 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:41:39,422 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-30 14:41:39,422 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-30 14:41:39,422 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-30 14:41:39,422 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-30 14:41:39,423 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-30 14:41:39,423 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-30 14:41:39,423 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-30 14:41:39,424 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:41:39,425 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:41:39,426 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:41:39,427 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:41:39,430 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-30 14:41:39,433 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-30 14:41:39,435 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-30 14:41:39,435 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:41:39,435 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-30 14:41:39,435 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:41:39,485 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:41:39,485 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:41:39,485 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:41:39,485 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:41:39,485 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-30 14:41:39,496 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-30 14:41:39,496 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-30 14:41:39,496 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,496 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-30 14:41:39,499 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,500 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:41:39,501 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-30 14:41:39,501 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,502 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:41:39,503 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:41:39,503 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-30 14:41:39,504 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:41:39,504 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-30 14:41:39,505 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:41:39,506 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,506 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,507 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,507 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,507 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,508 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:41:39,508 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,509 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,509 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:41:39,509 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:41:39,510 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:41:39,510 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-30 14:41:39,511 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,511 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,511 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:41:39,512 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,514 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:41:39,514 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:41:39,516 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-30 14:41:39,516 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-30 14:41:39,516 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-30 19:42:41,111 agent-runner.queue_worker INFO MRNA analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:42:41,114 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b50 for COST (mode=delta)
+2026-08-30 19:42:42,982 agent-runner.tools.financials INFO earnings section unavailable for COST: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=COST&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 14:43:27,165 agent-runner.tools.breadth INFO breadth: BAD unavailable (not covered), excluding from sweep
+2026-08-30 14:43:27,172 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:43:27,175 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:43:27,175 agent-runner.tools.breadth INFO emitted market_flow feed event: Bearish SPY/NYMO divergence detected
+2026-08-30 14:43:27,177 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:43:27,177 agent-runner.tools.breadth INFO emitted market_flow feed event: Bullish SPY/NYMO divergence detected
+2026-08-30 14:43:27,179 agent-runner.tools.breadth WARNING FMP constituents failed for sp500 (fmp down); using scrape fallback
+2026-08-30 14:43:27,202 agent-runner.tools.breadth WARNING SPY history unavailable (yahoo down) — divergence read skipped
+2026-08-30 14:43:27,202 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:43:27,202 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:43:27,202 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:43:27,202 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:43:27,211 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:43:27,211 agent-runner.breadth_worker ERROR market breadth refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\breadth_worker.py", line 49, in run_daily_breadth_if_due
+    result = refresh(db=db)
+             ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_breadth_worker.py", line 47, in boom
+    raise RuntimeError("yahoo down")
+RuntimeError: yahoo down
+2026-08-30 14:43:27,211 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 14:43:27,211 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -42.0, divergence none
+2026-08-30 14:43:27,218 agent-runner.tools.company_profile INFO FMP 402 for AAPL/profile — not covered on this plan, skipping
+2026-08-30 14:43:27,219 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:43:27,219 agent-runner.tools.company_profile INFO FMP 403 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:43:27,219 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:43:27,227 agent-runner.tools.company_profile INFO FMP 402 for AAPL/stock-peers — not covered on this plan, skipping
+2026-08-30 14:43:27,227 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:43:27,227 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:43:27,227 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:43:27,229 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:43:27,229 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping profile for AAPL
+2026-08-30 14:43:27,229 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping peers for AAPL
+2026-08-30 14:43:27,229 agent-runner.tools.company_profile WARNING FMP daily soft cap exceeded — skipping employee counts for AAPL
+2026-08-30 14:43:27,257 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: senate feed down
+2026-08-30 14:43:27,258 agent-runner.tools.congress WARNING congress_trades_pull: senate fetch failed: provider down
+2026-08-30 14:43:27,258 agent-runner.tools.congress WARNING congress_trades_pull: house fetch failed: provider down
+2026-08-30 14:43:27,307 agent-runner.crew INFO AAPL: FMP existence check failed but financials resolve — proceeding
+2026-08-30 14:43:27,484 agent-runner.tools.db WARNING unique ticker index on analyses blocked by existing duplicates — run scripts/dedupe_analyses.py
+2026-08-30 14:43:27,500 agent-runner.tools.earnings_calendar INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-30 14:43:27,504 agent-runner.agents.earnings_scanner INFO analyst grades unavailable for TST: nope
+2026-08-30 14:43:27,505 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:43:27,506 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:43:27,506 agent-runner.agents.earnings_scanner WARNING thesis generation failed — keeping templated lines: ollama down
+2026-08-30 14:43:27,507 agent-runner.agents.earnings_scanner INFO earnings scan: 3 screened, enriching top 2 by market cap
+2026-08-30 14:43:27,507 agent-runner.agents.earnings_scanner WARNING failed to enrich BIG: api down
+2026-08-30 14:43:27,509 agent-runner.earnings_scan_worker INFO claimed earnings scan abc (days_ahead=3)
+2026-08-30 14:43:27,509 agent-runner.earnings_scan_worker INFO earnings scan abc complete: 1 scored of 5 screened
+2026-08-30 14:43:27,510 agent-runner.earnings_scan_worker INFO claimed earnings scan bad (days_ahead=7)
+2026-08-30 14:43:27,510 agent-runner.earnings_scan_worker ERROR earnings scan bad failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\earnings_scan_worker.py", line 44, in claim_and_run_next_scan
+    result = run_scan(days_ahead=days_ahead, db=db)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_earnings_scanner.py", line 181, in broken_run
+    raise RuntimeError("universe fetch died")
+RuntimeError: universe fetch died
+2026-08-30 14:43:27,522 agent-runner.tools.economics WARNING economic-indicators pull failed for series=GDP
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 218, in pull_economic_indicators
+    raw = fmp_get(f"economic-indicators?name={series}", db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 202, in fake_fmp_get
+    raise requests.exceptions.ConnectionError("boom")
+requests.exceptions.ConnectionError: boom
+2026-08-30 14:43:27,525 agent-runner.tools.economics WARNING economics pull: treasury_rates failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:43:27,526 agent-runner.tools.economics WARNING economics pull: economic_calendar failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:43:27,526 agent-runner.tools.economics WARNING economics pull: economic_indicators failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:43:27,526 agent-runner.tools.economics WARNING economics pull: market_risk_premium failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tools\economics.py", line 280, in run_economics_pull
+    total += pull(db)
+             ^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics.py", line 258, in always_fails
+    raise requests.exceptions.ConnectionError("provider down")
+requests.exceptions.ConnectionError: provider down
+2026-08-30 14:43:27,527 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:43:27,527 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:43:27,527 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:43:27,527 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:43:27,529 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:43:27,529 agent-runner.economics_worker ERROR economics refresh failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\economics_worker.py", line 58, in run_daily_economics_if_due
+    record_count = refresh(db=db)
+                   ^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_economics_worker.py", line 46, in boom
+    raise RuntimeError("fmp down")
+RuntimeError: fmp down
+2026-08-30 14:43:27,529 agent-runner.economics_worker INFO starting daily economics refresh
+2026-08-30 14:43:27,529 agent-runner.economics_worker INFO economics refresh complete — 15 records written
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/income_annual — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/income_quarterly — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/balance_annual — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/cashflow_annual — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/ratios — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/key_metrics — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for BSX/growth — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO FMP 402 for APP/income_annual — not covered on this plan, skipping
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping income_quarterly for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping balance_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping cashflow_annual for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping ratios for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping key_metrics for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials WARNING FMP daily soft cap exceeded — skipping growth for AAPL
+2026-08-30 14:43:27,536 agent-runner.tools.financials INFO earnings section unavailable for AAPL: endpoint down
+2026-08-30 14:43:27,547 agent-runner.tools.fmp_client WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to stale cache
+2026-08-30 14:43:27,550 agent-runner.tools.fmp_client INFO fmp throttle: sleeping 60.0s to stay under 2 calls/min
+2026-08-30 14:43:27,557 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'entitled', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'payment_required', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:43:27,558 agent-runner.tools.fmp_client WARNING entitlement probe failed for batch_quote: boom
+2026-08-30 14:43:27,560 agent-runner.tools.fmp_client INFO entitlement probe complete: {'eod_prices': 'entitled', 'intraday_1h': 'entitled', 'intraday_1m': 'entitled', 'batch_quote': 'error', 'insider_trading': 'entitled', 'form_13f': 'entitled', 'senate_house': 'entitled', 'sector_performance': 'entitled', 'movers': 'entitled', 'economic_calendar': 'entitled', 'earnings_calendar': 'entitled', 'analyst_grades': 'entitled', 'fund_holdings': 'entitled', 'transcripts': 'entitled', 'company_info': 'entitled', 'stock_peers': 'entitled', 'employee_count': 'entitled'}
+2026-08-30 14:43:27,608 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:43:27,608 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:43:27,610 agent-runner.tools.insider INFO AAPL: insider transactions unavailable (not entitled) — serving stored
+2026-08-30 14:43:27,610 agent-runner.tools.insider INFO AAPL: insider sentiment unavailable (not entitled)
+2026-08-30 14:43:27,611 agent-runner.agents.institutional_flow_scanner INFO flow scan built 6 events (6 dataroma, 0 13F)
+2026-08-30 14:43:27,611 agent-runner.agents.institutional_flow_scanner INFO flow scan built 0 events (0 dataroma, 0 13F)
+2026-08-30 14:43:27,612 agent-runner.agents.institutional_flow_scanner INFO flow scan built 3 events (0 dataroma, 3 13F)
+2026-08-30 14:43:27,612 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,613 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (0 dataroma, 2 13F)
+2026-08-30 14:43:27,614 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,615 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:43:27,615 agent-runner.agents.institutional_flow_scanner WARNING headline generation failed — keeping templated lines: ollama down
+2026-08-30 14:43:27,615 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,617 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:43:27,617 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:43:27,618 agent-runner.institutional_flow_worker INFO starting institutional flow scan (manual)
+2026-08-30 14:43:27,619 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:43:27,619 agent-runner.institutional_flow_worker ERROR institutional flow scan failed
+Traceback (most recent call last):
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\institutional_flow_worker.py", line 147, in run_daily_scan_if_due
+    return scan(db=db, now=now)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\NealPC\Git\ai_stocks\agent-runner\tests\test_institutional_flow.py", line 160, in boom
+    raise RuntimeError("playwright exploded")
+RuntimeError: playwright exploded
+2026-08-30 14:43:27,619 agent-runner.institutional_flow_worker INFO starting institutional flow scan (scheduled)
+2026-08-30 14:43:27,619 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,619 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,623 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,623 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,623 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,623 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:43:27,623 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,623 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,625 agent-runner.agents.institutional_flow_scanner INFO flow scan built 1 events (1 dataroma, 0 13F)
+2026-08-30 14:43:27,625 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 0 new events
+2026-08-30 14:43:27,625 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:43:27,626 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 1 new events
+2026-08-30 14:43:27,626 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,626 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,626 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (2 dataroma, 0 13F)
+2026-08-30 14:43:27,626 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,628 agent-runner.agents.institutional_flow_scanner INFO flow scan built 2 events (1 dataroma, 1 13F)
+2026-08-30 14:43:27,628 agent-runner.institutional_flow_worker INFO institutional flow scan wrote 2 new events
+2026-08-30 14:43:27,630 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): not json
+2026-08-30 14:43:27,630 agent-runner.llm WARNING LLM returned invalid JSON (attempt 1/2): nope
+2026-08-30 14:43:27,630 agent-runner.llm WARNING LLM returned invalid JSON (attempt 2/2): still nope
+2026-08-30 19:45:15,739 agent-runner.queue_worker INFO COST analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 19:45:15,742 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b51 for MRK (mode=delta)
+2026-08-30 19:45:17,262 agent-runner.tools.financials INFO earnings section unavailable for MRK: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MRK&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:47:49,479 agent-runner.queue_worker INFO MRK analysis done (mode=delta signal=neutral conviction=high)
+2026-08-30 19:47:49,481 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b52 for SAM (mode=delta)
+2026-08-30 19:47:51,147 agent-runner.tools.financials INFO earnings section unavailable for SAM: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SAM&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:49:46,463 agent-runner.queue_worker INFO SAM analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:49:46,466 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b53 for MU (mode=delta)
+2026-08-30 19:49:49,193 agent-runner.tools.financials INFO earnings section unavailable for MU: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MU&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:52:53,854 agent-runner INFO agent-runner starting (poll=30s, model=qwen3:14b, ollama=http://ollama:11434)
+2026-08-30 19:52:53,891 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b54 for PCT (mode=delta)
+2026-08-30 19:52:54,876 agent-runner.tools.financials INFO earnings section unavailable for PCT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PCT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:56:04,492 agent-runner.queue_worker INFO PCT analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:56:04,495 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b55 for META (mode=delta)
+2026-08-30 19:56:06,432 agent-runner.tools.financials INFO earnings section unavailable for META: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=META&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 19:58:21,152 agent-runner.queue_worker INFO META analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 19:58:21,154 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b56 for RGTI (mode=delta)
+2026-08-30 19:58:22,958 agent-runner.tools.financials INFO earnings section unavailable for RGTI: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=RGTI&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:00:46,953 agent-runner.queue_worker INFO RGTI analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-30 20:00:46,955 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b57 for RDDT (mode=delta)
+2026-08-30 20:00:48,356 agent-runner.tools.financials INFO earnings section unavailable for RDDT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=RDDT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:02:53,600 agent-runner.queue_worker INFO RDDT analysis done (mode=delta signal=neutral conviction=high)
+2026-08-30 20:02:53,602 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b58 for IBP (mode=delta)
+2026-08-30 20:02:55,490 agent-runner.tools.financials INFO earnings section unavailable for IBP: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=IBP&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:04:54,328 agent-runner.queue_worker INFO IBP analysis done (mode=delta signal=bullish conviction=medium)
+2026-08-30 20:04:54,330 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b59 for PCAR (mode=delta)
+2026-08-30 20:04:56,668 agent-runner.tools.financials INFO earnings section unavailable for PCAR: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PCAR&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:07:06,064 agent-runner.queue_worker INFO PCAR analysis done (mode=delta signal=bullish conviction=low)
+2026-08-30 20:07:06,066 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5a for CAT (mode=delta)
+2026-08-30 20:07:07,865 agent-runner.tools.financials INFO earnings section unavailable for CAT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CAT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:09:36,140 agent-runner.queue_worker INFO CAT analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:09:36,142 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5b for UNH (mode=delta)
+2026-08-30 20:09:37,996 agent-runner.tools.financials INFO earnings section unavailable for UNH: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=UNH&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:11:58,233 agent-runner.queue_worker INFO UNH analysis done (mode=delta signal=bearish conviction=medium)
+2026-08-30 20:11:58,236 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5c for INVH (mode=delta)
+2026-08-30 20:11:59,270 agent-runner.tools.financials INFO earnings section unavailable for INVH: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=INVH&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:14:44,049 agent-runner.queue_worker INFO INVH analysis done (mode=delta signal=neutral conviction=low)
+2026-08-30 20:14:44,051 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5d for WY (mode=delta)
+2026-08-30 20:14:45,761 agent-runner.tools.financials INFO earnings section unavailable for WY: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=WY&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:17:05,880 agent-runner.queue_worker INFO WY analysis done (mode=delta signal=bearish conviction=high)
+2026-08-30 20:17:05,883 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5e for SPCX (mode=delta)
+2026-08-30 20:17:07,826 agent-runner.tools.financials INFO earnings section unavailable for SPCX: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SPCX&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:19:36,774 agent-runner.queue_worker INFO SPCX analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:19:36,777 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b5f for SNOW (mode=delta)
+2026-08-30 20:19:38,394 agent-runner.tools.financials INFO earnings section unavailable for SNOW: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SNOW&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:21:49,137 agent-runner.queue_worker INFO SNOW analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:21:49,140 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b60 for VSTS (mode=delta)
+2026-08-30 20:21:51,000 agent-runner.tools.financials INFO earnings section unavailable for VSTS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=VSTS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:23:57,128 agent-runner.queue_worker INFO VSTS analysis done (mode=delta signal=bullish conviction=medium)
+2026-08-30 20:23:57,130 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b61 for ADSK (mode=delta)
+2026-08-30 20:23:58,646 agent-runner.tools.financials INFO earnings section unavailable for ADSK: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=ADSK&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:26:13,124 agent-runner.queue_worker INFO ADSK analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:26:13,127 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b62 for FTNT (mode=delta)
+2026-08-30 20:26:15,106 agent-runner.tools.financials INFO earnings section unavailable for FTNT: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=FTNT&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:28:31,002 agent-runner.queue_worker INFO FTNT analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:28:31,004 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b63 for CDNS (mode=delta)
+2026-08-30 20:28:32,798 agent-runner.tools.financials INFO earnings section unavailable for CDNS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=CDNS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:30:50,030 agent-runner.queue_worker INFO CDNS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:30:50,033 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b64 for SNPS (mode=delta)
+2026-08-30 20:30:51,033 agent-runner.tools.financials INFO earnings section unavailable for SNPS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=SNPS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:32:47,904 agent-runner.queue_worker INFO SNPS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:32:47,906 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b65 for KO (mode=delta)
+2026-08-30 20:32:49,688 agent-runner.tools.financials INFO earnings section unavailable for KO: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=KO&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:35:08,230 agent-runner.queue_worker INFO KO analysis done (mode=delta signal=neutral conviction=high)
+2026-08-30 20:35:08,232 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b66 for NBIS (mode=delta)
+2026-08-30 20:35:09,556 agent-runner.tools.financials INFO earnings section unavailable for NBIS: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NBIS&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:37:29,210 agent-runner.queue_worker INFO NBIS analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:37:29,213 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b67 for IREN (mode=delta)
+2026-08-30 20:37:31,186 agent-runner.tools.financials INFO earnings section unavailable for IREN: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=IREN&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:39:40,885 agent-runner.queue_worker INFO IREN analysis done (mode=delta signal=neutral conviction=high)
+2026-08-30 20:39:40,888 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b68 for PEP (mode=delta)
+2026-08-30 20:39:42,876 agent-runner.tools.financials INFO earnings section unavailable for PEP: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PEP&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:42:06,862 agent-runner.queue_worker INFO PEP analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-30 20:42:06,865 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b69 for DLTR (mode=delta)
+2026-08-30 20:42:08,847 agent-runner.tools.financials INFO earnings section unavailable for DLTR: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DLTR&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:44:24,294 agent-runner.queue_worker INFO DLTR analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:44:24,297 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6a for DOW (mode=delta)
+2026-08-30 20:44:26,474 agent-runner.tools.financials INFO earnings section unavailable for DOW: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DOW&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:46:46,665 agent-runner.queue_worker INFO DOW analysis done (mode=delta signal=neutral conviction=medium)
+2026-08-30 20:46:46,667 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6b for DVN (mode=delta)
+2026-08-30 20:46:48,508 agent-runner.tools.financials INFO earnings section unavailable for DVN: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=DVN&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:49:17,704 agent-runner.queue_worker INFO DVN analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:49:17,707 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6c for MA (mode=delta)
+2026-08-30 20:49:19,754 agent-runner.tools.financials INFO earnings section unavailable for MA: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=MA&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:52:29,063 agent-runner.queue_worker INFO MA analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:52:29,065 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6d for OXY (mode=delta)
+2026-08-30 20:52:31,225 agent-runner.tools.financials INFO earnings section unavailable for OXY: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=OXY&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:54:55,242 agent-runner.queue_worker INFO OXY analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:54:55,249 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6e for PFG (mode=delta)
+2026-08-30 20:54:56,526 agent-runner.tools.financials INFO earnings section unavailable for PFG: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PFG&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:57:19,488 agent-runner.queue_worker INFO PFG analysis done (mode=delta signal=bearish conviction=medium)
+2026-08-30 20:57:19,490 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b6f for TEL (mode=delta)
+2026-08-30 20:57:21,353 agent-runner.tools.financials INFO earnings section unavailable for TEL: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=TEL&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 20:59:47,026 agent-runner.queue_worker INFO TEL analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 20:59:47,028 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b70 for BRK-B (mode=delta)
+2026-08-30 20:59:48,541 agent-runner.tools.financials INFO earnings section unavailable for BRK-B: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=BRK-B&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 21:02:02,125 agent-runner.queue_worker INFO BRK-B analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 21:02:02,127 agent-runner.breadth_worker INFO starting daily market breadth refresh
+2026-08-30 21:02:02,131 agent-runner.breadth_worker INFO breadth refresh complete — NYMO -27.6, divergence none
+2026-08-30 21:02:02,132 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b71 for BA (mode=delta)
+2026-08-30 21:02:04,379 agent-runner.tools.financials INFO earnings section unavailable for BA: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=BA&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 21:04:33,151 agent-runner.queue_worker INFO BA analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 21:04:33,153 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b72 for PANW (mode=delta)
+2026-08-30 21:04:35,130 agent-runner.tools.financials INFO earnings section unavailable for PANW: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=PANW&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s
+2026-08-30 21:06:58,115 agent-runner.queue_worker INFO PANW analysis done (mode=delta signal=bullish conviction=high)
+2026-08-30 21:06:58,118 agent-runner.queue_worker INFO claimed job 6a8fa18820a7eef669083b73 for NFLX (mode=delta)
+2026-08-30 21:07:00,068 agent-runner.tools.financials INFO earnings section unavailable for NFLX: 400 Client Error: Bad Request for url: https://financialmodelingprep.com/stable/analyst-estimates?symbol=NFLX&limit=4&apikey=MaSOxA9UVwy52xeMwbGbWPJIQzhqui7s

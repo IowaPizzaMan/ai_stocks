@@ -36,13 +36,17 @@ Expected before first run: `price_history 556`, `financials_cache 65`, `company_
 ## 2. Build the screener collection
 
 ```bash
-# via the admin job (preferred — exercises the real path)
-curl -s -X POST localhost:8000/admin/jobs/screener_refresh
-
-# or directly
 docker compose exec -T agent-runner python -c "
-from tools.screener import refresh_all; print(refresh_all())"
+from tools.screener import refresh_all
+from tools.db import get_db
+print(refresh_all(get_db()))"
 ```
+
+The `screener_refresh` job type is also registered in `agent-runner/tools/admin_jobs.py`'s
+`JOB_HANDLERS` and can be triggered by inserting a `work_queue` document with
+`{"job_type": "screener_refresh", "status": "pending"}` — this app enqueues admin jobs directly
+into `work_queue` rather than through a generic HTTP trigger endpoint (see `backend/routers/market.py`
+for the pattern other admin jobs use to enqueue from a specific route).
 
 **Expect**: ~556 documents written in under a minute. Then sanity-check that signals are
 populated and plausible:
@@ -181,40 +185,44 @@ docker compose exec -T mongodb mongosh stockai --quiet --eval '
 **Expect**: `portfolio_digest_cache: 1` (orphaned — the only collection with zero code
 references), `transcripts_cache: 0` (**kept**, reserved for `specs/007-earnings-transcripts/`).
 
-After the approved cleanup: `portfolio_digest_cache` gone; `transcripts_cache` and
-`fmp_entitlements` still present; the four dead constants removed from both `db.py` files while
-the `"sector_performance"` / `"fund_holdings"` probe keys in
-`agent-runner/tools/fmp_client.py:148,153` remain untouched.
+The dead constants (`FUND_HOLDINGS`, `SECTOR_PERFORMANCE`, `STOCK_NEWS`, `MARKET_NEWS`) were
+already removed from both `db.py` files as part of implementation — `backend/tests/test_db_constants.py`
+asserts they're gone and that `TRANSCRIPTS_CACHE`/`FMP_ENTITLEMENTS` were NOT removed by the same
+pass. What's left is the one genuinely destructive step:
+
+```bash
+python scripts/drop_portfolio_digest_cache.py           # dry run — reports the count, changes nothing
+python scripts/drop_portfolio_digest_cache.py --yes     # actually drops it, after you've confirmed
+```
 
 ```bash
 cd backend && pytest && cd ../agent-runner && pytest
 ```
 
 Both suites must pass — `transcripts_cache` still has an asserting test
-(`backend/tests/test_routers.py:460`).
+(`backend/tests/test_routers.py`).
 
 ---
 
 ## 8. Verify 15x headroom (SC-004)
 
 ```bash
-docker compose exec -T mongodb mongosh stockai --quiet --eval '
-  const s = db.stats();
-  print("dataSize MB:", (s.dataSize/1048576).toFixed(1));
-  print("screener MB:", (db.screener.stats().storageSize/1048576).toFixed(2));
-  print("largest price doc KB:",
-    (db.price_history.aggregate([{$project:{n:{$bsonSize:"$$ROOT"}}},
-      {$sort:{n:-1}},{$limit:1}]).toArray()[0].n/1024).toFixed(0));'
+python scripts/seed_15x_screener.py --cleanup
 ```
 
-**Expect today**: dataSize ≈ 84 MB, `screener` ≈ 1–2 MB, largest price doc ≈ 121 KB.
+This seeds ~8,340 synthetic `screener` documents into a **separate `stockai_scale_test`
+database** (never touches production data), reports data/index size and a flagship-style query's
+latency, then drops the test database. Already run once during implementation:
 
-**Projected at 15x**: dataSize ≈ 1.3 GB, `screener` ≈ 17 MB, largest price doc **unchanged**
-at ~121 KB (it grows with history depth, not ticker count) — 0.75% of the 16 MB BSON cap.
+**Measured** (not estimated): 8,340 docs → **5.12 MB data / 0.77 MB indexes**; a 4-predicate
+`$match` against the full collection returned in **3.6 ms**. Both came in well under the
+original rough estimate (~17 MB assumed at 2 KB/doc; actual is ~644 bytes/doc) — see research.md
+R5 for the full comparison against today's baseline (84 MB total, 556-doc `price_history`, 121 KB
+largest doc).
 
-The load test that matters is chat latency against a 15x-sized `screener`, since chat never
-touches `price_history`. Seed ~8,340 synthetic screener docs and re-run step 4; query execution
-should stay in the low milliseconds, leaving latency dominated by the LLM exactly as it is today.
+The reason this stays fast at 15x: chat only ever queries `screener`, never the much larger
+`price_history` — so the 15x growth that matters for chat latency is bounded by `screener`'s
+size, not the whole database's.
 
 ---
 

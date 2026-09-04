@@ -1,9 +1,16 @@
 // Spec: specs/component-specs/frontend/components/layout/Sidebar.md
+// specs/035-chat-and-news-upgrade US6 (FR-021, FR-022) — gained a second,
+// independently scrollable section (Top Traded Stocks) alongside Watchlist.
+// The aside is pinned to viewport height (sticky + h-screen) so its two
+// flex-1/min-h-0/overflow-y-auto children actually have a bounded height to
+// scroll within — without that, each section would just grow to fit its
+// content and the whole page would scroll instead (research.md R10).
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { WatchlistItem } from "../../api/types";
 import { useRemoveFromWatchlist, useWatchlist } from "../../hooks/useWatchlist";
 import RemoveIcon from "../shared/RemoveIcon";
+import TopTradedList from "./TopTradedList";
 
 const DOT: Record<string, string> = {
   bullish: "bg-emerald-400",
@@ -74,19 +81,23 @@ export default function Sidebar() {
   const { data, isLoading } = useWatchlist();
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-zinc-800 p-4 text-sm text-zinc-400 md:block">
-      <p className="mb-3 font-medium text-zinc-300">Watchlist</p>
-      {isLoading && <p className="text-xs text-zinc-600">loading…</p>}
-      {!isLoading && (data?.items.length ?? 0) === 0 && (
-        <p className="text-xs text-zinc-600">
-          Empty — add tickers from the feed or a stock page.
-        </p>
-      )}
-      <ul className="space-y-1">
-        {data?.items.map((item) => (
-          <WatchlistRow key={item.ticker} item={item} />
-        ))}
-      </ul>
+    <aside className="hidden w-56 shrink-0 flex-col gap-4 border-r border-zinc-800 p-4 text-sm text-zinc-400 md:sticky md:top-0 md:flex md:h-screen">
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <p className="font-medium text-zinc-300">Watchlist</p>
+        {isLoading && <p className="text-xs text-zinc-600">loading…</p>}
+        {!isLoading && (data?.items.length ?? 0) === 0 && (
+          <p className="text-xs text-zinc-600">
+            Empty — add tickers from the feed or a stock page.
+          </p>
+        )}
+        <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
+          {data?.items.map((item) => (
+            <WatchlistRow key={item.ticker} item={item} />
+          ))}
+        </ul>
+      </div>
+
+      <TopTradedList />
     </aside>
   );
 }

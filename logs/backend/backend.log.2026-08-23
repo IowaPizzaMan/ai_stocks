@@ -1,0 +1,201 @@
+2026-08-23 10:05:13,616 backend.semantic.chat WARNING chat query rejected: stage 'match' is not permitted for chat queries
+2026-08-23 10:06:48,650 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:06:48,658 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:06:48,658 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:06:48,659 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:06:57,320 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:06:57,329 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:06:57,330 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:06:57,330 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:06:58,188 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 10:06:58,205 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 10:06:58,217 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 10:06:58,217 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 10:12:07,450 backend.llm INFO chat model qwen3:14b pre-warmed
+2026-08-23 10:14:04,849 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:14:04,868 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:14:04,868 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:14:04,868 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:16:42,798 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:16:42,806 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:16:42,806 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:16:42,806 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:16:43,757 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 10:16:43,773 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 10:16:43,784 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 10:16:43,786 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 10:17:37,938 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:17:37,955 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:17:37,955 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:17:37,955 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:17:38,884 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 10:17:38,904 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 10:17:38,916 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 10:17:38,918 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 10:24:09,911 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 10:24:09,919 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 10:24:09,919 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 10:24:09,919 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 10:24:11,026 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 10:24:11,044 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 10:24:11,056 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 10:24:11,058 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 15:31:09,430 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 15:59:34,384 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 18:52:01,546 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 13:57:21,420 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 13:57:21,424 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 13:58:45,194 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 13:58:45,203 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 13:58:45,203 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 13:58:45,203 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 13:58:45,239 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 13:58:45,244 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 13:59:05,088 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 13:59:05,096 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 13:59:05,096 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 13:59:05,096 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 13:59:33,366 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 13:59:33,377 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 13:59:33,377 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 13:59:33,377 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 13:59:33,423 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 13:59:33,427 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 13:59:39,360 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 13:59:39,377 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 13:59:39,377 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 13:59:39,377 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 13:59:40,534 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 13:59:40,554 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 13:59:40,570 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 13:59:40,572 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 14:03:12,008 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 14:03:12,008 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 14:03:55,995 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 14:03:56,000 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 14:04:36,741 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 14:04:36,773 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 14:04:36,773 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 14:04:36,775 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 14:04:37,801 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 14:04:37,820 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 14:04:37,834 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 14:04:37,836 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 19:06:09,661 backend.llm INFO chat model qwen3:14b pre-warmed
+2026-08-23 14:12:47,783 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 14:12:47,783 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 14:12:47,783 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 14:12:47,783 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 14:12:48,731 backend.earnings_data INFO earnings dates unavailable for XYZ: fmp hiccup
+2026-08-23 14:12:48,749 backend.earnings_data WARNING earnings calendar 2026-08-15..2026-08-19: FMP budget spent — serving stale cache
+2026-08-23 14:12:48,762 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 14:12:48,762 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 19:25:10,764 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 21:40:52,117 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 17:56:19,504 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 17:56:19,504 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 17:56:19,504 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 17:56:19,504 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 17:59:59,311 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 17:59:59,311 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 17:59:59,328 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 17:59:59,328 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 17:59:59,328 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 17:59:59,328 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:01:07,526 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:01:07,530 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:01:07,530 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:01:07,530 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:33,368 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:02:33,383 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:02:33,383 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:02:33,383 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:40,299 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:02:40,299 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:02:40,299 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:02:40,299 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:40,381 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 18:02:40,389 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 18:02:40,403 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:02:40,403 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:02:40,403 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:40,403 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:02:48,083 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:02:48,105 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:02:48,105 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:02:48,105 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:48,585 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:02:48,585 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:02:48,585 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:02:48,588 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:02:48,958 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 18:02:48,960 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 18:04:40,120 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:04:40,220 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:04:40,220 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:04:40,220 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:04:40,220 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:04:40,220 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:04:40,220 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:04:40,289 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 18:04:40,301 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 18:04:40,315 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:04:40,315 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:04:40,315 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:04:40,315 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:05:09,360 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:05:09,371 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:09,371 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:09,371 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:09,371 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:09,371 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:09,371 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:09,432 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 18:05:09,444 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 18:05:09,456 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:09,457 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:09,457 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:09,458 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:05:17,838 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:05:17,871 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:17,871 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:17,871 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:17,871 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:17,871 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:17,871 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:18,310 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:05:18,310 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:05:18,310 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:05:18,312 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:05:18,847 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 18:05:18,847 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 18:07:52,943 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:07:52,959 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:07:52,959 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:07:52,959 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:07:52,959 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:07:52,959 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:07:52,959 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:07:53,026 backend.semantic.strategy_picks WARNING strategy_picks: gap_analysis ranking failed: boom
+2026-08-23 18:07:53,036 backend.semantic.strategy_picks WARNING strategy_picks narration failed, using fallback: model call failed: ollama unreachable
+2026-08-23 18:07:53,051 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:07:53,051 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:07:53,051 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:07:53,053 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:08:03,860 backend.semantic.chat WARNING chat query rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:08:03,891 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:08:03,891 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:08:03,891 backend.semantic.chat WARNING strategy_picks intent detection failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:08:03,891 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:08:03,891 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:08:03,891 backend.semantic.chat WARNING chat query generation failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:08:04,362 backend.llm WARNING Ollama call failed (attempt 1/2): ollama unreachable
+2026-08-23 18:08:04,362 backend.llm WARNING Ollama call failed (attempt 2/2): ollama unreachable
+2026-08-23 18:08:04,362 backend.semantic.condition_filter WARNING condition_filter: translation call failed: model call failed after 2 attempts: ollama unreachable
+2026-08-23 18:08:04,362 backend.semantic.condition_filter WARNING condition_filter: generated pipeline rejected: stage '$out' is not permitted for chat queries
+2026-08-23 18:08:04,879 backend.fmp WARNING FMP daily soft cap (2) exceeded — 3 calls today; degrading to cache
+2026-08-23 18:08:04,880 backend.fmp WARNING FMP daily soft cap (1) exceeded — 2 calls today; degrading to cache
+2026-08-23 23:13:33,791 backend.llm INFO chat model qwen3:14b pre-warmed
+2026-08-23 23:24:31,979 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 23:41:04,314 backend.llm WARNING chat model pre-warm failed (will load on first question): timed out
+2026-08-23 23:41:12,736 backend.llm WARNING Ollama call failed (attempt 1/2): timed out
